@@ -1,10 +1,10 @@
-# 07_frame_diff.py
+# 01_frame_diff.py
 # Adjacent frame differencing: diff = absdiff(frame_N, frame_N-1).
 # Fast-moving ball produces a strong signal; slow-moving people a weak one.
 # Produces a 3-row contact sheet (diff / mask / detection) per flight.
 #
 # Run from anywhere:
-#   python path/to/code/07_frame_diff.py
+#   python path/to/code/01_frame_diff.py
 
 from pathlib import Path
 import numpy as np
@@ -12,13 +12,13 @@ import cv2
 
 # ---- paths ----
 HERE    = Path(__file__).resolve().parent
-SESSION = HERE.parent / "2026-05-27_staircase_bringup"
+SESSION = HERE.parent / "data" / "2026-06-01_Dyson_library_test"
 MOV_DIR = SESSION / "moving"
-OUT_DIR = SESSION / "tuning" / "02_moving" / "12_frame_difference_all_flights"
+OUT_DIR = SESSION / "tuning" / "02_moving" / "01_frame_diff"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # ---- which flights to process ----
-FLIGHTS = ["flight_01", "flight_02", "flight_03", "flight_04", "flight_05", "flight_06", "flight_07", "flight_08", "flight_09", "flight_10"]
+FLIGHTS = sorted(p.name for p in MOV_DIR.iterdir() if p.is_dir() and p.name.startswith("flight_"))
 
 # ---- contact sheet layout ----
 COLS_PER_ROW = 10
@@ -161,6 +161,6 @@ for flight_name in FLIGHTS:
     grid     = np.vstack(rows)
     out_path = OUT_DIR / f"{flight_name}_contact.png"
     cv2.imwrite(str(out_path), grid)
-    print(f"  → {out_path.name}\n")
+    print(f"  -> {out_path.name}\n")
 
 print(f"Done. Outputs in:\n  {OUT_DIR}")
