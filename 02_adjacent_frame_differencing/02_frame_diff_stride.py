@@ -32,7 +32,7 @@ FLIGHTS = [f"flight_{n:02d}" for n in FLIGHT_NUMS if (MOV_DIR / f"flight_{n:02d}
 
 # ---- contact sheet layout ----
 COLS_PER_ROW = 10
-PANEL_W      = 300    # 10 × 300 = 3000 px wide
+PANEL_W      = 600    # 10 × 600 = 6000 px wide
 
 # ---- settled detection parameters ----
 DIFF_THRESHOLD = 20
