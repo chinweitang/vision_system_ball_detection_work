@@ -236,13 +236,38 @@ def main():
     WIN = "Ball Labeller"
     cv2.namedWindow(WIN, cv2.WINDOW_AUTOSIZE)
 
+    def clamp_pan():
+        """Keep viewport within fit-canvas bounds."""
+        fw, fh = fit_dims[0]
+        pan_x[0] = max(0.0, min(pan_x[0], fw - fw / zoom[0]))
+        pan_y[0] = max(0.0, min(pan_y[0], fh - fh / zoom[0]))
+
     def refresh():
         fn     = frame_num(frames[idx[0]])
         canvas = build_canvas(img_cache[0], pad, clicks, labels, fn, redo_flag[0])
+
+        # Step 1: fit-to-screen downscale
         if scale[0] < 1.0:
-            canvas = cv2.resize(canvas, None, fx=scale[0], fy=scale[0],
-                                interpolation=cv2.INTER_AREA)
-        cv2.imshow(WIN, canvas)
+            fit = cv2.resize(canvas, None, fx=scale[0], fy=scale[0],
+                             interpolation=cv2.INTER_AREA)
+        else:
+            fit = canvas
+
+        # Step 2: zoom viewport crop + upscale (window always stays fit_dims sized)
+        fw, fh = fit_dims[0]
+        if zoom[0] > 1.0:
+            vw = fw / zoom[0]
+            vh = fh / zoom[0]
+            x0 = int(round(max(0.0, min(pan_x[0], fw - vw))))
+            y0 = int(round(max(0.0, min(pan_y[0], fh - vh))))
+            x1 = min(x0 + int(round(vw)), fw)
+            y1 = min(y0 + int(round(vh)), fh)
+            disp = cv2.resize(fit[y0:y1, x0:x1], (fw, fh),
+                              interpolation=cv2.INTER_NEAREST)
+        else:
+            disp = fit
+
+        cv2.imshow(WIN, disp)
 
     def load_frame(i: int):
         """Load frame i: clear click state, render, update title."""
@@ -253,17 +278,47 @@ def main():
         fn           = frame_num(fp)
         img_cache[0] = cv2.imread(str(fp), cv2.IMREAD_GRAYSCALE)
         refresh()
-        set_title(WIN, i, len(frames), fn, labels)
+        set_title(WIN, i, len(frames), fn, labels, zoom[0])
 
     def on_mouse(event, x, y, flags, param):
-        """Record a click; convert padded display coords → original image coords."""
-        if event != cv2.EVENT_LBUTTONDOWN or len(clicks) >= 2:
-            return
-        # Invert display scale, then subtract pad to get original-image coords
-        orig_x = int(round(x / scale[0])) - pad
-        orig_y = int(round(y / scale[0])) - pad
-        clicks.append((orig_x, orig_y))   # may be negative for off-edge balls
-        refresh()
+        """Handle left-click (label), scroll wheel (zoom), right-drag (pan)."""
+
+        if event == cv2.EVENT_LBUTTONDOWN and len(clicks) < 2:
+            # Convert window → fit canvas → padded canvas → original image coords
+            fit_x  = x / zoom[0] + pan_x[0]
+            fit_y  = y / zoom[0] + pan_y[0]
+            orig_x = int(round(fit_x / scale[0])) - pad
+            orig_y = int(round(fit_y / scale[0])) - pad
+            clicks.append((orig_x, orig_y))   # may be negative for off-edge balls
+            refresh()
+
+        elif event == cv2.EVENT_MOUSEWHEEL:
+            factor = ZOOM_STEP if flags > 0 else 1.0 / ZOOM_STEP
+            new_z  = max(1.0, min(zoom[0] * factor, ZOOM_MAX))
+            # keep the pixel under the cursor fixed in fit-canvas space
+            cx = x / zoom[0] + pan_x[0]
+            cy = y / zoom[0] + pan_y[0]
+            zoom[0]  = new_z
+            pan_x[0] = cx - x / zoom[0]
+            pan_y[0] = cy - y / zoom[0]
+            clamp_pan()
+            refresh()
+            fn_cur = frame_num(frames[idx[0]])
+            set_title(WIN, idx[0], len(frames), fn_cur, labels, zoom[0])
+
+        elif event == cv2.EVENT_RBUTTONDOWN:
+            is_panning[0] = True
+            drag_start[0] = (x, y, pan_x[0], pan_y[0])
+
+        elif event == cv2.EVENT_MOUSEMOVE and is_panning[0]:
+            sx, sy, px0, py0 = drag_start[0]
+            pan_x[0] = px0 - (x - sx) / zoom[0]
+            pan_y[0] = py0 - (y - sy) / zoom[0]
+            clamp_pan()
+            refresh()
+
+        elif event == cv2.EVENT_RBUTTONUP:
+            is_panning[0] = False
 
     cv2.setMouseCallback(WIN, on_mouse)
 
@@ -294,6 +349,13 @@ def main():
             if idx[0] < len(frames) - 1:
                 load_frame(idx[0] + 1)
 
+        elif key in (ord("z"), ord("0")):               # ---- reset zoom
+            zoom[0]  = 1.0
+            pan_x[0] = 0.0
+            pan_y[0] = 0.0
+            refresh()
+            set_title(WIN, idx[0], len(frames), fn, labels, zoom[0])
+
         elif key in (KEY_DEL_WIN, KEY_DEL_ASCII):       # ---- redo / delete
             if clicks:
                 # Clear live clicks; stored overlay re-appears (redo_flag stays False)
@@ -311,7 +373,7 @@ def main():
             if idx[0] < len(frames) - 1:
                 load_frame(idx[0] + 1)
             else:
-                set_title(WIN, idx[0], len(frames), fn, labels)
+                set_title(WIN, idx[0], len(frames), fn, labels, zoom[0])
 
         elif key in (ord("s"), 13):                     # ---- save  (s or Enter)
             if len(clicks) != 2:
@@ -331,7 +393,7 @@ def main():
             if idx[0] < len(frames) - 1:
                 load_frame(idx[0] + 1)
             else:
-                set_title(WIN, idx[0], len(frames), fn, labels)
+                set_title(WIN, idx[0], len(frames), fn, labels, zoom[0])
 
     cv2.destroyAllWindows()
 
