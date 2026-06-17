@@ -4,7 +4,7 @@
 #
 #   back_diff = absdiff(frame_N,     frame_{N-S})
 #   fwd_diff  = absdiff(frame_{N+S}, frame_N)
-#   combined  = bitwise_and(threshold(back_diff), threshold(fwd_diff))
+#   combined  = threshold(min(back_diff, fwd_diff))   [softer min-diff intersection]
 #
 # Requires S future frames → S frames of latency (negligible at video rates).
 # Loses S frames at BOTH ends of the sequence (not just the start).
@@ -22,7 +22,7 @@ SESSION = HERE.parent / "data" / "2026-06-01_Dyson_library_test"
 MOV_DIR = SESSION / "moving" / "flight_01"
 
 # ---- stride ----
-STRIDE = 2   # change to 1 or 3 to re-run
+STRIDE = 3   # change to 1 or 3 to re-run
 
 STRIDE_OUT_NAMES = {1: "04_3f_stride1", 2: "05_3f_stride2", 3: "06_3f_stride3"}
 OUT_DIR = SESSION / "tuning" / "02_moving" / STRIDE_OUT_NAMES[STRIDE]
@@ -36,9 +36,9 @@ COLS_PER_ROW = 8
 PANEL_W      = 600    # 8 × 600 = 4800 px wide
 
 # ---- detection parameters ----
-DIFF_THRESHOLD = 20
+DIFF_THRESHOLD = 15
 OPEN_KERNEL    = 7
-CLOSE_KERNEL   = 30
+CLOSE_KERNEL   = 50
 MIN_AREA       = 200
 MAX_AREA       = 50000
 MIN_CIRC       = 0.3
@@ -111,9 +111,8 @@ for flight_name in FLIGHTS:
         back_diff = cv2.absdiff(img_curr, img_prev)
         fwd_diff  = cv2.absdiff(img_next, img_curr)
 
-        _, mask_back = cv2.threshold(back_diff, DIFF_THRESHOLD, 255, cv2.THRESH_BINARY)
-        _, mask_fwd  = cv2.threshold(fwd_diff,  DIFF_THRESHOLD, 255, cv2.THRESH_BINARY)
-        combined     = cv2.bitwise_and(mask_back, mask_fwd)
+        min_diff = cv2.min(back_diff, fwd_diff)
+        _, combined = cv2.threshold(min_diff, DIFF_THRESHOLD, 255, cv2.THRESH_BINARY)
 
         candidates, best, morphed = run_morph_and_contours(combined)
 
@@ -178,7 +177,7 @@ for flight_name in FLIGHTS:
         rows.append(np.hstack(chunk_v))   # row 3: detection
 
     grid     = np.vstack(rows)
-    out_path = OUT_DIR / f"{flight_name}_3f_contact.png"
+    out_path = OUT_DIR / f"{flight_name}_3f_ck{CLOSE_KERNEL}_th{DIFF_THRESHOLD}_min_diff_contact.png"
     cv2.imwrite(str(out_path), grid)
     print(f"  -> {out_path.name}\n")
 
