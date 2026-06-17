@@ -8,16 +8,18 @@
 
 from collections import deque
 from pathlib import Path
+import math
 import numpy as np
 import cv2
+import openpyxl
 
 # ---- paths ----
 HERE    = Path(__file__).resolve().parent
 SESSION = HERE.parent / "data" / "2026-06-01_Dyson_library_test"
-MOV_DIR = SESSION / "moving"
+MOV_DIR = SESSION / "moving" / "flight_01"
 
 # ---- stride ----
-STRIDE = 2   # change to 5 for 5-stride run
+STRIDE = 3
 
 STRIDE_OUT_NAMES = {
     3: "02_frame_diff_3stride",
@@ -27,8 +29,7 @@ OUT_DIR = SESSION / "tuning" / "02_moving" / STRIDE_OUT_NAMES[STRIDE]
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # ---- which flights to process ----
-FLIGHT_NUMS = [1, 2, 3, 23, 24, 25]
-FLIGHTS = [f"flight_{n:02d}" for n in FLIGHT_NUMS if (MOV_DIR / f"flight_{n:02d}").is_dir()]
+FLIGHTS = ["flight_01_towards_leg"]
 
 # ---- contact sheet layout ----
 COLS_PER_ROW = 10
@@ -96,10 +97,11 @@ for flight_name in FLIGHTS:
 
     print(f"{flight_name}: {len(frame_paths)} frames ({len(frame_paths) - STRIDE} processable)")
 
-    diff_panels = []
-    mask_panels = []
-    det_panels  = []
-    buffer      = deque(maxlen=STRIDE + 1)
+    diff_panels  = []
+    mask_panels  = []
+    det_panels   = []
+    frame_results = []
+    buffer       = deque(maxlen=STRIDE + 1)
 
     for path in frame_paths:
         img = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
@@ -148,6 +150,14 @@ for flight_name in FLIGHTS:
 
         det_panels.append(dp)
 
+        frame_results.append({
+            "frame_number":                    int(name.split("_")[1]),
+            f"stride {STRIDE} detection":      bool(best),
+            f"stride {STRIDE} false negative": not bool(best),
+            f"stride {STRIDE} centroid x":     best["u"] if best else None,
+            f"stride {STRIDE} centroid y":     best["v"] if best else None,
+        })
+
     # ---- assemble contact sheet ----
     n = len(diff_panels)
     blank = np.zeros_like(diff_panels[0])
@@ -170,6 +180,55 @@ for flight_name in FLIGHTS:
     grid     = np.vstack(rows)
     out_path = OUT_DIR / f"{flight_name}_contact.png"
     cv2.imwrite(str(out_path), grid)
-    print(f"  -> {out_path.name}\n")
+    print(f"  -> {out_path.name}")
+
+    # ---- write stride results to xlsx ----
+    RESULTS_XL = SESSION / "tuning" / "02_moving" / "flight_01_towards_leg_results.xlsx"
+    det_by_frame = {r["frame_number"]: r for r in frame_results}
+
+    wb = openpyxl.load_workbook(str(RESULTS_XL))
+    ws = wb[f"flight_01_stride{STRIDE}_results"]
+
+    old_headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+    fn_idx  = old_headers.index("frame_number")
+    lcx_idx = old_headers.index("labelled_centroid_x")
+    lcy_idx = old_headers.index("labelled_centroid_y")
+    ld_idx  = old_headers.index("labelled_diameter_px")
+
+    s = f"stride {STRIDE}"
+    keep = [i for i, h in enumerate(old_headers) if h and s not in str(h)]
+    new_h = [
+        f"{s} detection", f"{s} false negative",
+        f"{s} centroid x", f"{s} centroid y",
+        f"{s} centroid error (px)",
+        f"{s} normalised centroid error (/diameter)",
+    ]
+
+    rows_out = []
+    for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+        base = [row[i] for i in keep]
+        fn   = int(row[fn_idx])
+        lx, ly, ld = row[lcx_idx], row[lcy_idx], row[ld_idx]
+        d = det_by_frame.get(fn)
+        if d:
+            cx, cy = d[f"{s} centroid x"], d[f"{s} centroid y"]
+            err  = math.sqrt((cx - lx)**2 + (cy - ly)**2) if (cx is not None and lx is not None) else None
+            norm = f"=J{row_num}/D{row_num}" if err is not None else None
+            if err is not None and ld is not None and err / ld > 1:
+                detection, false_neg = False, False
+            else:
+                detection, false_neg = d[f"{s} detection"], d[f"{s} false negative"]
+            extra = [detection, false_neg, cx, cy, err, norm]
+        else:
+            extra = [None, None, None, None, None, None]
+        rows_out.append(base + extra)
+
+    ws.delete_rows(1, ws.max_row)
+    ws.append([old_headers[i] for i in keep] + new_h)
+    for r in rows_out:
+        ws.append(r)
+
+    wb.save(str(RESULTS_XL))
+    print(f"  -> {RESULTS_XL.name}\n")
 
 print(f"Done. Outputs in:\n  {OUT_DIR}")
