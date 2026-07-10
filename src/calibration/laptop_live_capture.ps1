@@ -6,16 +6,17 @@
 #   1. Start pi_preview_loop.sh on the Pi first (separate SSH session).
 #   2. Run this script, enter a distance label when prompted.
 #   3. Open IrfanView on $LOCAL_PREVIEW, enable auto-refresh (View > Auto play/refresh > On).
-#   4. Press keys to save labelled PNG frames to the Pi.
+#   4. Press keys to save labelled PNG frames locally (converted on the laptop).
 
 $PI_USER = "chinnywei"
 $PI_HOST = "192.168.50.1"
 $SSH_KEY  = "$HOME\.ssh\id_volley"
-$PI_CAPTURES = "/home/chinnywei/captures"
 
 # Local preview file - update IrfanView to watch this path.
 $SCRIPT_ROOT   = Split-Path -Parent $MyInvocation.MyCommand.Path
 $LOCAL_PREVIEW = [IO.Path]::GetFullPath((Join-Path $SCRIPT_ROOT "..\..\data\calibration_captures\preview.jpg"))
+$OUTPUT_DIR    = [IO.Path]::GetFullPath((Join-Path $SCRIPT_ROOT "..\..\data\calibration_captures\distance_check"))
+New-Item -ItemType Directory -Force -Path $OUTPUT_DIR | Out-Null
 
 $CAM = "camA"  # cam0 = camA; change to camB when second camera is live
 
@@ -46,20 +47,21 @@ $saved = @{}
 
 function Save-Frame([string]$label) {
     $filename = "${CAM}_${distance}_${label}.png"
-    $src  = "${PI_CAPTURES}/preview.jpg"
-    $dest = "${PI_CAPTURES}/distance_check/${filename}"
+    $dest = Join-Path $OUTPUT_DIR $filename
 
-    # Read JPG on Pi, write PNG — cv2 infers format from extension.
-    $py = "import cv2,sys; img=cv2.imread('$src'); ok=img is not None and cv2.imwrite('$dest',img); sys.exit(0 if ok else 1)"
+    # Convert the already-synced local preview JPG to PNG right here on the
+    # laptop - cv2 infers format from extension. Piped over stdin so no
+    # quoting is needed for the paths.
+    $py = "import cv2,sys; img=cv2.imread(r'$LOCAL_PREVIEW'); ok=img is not None and cv2.imwrite(r'$dest',img); sys.exit(0 if ok else 1)"
 
     Write-Host -NoNewline "  Saving ${filename} ... "
-    ssh -i $SSH_KEY "${PI_USER}@${PI_HOST}" "python3 -c `"$py`""
+    $py | python -
 
     if ($LASTEXITCODE -eq 0) {
         $script:saved[$label] = $true
         Write-Host "OK"
     } else {
-        Write-Host "FAILED (check Pi - is cv2 importable? Is preview.jpg present?)"
+        Write-Host "FAILED (check local preview.jpg is present and readable)"
     }
 }
 
@@ -72,7 +74,7 @@ function Show-Status {
     Write-Host -NoNewline ("`r  [done: {0}]  [remaining: {1}]    " -f $dStr, $rStr)
 }
 
-# ── Main loop ─────────────────────────────────────────────────────────────────
+# -- Main loop --------------------------------------------------------------------
 # Poll every 100 ms; scp every 5th poll (0.5 s).
 $iter = 0
 while ($true) {
@@ -89,7 +91,7 @@ while ($true) {
             Write-Host "`nSession ended."
             break
         }
-        elseif ($positions.ContainsKey($char)) {
+        elseif ($positions.Contains($char)) {
             Write-Host ""
             Save-Frame $positions[$char]
             Show-Status
