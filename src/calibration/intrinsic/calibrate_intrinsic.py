@@ -5,10 +5,10 @@ from evidence (RMS error, per-image outliers, undistort comparison) - this
 script does not pick a winner for you.
 
 Run from anywhere:
-    python src/calibration/calibrate_intrinsic.py [camA|camB|<path>] [test_image]
+    python src/calibration/intrinsic/calibrate_intrinsic.py [camA|camB|<path>] [test_image]
 
   camA/camB/<path>  Which capture set to calibrate (default camA), i.e.
-                    ..\\..\\data\\calibration_captures\\calib_intrinsic_camA\\
+                    ..\\..\\..\\data\\calibration_captures\\calib_intrinsic_camA\\
                     relative to this script, or a full path to another folder.
   test_image        Filename (e.g. img_0015.png) or full path of the frame to
                     undistort for the side-by-side comparison. Defaults to the
@@ -69,7 +69,7 @@ def detect_corners(gray):
 
 
 def resolve_image_dir(target):
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     candidate = Path(target)
     if candidate.is_dir():
         return candidate.resolve()

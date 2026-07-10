@@ -3,9 +3,9 @@ Validate checkerboard coverage for an intrinsic calibration image set, so gaps
 can be caught (and fill-in frames shot) before tearing down the rig.
 
 Run from anywhere:
-    python src/calibration/check_coverage.py [camA|camB|<path-to-folder>]
+    python src/calibration/intrinsic/check_coverage.py [camA|camB|<path-to-folder>]
 
-Defaults to camA, i.e. ..\\..\\data\\calibration_captures\\calib_intrinsic_camA\\
+Defaults to camA, i.e. ..\\..\\..\\data\\calibration_captures\\calib_intrinsic_camA\\
 relative to this script. Pass "camB" for the other camera, or a full path to
 check an arbitrary folder of img_????.png frames.
 
@@ -64,7 +64,7 @@ def detect_corners(gray):
 
 
 def resolve_image_dir(target):
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     candidate = Path(target)
     if candidate.is_dir():
         return candidate.resolve()

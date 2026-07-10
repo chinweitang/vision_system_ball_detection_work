@@ -1,7 +1,7 @@
 import cv2
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 INPUT_DIR = ROOT / "data/calibration_captures/distance_check"
 OUTPUT_DIR = INPUT_DIR / "corners"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

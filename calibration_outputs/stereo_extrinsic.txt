@@ -1,0 +1,30 @@
+Stereo extrinsic calibration - fisheye rig
+Convention: cam0 = RIGHT camera (first), cam1 = LEFT camera (second)
+R, T map the cam0/right frame into the cam1/left frame: X_left = R @ X_right + T
+
+Pairs kept / found: 8 / 10
+Checkerboard: 7x11 internal corners, square size = 67.5 mm
+
+stereoCalibrate RMS reprojection error: 0.8688 px [PASS]
+Independent triangulation mean reprojection error: 0.2033 px
+
+Baseline |T| = 853.89 mm (expected ~850 mm, +0.5%)
+T (mm): x=853.7300 y=-3.3547 z=-16.4041
+
+R:
+[[ 9.99994953e-01  8.08055413e-04 -3.07267885e-03]
+ [-8.14369087e-04  9.99997559e-01 -2.05408268e-03]
+ [ 3.07101153e-03  2.05657461e-03  9.99993170e-01]]
+
+======================================================================
+Baseline convergence sweep (kept pairs shuffled, seed=0)
+======================================================================
+  N |  baseline_mm |   rms_px
+  4 |       853.82 |   1.0847
+  5 |       853.70 |   1.0410
+  6 |       853.61 |   0.9570
+  7 |       853.78 |   0.8975
+  8 |       853.89 |   0.8688
+
+Convergence verdict: CONVERGED
+  Final N=8 baseline=853.89 mm, last-3 mean=853.76 mm, last-3 spread=0.29 mm

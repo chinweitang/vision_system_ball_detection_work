@@ -24,14 +24,14 @@ $SSH_KEY = "$HOME\.ssh\id_volley"
 
 $TARGET_COUNT = 30
 
-$CAM = "camA"  # camA = camera 0, camB = camera 1
+$CAM = "camB"  # camA = camera 0, camB = camera 1
 $CAM_INDEX = if ($CAM -eq "camA") { 0 } else { 1 }
 
 # Local preview file - update IrfanView to watch this path. Aiming only;
 # never saved as a calibration frame.
 $SCRIPT_ROOT   = Split-Path -Parent $MyInvocation.MyCommand.Path
-$LOCAL_PREVIEW = [IO.Path]::GetFullPath((Join-Path $SCRIPT_ROOT "..\..\data\calibration_captures\preview.jpg"))
-$OUTPUT_DIR    = [IO.Path]::GetFullPath((Join-Path $SCRIPT_ROOT "..\..\data\calibration_captures\calib_intrinsic_$CAM"))
+$LOCAL_PREVIEW = [IO.Path]::GetFullPath((Join-Path $SCRIPT_ROOT "..\..\..\data\calibration_captures\preview.jpg"))
+$OUTPUT_DIR    = [IO.Path]::GetFullPath((Join-Path $SCRIPT_ROOT "..\..\..\data\calibration_captures\calib_intrinsic_$CAM"))
 New-Item -ItemType Directory -Force -Path $OUTPUT_DIR | Out-Null
 
 $REMOTE_REQUEST = "/home/chinnywei/captures/capture_request"

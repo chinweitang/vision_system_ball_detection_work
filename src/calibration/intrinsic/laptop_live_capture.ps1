@@ -14,8 +14,8 @@ $SSH_KEY  = "$HOME\.ssh\id_volley"
 
 # Local preview file - update IrfanView to watch this path.
 $SCRIPT_ROOT   = Split-Path -Parent $MyInvocation.MyCommand.Path
-$LOCAL_PREVIEW = [IO.Path]::GetFullPath((Join-Path $SCRIPT_ROOT "..\..\data\calibration_captures\preview.jpg"))
-$OUTPUT_DIR    = [IO.Path]::GetFullPath((Join-Path $SCRIPT_ROOT "..\..\data\calibration_captures\distance_check"))
+$LOCAL_PREVIEW = [IO.Path]::GetFullPath((Join-Path $SCRIPT_ROOT "..\..\..\data\calibration_captures\preview.jpg"))
+$OUTPUT_DIR    = [IO.Path]::GetFullPath((Join-Path $SCRIPT_ROOT "..\..\..\data\calibration_captures\distance_check"))
 New-Item -ItemType Directory -Force -Path $OUTPUT_DIR | Out-Null
 
 $CAM = "camA"  # cam0 = camA; change to camB when second camera is live

@@ -7,9 +7,9 @@ captured (validation error and parameters stop moving) and whether the fit is
 overfitting (train error much lower than held-out error).
 
 Run from anywhere:
-    python src/calibration/convergence_test.py [camA|camB|<path>]
+    python src/calibration/intrinsic/convergence_test.py [camA|camB|<path>]
 
-Defaults to camA, i.e. ..\\..\\data\\calibration_captures\\calib_intrinsic_camA\\
+Defaults to camA, i.e. ..\\..\\..\\data\\calibration_captures\\calib_intrinsic_camA\\
 relative to this script.
 
 Output (written into the image folder): convergence_camA.png (or _camB), plus
@@ -65,7 +65,7 @@ def detect_corners(gray):
 
 
 def resolve_image_dir(target):
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     candidate = Path(target)
     if candidate.is_dir():
         return candidate.resolve()
