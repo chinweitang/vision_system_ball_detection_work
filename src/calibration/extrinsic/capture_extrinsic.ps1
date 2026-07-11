@@ -38,7 +38,7 @@ $CAMS = @(
 # Local preview files - point one IrfanView window at each. Aiming only;
 # never saved as calibration frames.
 $SCRIPT_ROOT   = Split-Path -Parent $MyInvocation.MyCommand.Path
-$CAPTURE_ROOT  = [IO.Path]::GetFullPath((Join-Path $SCRIPT_ROOT "..\..\..\data\calibration_captures\extrinsic"))
+$CAPTURE_ROOT  = [IO.Path]::GetFullPath((Join-Path $SCRIPT_ROOT "..\..\..\data\2026_07_11_gym_session\ball_static"))
 $LOCAL_PREVIEW_CAM0 = Join-Path $CAPTURE_ROOT "preview_cam0.jpg"
 $LOCAL_PREVIEW_CAM1 = Join-Path $CAPTURE_ROOT "preview_cam1.jpg"
 

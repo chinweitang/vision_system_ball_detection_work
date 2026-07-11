@@ -32,10 +32,10 @@ run_loop() {
     while true; do
         if [ -f "$REQUEST" ]; then
             rm -f "$REQUEST"
-            if rpicam-still --camera "$CAM" --encoding png -o "$RESULT_TMP" --immediate --width 1456 --height 1088 -n 2>/dev/null; then
+            if rpicam-still --camera "$CAM" --encoding png -o "$RESULT_TMP" --immediate --width 1456 --height 1088 --shutter 5000 --gain 4.0 -n 2>/dev/null; then
                 mv "$RESULT_TMP" "$RESULT"
             fi
-        elif rpicam-still --camera "$CAM" -o "$PREVIEW_TMP" --immediate --width 1456 --height 1088 -n 2>/dev/null; then
+        elif rpicam-still --camera "$CAM" -o "$PREVIEW_TMP" --immediate --width 1456 --height 1088 --shutter 5000 --gain 4.0 -n 2>/dev/null; then
             mv "$PREVIEW_TMP" "$PREVIEW"
         fi
     done

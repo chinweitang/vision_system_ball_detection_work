@@ -24,19 +24,19 @@ Inputs (already-solved intrinsics - NOT re-estimated here):
     calibration_outputs/cam1_intrinsics_fisheye.npz  (K, D) - cam1 / left
 
 Matched checkerboard pairs (same index = same physical board pose):
-    data/calibration_captures/extrinsic/cam0/img_XXXX.png  (right)
-    data/calibration_captures/extrinsic/cam1/img_XXXX.png  (left)
+    data/2026_07_11_gym_session/extrinsic/cam0/img_XXXX.png  (right)
+    data/2026_07_11_gym_session/extrinsic/cam1/img_XXXX.png  (left)
 
-Outputs:
-    calibration_outputs/stereo_extrinsic.npz  (R, T, image_size, square_size_mm,
-                                                first/second camera labels, rms)
-    calibration_outputs/stereo_extrinsic.txt  (human-readable summary, including
-                                                the convergence sweep table/verdict)
-    calibration_outputs/corner_order_debug_cam0.png / _cam1.png
+Outputs (dated per-session subfolder, intrinsics above are never overwritten):
+    calibration_outputs/2026_07_11_session/stereo_extrinsic.npz  (R, T, image_size,
+        square_size_mm, first/second camera labels, rms)
+    calibration_outputs/2026_07_11_session/stereo_extrinsic.txt  (human-readable
+        summary, including the convergence sweep table/verdict)
+    calibration_outputs/2026_07_11_session/corner_order_debug_cam0.png / _cam1.png
         (corner index 0 marked on the first kept pair - confirm it's the same
         physical corner in both images; a mismatch here is the #1 cause of a
         high stereo RMS)
-    calibration_outputs/extrinsic_convergence.png
+    calibration_outputs/2026_07_11_session/extrinsic_convergence.png
         (baseline and RMS vs number of pairs used - diagnoses whether the
         captured tilt/pose range was wide enough to constrain the extrinsic;
         RMS alone can look fine even when the pose range is too narrow)
@@ -74,16 +74,17 @@ OBJP = np.zeros((PATTERN_SIZE[0] * PATTERN_SIZE[1], 3), np.float64)
 OBJP[:, :2] = np.mgrid[0:PATTERN_SIZE[0], 0:PATTERN_SIZE[1]].T.reshape(-1, 2) * SQUARE_SIZE_MM
 
 ROOT = Path(__file__).resolve().parents[3]
-INTRINSICS_DIR = ROOT / "calibration_outputs"
-CAPTURE_DIR = ROOT / "data/calibration_captures/extrinsic"
+INTRINSICS_DIR = ROOT / "calibration_outputs"  # cam0/cam1_intrinsics_fisheye.npz live here, never written to
+OUTPUT_DIR = ROOT / "calibration_outputs/2026_07_11_session"
+CAPTURE_DIR = ROOT / "data/2026_07_11_gym_session/extrinsic"
 CAM0_DIR = CAPTURE_DIR / "cam0"
 CAM1_DIR = CAPTURE_DIR / "cam1"
 
-OUTPUT_NPZ = INTRINSICS_DIR / "stereo_extrinsic.npz"
-OUTPUT_TXT = INTRINSICS_DIR / "stereo_extrinsic.txt"
-DEBUG_CORNER0_CAM0 = INTRINSICS_DIR / "corner_order_debug_cam0.png"
-DEBUG_CORNER0_CAM1 = INTRINSICS_DIR / "corner_order_debug_cam1.png"
-CONVERGENCE_PLOT_PATH = INTRINSICS_DIR / "extrinsic_convergence.png"
+OUTPUT_NPZ = OUTPUT_DIR / "stereo_extrinsic.npz"
+OUTPUT_TXT = OUTPUT_DIR / "stereo_extrinsic.txt"
+DEBUG_CORNER0_CAM0 = OUTPUT_DIR / "corner_order_debug_cam0.png"
+DEBUG_CORNER0_CAM1 = OUTPUT_DIR / "corner_order_debug_cam1.png"
+CONVERGENCE_PLOT_PATH = OUTPUT_DIR / "extrinsic_convergence.png"
 
 
 def detect_corners(gray):
@@ -425,7 +426,7 @@ def main():
     triangulation_rms = triangulation_check(objpoints, imgpoints0, imgpoints1, K0, D0, K1, D1, R, T)
 
     # -- Save results -------------------------------------------------------------
-    INTRINSICS_DIR.mkdir(parents=True, exist_ok=True)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     np.savez(
         OUTPUT_NPZ,
         R=R, T=T, image_size=np.array(IMAGE_SIZE), square_size_mm=SQUARE_SIZE_MM,
