@@ -26,6 +26,12 @@
 #   6. Press Q to quit. Vary the TILT of the board between poses, not just
 #      its position in one plane - stereoCalibrate needs rotation coverage.
 
+param(
+    # Output directory for captured pairs, relative to the repo root (or
+    # absolute). Defaults to the original gym-session ball_static location.
+    [string]$OutputDir = "data\2026_07_11_gym_session\ball_static"
+)
+
 $PI_USER = "chinnywei"
 $PI_HOST = "192.168.50.1"
 $SSH_KEY = "$HOME\.ssh\id_volley"
@@ -38,7 +44,12 @@ $CAMS = @(
 # Local preview files - point one IrfanView window at each. Aiming only;
 # never saved as calibration frames.
 $SCRIPT_ROOT   = Split-Path -Parent $MyInvocation.MyCommand.Path
-$CAPTURE_ROOT  = [IO.Path]::GetFullPath((Join-Path $SCRIPT_ROOT "..\..\..\data\2026_07_11_gym_session\ball_static"))
+if ([IO.Path]::IsPathRooted($OutputDir)) {
+    $CAPTURE_ROOT = [IO.Path]::GetFullPath($OutputDir)
+} else {
+    $REPO_ROOT    = [IO.Path]::GetFullPath((Join-Path $SCRIPT_ROOT "..\..\.."))
+    $CAPTURE_ROOT = [IO.Path]::GetFullPath((Join-Path $REPO_ROOT $OutputDir))
+}
 $LOCAL_PREVIEW_CAM0 = Join-Path $CAPTURE_ROOT "preview_cam0.jpg"
 $LOCAL_PREVIEW_CAM1 = Join-Path $CAPTURE_ROOT "preview_cam1.jpg"
 

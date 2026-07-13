@@ -42,6 +42,7 @@ Outputs (dated per-session subfolder, intrinsics above are never overwritten):
         RMS alone can look fine even when the pose range is too narrow)
 """
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -61,6 +62,20 @@ RMS_PASS_THRESHOLD_PX = 1.0
 MIN_PAIRS_WARN = 10
 TRIANGULATION_SAMPLE_PAIRS = 5
 
+# -- Per-pair pose-consistency outlier rejection -----------------------------
+# A pair can pass per-camera corner detection in both views yet still be
+# unusable for the joint solve: e.g. cv2.findChessboardCornersSB starts its
+# corner numbering from the "wrong" physical corner in one view for that
+# specific pose (a 180-degree in-plane relabeling), or the board was nudged
+# between the two (sequential, not simultaneous) per-camera shutter triggers.
+# Both symptoms show up as a per-pair implied cam0->cam1 rigid transform
+# (from independent mono solvePnP in each view) that is wildly inconsistent
+# with the rest of the kept pairs, even though every pair individually
+# reprojects fine. Flag and drop those before stereoCalibrate rather than
+# letting one bad pair make the whole joint solve fail to converge.
+POSE_OUTLIER_ANGLE_DEG = 15.0  # normal rig-only variation is well under 1 degree
+POSE_OUTLIER_BASELINE_PCT = 30.0  # vs. the per-session median implied baseline
+
 # -- Baseline convergence sweep constants ------------------------------------
 CONVERGENCE_SEED = 0  # fixed shuffle seed - curve reflects information content, not capture order
 CONVERGENCE_MIN_N = 4  # practical minimum pair count for stereoCalibrate
@@ -74,12 +89,16 @@ OBJP = np.zeros((PATTERN_SIZE[0] * PATTERN_SIZE[1], 3), np.float64)
 OBJP[:, :2] = np.mgrid[0:PATTERN_SIZE[0], 0:PATTERN_SIZE[1]].T.reshape(-1, 2) * SQUARE_SIZE_MM
 
 ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT))
+from src.stereo.triangulate import triangulate_points
+
 INTRINSICS_DIR = ROOT / "calibration_outputs"  # cam0/cam1_intrinsics_fisheye.npz live here, never written to
+
+# Overwritten in main() from CLI args - defaults match the original 2026-07-11 session.
 OUTPUT_DIR = ROOT / "calibration_outputs/2026_07_11_session"
 CAPTURE_DIR = ROOT / "data/2026_07_11_gym_session/extrinsic"
 CAM0_DIR = CAPTURE_DIR / "cam0"
 CAM1_DIR = CAPTURE_DIR / "cam1"
-
 OUTPUT_NPZ = OUTPUT_DIR / "stereo_extrinsic.npz"
 OUTPUT_TXT = OUTPUT_DIR / "stereo_extrinsic.txt"
 DEBUG_CORNER0_CAM0 = OUTPUT_DIR / "corner_order_debug_cam0.png"
@@ -158,6 +177,55 @@ def save_corner0_debug(idx, path0, path1, c0, c1):
     print("  if the mismatch is systematic).\n")
 
 
+def mono_solve_pose(imgp, K, D):
+    """Fisheye-undistort to normalized coords, then solvePnP against identity K."""
+    undist = cv2.fisheye.undistortPoints(imgp, K, D)
+    _, rvec, tvec = cv2.solvePnP(OBJP.reshape(-1, 1, 3), undist, np.eye(3), None,
+                                  flags=cv2.SOLVEPNP_ITERATIVE)
+    R, _ = cv2.Rodrigues(rvec)
+    return R, tvec.reshape(3)
+
+
+def find_pose_outliers(kept, imgpoints0, imgpoints1, K0, D0, K1, D1):
+    """
+    Independent mono solvePnP per view, per pair, then the implied cam0->cam1
+    rigid transform (R_rel, T_rel). Flags pairs whose implied baseline or
+    rotation deviates sharply from the per-session median - see the
+    POSE_OUTLIER_* constants above for why this catches corner-order flips
+    and non-simultaneous captures that per-view detection alone cannot.
+    Returns (outlier_positions: set[int], report_lines: list[str]).
+    """
+    baselines, angles, rel = [], [], []
+    for imgp0, imgp1 in zip(imgpoints0, imgpoints1):
+        R0, t0 = mono_solve_pose(imgp0, K0, D0)
+        R1, t1 = mono_solve_pose(imgp1, K1, D1)
+        R_rel = R1 @ R0.T
+        T_rel = t1 - R_rel @ t0
+        baselines.append(float(np.linalg.norm(T_rel)))
+        angles.append(float(np.degrees(np.arccos(np.clip((np.trace(R_rel) - 1) / 2, -1, 1)))))
+        rel.append((R_rel, T_rel))
+
+    median_baseline = float(np.median(baselines))
+    median_angle = float(np.median(angles))
+
+    outliers = set()
+    report_lines = []
+    for i, idx in enumerate(kept):
+        baseline_dev_pct = 100.0 * abs(baselines[i] - median_baseline) / median_baseline
+        angle_dev_deg = abs(angles[i] - median_angle)
+        if angle_dev_deg > POSE_OUTLIER_ANGLE_DEG or baseline_dev_pct > POSE_OUTLIER_BASELINE_PCT:
+            outliers.add(i)
+            line = (f"  {idx}: REMOVED (pose-outlier) - implied baseline={baselines[i]:.1f} mm "
+                     f"(median {median_baseline:.1f} mm, {baseline_dev_pct:+.0f}%), "
+                     f"implied rotation={angles[i]:.2f} deg (median {median_angle:.2f} deg). "
+                     f"Likely a corner-order mismatch between cam0/cam1 for this pose, or the "
+                     f"board moved between the sequential cam0/cam1 shutter triggers.")
+            print(line)
+            report_lines.append(line.strip())
+
+    return outliers, report_lines
+
+
 def triangulation_check(objpoints, imgpoints0, imgpoints1, K0, D0, K1, D1, R, T):
     """
     Undistort detected corners to normalized coordinates, triangulate with
@@ -168,8 +236,6 @@ def triangulation_check(objpoints, imgpoints0, imgpoints1, K0, D0, K1, D1, R, T)
     n = len(objpoints)
     sample_idx = sorted(set(np.linspace(0, n - 1, num=min(TRIANGULATION_SAMPLE_PAIRS, n), dtype=int).tolist()))
 
-    P1 = np.hstack([np.eye(3), np.zeros((3, 1))])
-    P2 = np.hstack([R, T.reshape(3, 1)])
     rvec1, _ = cv2.Rodrigues(R)
     tvec1 = T.reshape(3, 1)
     rvec0 = np.zeros((3, 1))
@@ -178,14 +244,10 @@ def triangulation_check(objpoints, imgpoints0, imgpoints1, K0, D0, K1, D1, R, T)
     print("Independent triangulation check (undistort -> triangulate -> reproject):")
     pair_means = []
     for i in sample_idx:
-        pts0 = imgpoints0[i].reshape(-1, 1, 2)
-        pts1 = imgpoints1[i].reshape(-1, 1, 2)
+        pts0 = imgpoints0[i].reshape(-1, 2)
+        pts1 = imgpoints1[i].reshape(-1, 2)
 
-        norm0 = cv2.fisheye.undistortPoints(pts0, K0, D0).reshape(-1, 2)
-        norm1 = cv2.fisheye.undistortPoints(pts1, K1, D1).reshape(-1, 2)
-
-        pts4d = cv2.triangulatePoints(P1, P2, norm0.T, norm1.T)
-        pts3d = (pts4d[:3] / pts4d[3]).T
+        pts3d = triangulate_points(pts0, pts1, K0, D0, K1, D1, R, T)
 
         reproj0, _ = cv2.fisheye.projectPoints(pts3d.reshape(-1, 1, 3), rvec0, tvec0, K0, D0)
         reproj1, _ = cv2.fisheye.projectPoints(pts3d.reshape(-1, 1, 3), rvec1, tvec1, K1, D1)
@@ -313,7 +375,34 @@ def convergence_sweep(objpoints, imgpoints0, imgpoints1, K0, D0, K1, D1):
     }
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--capture-dir", default=str(CAPTURE_DIR),
+                         help="Folder containing cam0/ and cam1/ matched checkerboard pairs "
+                              "(default: data/2026_07_11_gym_session/extrinsic)")
+    parser.add_argument("--output-dir", default=str(OUTPUT_DIR),
+                         help="Folder to write stereo_extrinsic.npz/.txt and debug images into "
+                              "(default: calibration_outputs/2026_07_11_session)")
+    return parser.parse_args()
+
+
 def main():
+    global OUTPUT_DIR, CAPTURE_DIR, CAM0_DIR, CAM1_DIR
+    global OUTPUT_NPZ, OUTPUT_TXT, DEBUG_CORNER0_CAM0, DEBUG_CORNER0_CAM1, CONVERGENCE_PLOT_PATH
+
+    args = parse_args()
+    CAPTURE_DIR = Path(args.capture_dir).resolve()
+    OUTPUT_DIR = Path(args.output_dir).resolve()
+    CAM0_DIR = CAPTURE_DIR / "cam0"
+    CAM1_DIR = CAPTURE_DIR / "cam1"
+    OUTPUT_NPZ = OUTPUT_DIR / "stereo_extrinsic.npz"
+    OUTPUT_TXT = OUTPUT_DIR / "stereo_extrinsic.txt"
+    DEBUG_CORNER0_CAM0 = OUTPUT_DIR / "corner_order_debug_cam0.png"
+    DEBUG_CORNER0_CAM1 = OUTPUT_DIR / "corner_order_debug_cam1.png"
+    CONVERGENCE_PLOT_PATH = OUTPUT_DIR / "extrinsic_convergence.png"
+
+    print(f"Capture dir: {CAPTURE_DIR}")
+    print(f"Output dir:  {OUTPUT_DIR}\n")
     print(f"Checkerboard: {PATTERN_SIZE[0]}x{PATTERN_SIZE[1]} internal corners, "
           f"square size = {SQUARE_SIZE_MM} mm (must be caliper-measured, not nominal)\n")
 
@@ -328,7 +417,7 @@ def main():
 
     objpoints, imgpoints0, imgpoints1 = [], [], []
     kept, skipped = [], []
-    kept_paths = []  # (idx, path0, path1, c0, c1) for the first kept pair's debug image
+    kept_paths = []  # (idx, path0, path1, c0, c1) per kept pair, for the corner-order debug image
 
     for idx, path0, path1 in pairs:
         g0 = cv2.imread(str(path0), cv2.IMREAD_GRAYSCALE)
@@ -351,8 +440,7 @@ def main():
         imgpoints0.append(c0.astype(np.float64).reshape(-1, 1, 2))
         imgpoints1.append(c1.astype(np.float64).reshape(-1, 1, 2))
         kept.append(idx)
-        if len(kept_paths) == 0:
-            kept_paths.append((idx, path0, path1, c0, c1))
+        kept_paths.append((idx, path0, path1, c0, c1))
 
     print(f"\nKept {len(kept)}/{len(pairs)} pairs ({len(skipped)} skipped).\n")
     if len(kept) < MIN_PAIRS_WARN:
@@ -361,6 +449,26 @@ def main():
               f"poorly conditioned; capture more varied poses if possible.\n")
     if len(kept) < 4:
         print("Not enough usable pairs to run stereoCalibrate (need at least a handful).")
+        sys.exit(1)
+
+    # -- Pose-consistency outlier rejection ---------------------------------------
+    # Run even before the corner-order debug dump: a pose-outlier pair below could
+    # itself be the corner-order-flip case that debug image is meant to catch.
+    print("Checking per-pair pose consistency (independent mono solvePnP per view)...")
+    outlier_positions, pose_outlier_lines = find_pose_outliers(kept, imgpoints0, imgpoints1, K0, D0, K1, D1)
+    if outlier_positions:
+        print(f"\nRemoved {len(outlier_positions)} pose-outlier pair(s) before stereoCalibrate.\n")
+        keep_mask = [i for i in range(len(kept)) if i not in outlier_positions]
+        kept = [kept[i] for i in keep_mask]
+        objpoints = [objpoints[i] for i in keep_mask]
+        imgpoints0 = [imgpoints0[i] for i in keep_mask]
+        imgpoints1 = [imgpoints1[i] for i in keep_mask]
+        kept_paths = [kept_paths[i] for i in keep_mask]
+    else:
+        print("No pose outliers found.\n")
+
+    if len(kept) < 4:
+        print("Not enough usable pairs left after pose-outlier rejection to run stereoCalibrate.")
         sys.exit(1)
 
     if kept_paths:
@@ -441,6 +549,22 @@ def main():
         f.write(f"Pairs kept / found: {len(kept)} / {len(pairs)}\n")
         f.write(f"Checkerboard: {PATTERN_SIZE[0]}x{PATTERN_SIZE[1]} internal corners, "
                 f"square size = {SQUARE_SIZE_MM} mm\n\n")
+
+        if skipped or pose_outlier_lines:
+            f.write("-" * 70 + "\n")
+            f.write("Anomalies (excluded from the solve)\n")
+            f.write("-" * 70 + "\n")
+            if skipped:
+                f.write(f"Skipped, board not detected in at least one view ({len(skipped)}): "
+                        f"{', '.join(skipped)}\n")
+            if pose_outlier_lines:
+                f.write(f"Removed as pose outliers ({len(pose_outlier_lines)}) - detection succeeded in "
+                        f"both views but the implied cam0->cam1 rigid transform for that pair did not "
+                        f"match the rest of the session (see POSE_OUTLIER_* thresholds in the script):\n")
+                for line in pose_outlier_lines:
+                    f.write(f"{line}\n")
+            f.write("\n")
+
         f.write(f"stereoCalibrate RMS reprojection error: {rms:.4f} px [{rms_verdict}]\n")
         f.write(f"Independent triangulation mean reprojection error: {triangulation_rms:.4f} px\n\n")
         f.write(f"Baseline |T| = {baseline_mm:.2f} mm (expected ~{EXPECTED_BASELINE_MM:.0f} mm, "
