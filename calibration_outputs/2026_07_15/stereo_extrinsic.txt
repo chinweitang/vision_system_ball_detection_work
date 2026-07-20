@@ -1,0 +1,49 @@
+Stereo extrinsic calibration - fisheye rig
+Convention: cam0 = RIGHT camera (first), cam1 = LEFT camera (second)
+R, T map the cam0/right frame into the cam1/left frame: X_left = R @ X_right + T
+
+Pairs kept / found: 15 / 25
+Checkerboard: 7x11 internal corners, square size = 67.5 mm
+
+----------------------------------------------------------------------
+Anomalies (excluded from the solve)
+----------------------------------------------------------------------
+Skipped, board not detected in at least one view (4): img_0006, img_0014, img_0015, img_0025
+Removed as pose outliers (6) - detection succeeded in both views but the implied cam0->cam1 rigid transform for that pair did not match the rest of the session (see POSE_OUTLIER_* thresholds in the script):
+img_0001: REMOVED (pose-outlier) - implied baseline=560.1 mm (median 861.2 mm, +35%), implied rotation=179.63 deg (median 0.66 deg). Likely a corner-order mismatch between cam0/cam1 for this pose, or the board moved between the sequential cam0/cam1 shutter triggers.
+img_0003: REMOVED (pose-outlier) - implied baseline=2641.6 mm (median 861.2 mm, +207%), implied rotation=179.92 deg (median 0.66 deg). Likely a corner-order mismatch between cam0/cam1 for this pose, or the board moved between the sequential cam0/cam1 shutter triggers.
+img_0012: REMOVED (pose-outlier) - implied baseline=1332.1 mm (median 861.2 mm, +55%), implied rotation=179.90 deg (median 0.66 deg). Likely a corner-order mismatch between cam0/cam1 for this pose, or the board moved between the sequential cam0/cam1 shutter triggers.
+img_0018: REMOVED (pose-outlier) - implied baseline=1451.6 mm (median 861.2 mm, +69%), implied rotation=179.24 deg (median 0.66 deg). Likely a corner-order mismatch between cam0/cam1 for this pose, or the board moved between the sequential cam0/cam1 shutter triggers.
+img_0020: REMOVED (pose-outlier) - implied baseline=604.8 mm (median 861.2 mm, +30%), implied rotation=179.60 deg (median 0.66 deg). Likely a corner-order mismatch between cam0/cam1 for this pose, or the board moved between the sequential cam0/cam1 shutter triggers.
+img_0022: REMOVED (pose-outlier) - implied baseline=2775.8 mm (median 861.2 mm, +222%), implied rotation=179.81 deg (median 0.66 deg). Likely a corner-order mismatch between cam0/cam1 for this pose, or the board moved between the sequential cam0/cam1 shutter triggers.
+
+stereoCalibrate RMS reprojection error: 0.9502 px [PASS]
+Independent triangulation mean reprojection error: 0.3390 px
+
+Baseline |T| = 851.60 mm (expected ~850 mm, +0.2%)
+T (mm): x=851.3299 y=-2.6806 z=-21.4749
+
+R:
+[[ 9.99999693e-01  4.51016959e-04 -6.40328711e-04]
+ [-4.52662399e-04  9.99996590e-01 -2.57186554e-03]
+ [ 6.39166573e-04  2.57215461e-03  9.99996488e-01]]
+
+======================================================================
+Baseline convergence sweep (kept pairs shuffled, seed=0)
+======================================================================
+  N |  baseline_mm |   rms_px
+  4 |       857.89 |   1.1602
+  5 |       852.75 |   1.1073
+  6 |       851.52 |   1.0664
+  7 |       851.83 |   1.1224
+  8 |       851.70 |   1.0605
+  9 |       851.23 |   1.0598
+ 10 |       851.00 |   1.0144
+ 11 |       851.03 |   0.9830
+ 12 |       851.99 |   0.9871
+ 13 |       851.71 |   0.9684
+ 14 |       851.42 |   0.9710
+ 15 |       851.60 |   0.9502
+
+Convergence verdict: CONVERGED
+  Final N=15 baseline=851.60 mm, last-3 mean=851.58 mm, last-3 spread=0.29 mm

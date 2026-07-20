@@ -1,10 +1,21 @@
-# 01_frame_diff.py
-# Adjacent frame differencing: diff = absdiff(frame_N, frame_N-1).
-# Fast-moving ball produces a strong signal; slow-moving people a weak one.
-# Produces a 3-row contact sheet (diff / mask / detection) per flight.
+# 04_stereo_three_frame_diff.py
+# Same gym harness as 01_frame_diff.py (paths, exclusion mask, CSV format,
+# contact-sheet writer, OUT_SUBDIR/OUT_SUFFIX override) with ONLY the diff
+# step swapped for the 3-frame min-diff logic from 03_three_frame_diff.py:
+#
+#   back = absdiff(frame[i],       frame[i-STRIDE])
+#   fwd  = absdiff(frame[i+STRIDE], frame[i])
+#   combined = threshold(cv2.min(back, fwd), DIFF_THRESHOLD)
+#
+# then the SAME morphology + exclusion + contour filter + largest-blob pick
+# as 01. Centroid is still plain contour moments -- no intensity weighting.
+#
+# Consequence, not papered over: this loses STRIDE frames at BOTH ends of the
+# sequence (01 only lost the first), so the detections CSV is missing the
+# first and last STRIDE frame(s) that 01/analysis_2 had.
 #
 # Run from anywhere:
-#   python path/to/code/01_frame_diff.py
+#   python path/to/code/04_stereo_three_frame_diff.py
 
 from pathlib import Path
 import sys
@@ -21,27 +32,23 @@ sys.path.insert(0, str(REPO_ROOT))
 from src.image_processing.exclusion_mask import apply_exclusion
 
 # ---- which flights/cams to process ----
-# Flight names may be a bare folder name (direct child of BALL_FLIGHTS_DIR) or
-# a relative path through a group folder, e.g. "2 ball contacts ground before
-# plane/flight_01" -- both resolve the same way via BALL_FLIGHTS_DIR / flight_name.
-FLIGHTS = ["flight_01", "flight_11", "flight_17", "flight_33",
-           "2 ball contacts ground before plane/flight_01"]
+FLIGHTS = ["2 ball contacts ground before plane/flight_01"]
 CAMS    = ["cam0", "cam1"]
 
 # ---- verification-run output override ----
-# Set OUT_SUBDIR to write contact sheets / detections CSVs to a separate
-# per-flight subfolder (created if missing) with OUT_SUFFIX appended to
-# filenames, instead of the normal ball_in_frame / flight-folder locations --
-# lets a before/after re-run be compared without overwriting the originals.
-# Set OUT_SUBDIR = None and OUT_SUFFIX = "" to restore normal output.
-OUT_SUBDIR = "analysis_2"
-OUT_SUFFIX = "2"
+# Set OUT_SUBDIR = None and OUT_SUFFIX = "" to restore normal (ball_in_frame /
+# flight-folder) output locations.
+OUT_SUBDIR = "analysis_3"
+OUT_SUFFIX = "3"
 
-# ---- contact sheet layout ----
+# ---- 3-frame stride ----
+STRIDE = 1   # frames of separation on each side of the target frame
+
+# ---- contact sheet layout (unchanged from 01) ----
 COLS_PER_ROW = 5
 PANEL_W      = 600    # 5 × 600 = 3000 px wide
 
-# ---- settled detection parameters ----
+# ---- settled detection parameters (unchanged from 01) ----
 DIFF_THRESHOLD = 20
 OPEN_KERNEL    = 7
 CLOSE_KERNEL   = 30
@@ -50,9 +57,11 @@ MAX_AREA       = 50000
 MIN_CIRC       = 0.3
 
 # ---- helpers ----
-def run_detection(diff, cam_name):
-    """Threshold → morphology → contour filter → pick largest. Returns (candidates, best|None, mask)."""
-    _, mask  = cv2.threshold(diff, DIFF_THRESHOLD, 255, cv2.THRESH_BINARY)
+def run_detection(back, fwd, cam_name):
+    """3-frame min-diff → threshold → morphology → exclusion → contour filter
+    → pick largest. Returns (candidates, best|None, back, fwd, mask)."""
+    min_diff = cv2.min(back, fwd)
+    _, mask  = cv2.threshold(min_diff, DIFF_THRESHOLD, 255, cv2.THRESH_BINARY)
     open_k   = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (OPEN_KERNEL,  OPEN_KERNEL))
     close_k  = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (CLOSE_KERNEL, CLOSE_KERNEL))
     mask     = cv2.morphologyEx(mask, cv2.MORPH_OPEN,  open_k)
@@ -106,38 +115,43 @@ for flight_name in FLIGHTS:
             print(f"{label}: no images found, skipping.\n")
             continue
 
-        print(f"{label}: {len(frame_paths)} frames ({len(frame_paths) - 1} processable)")
+        # Loses STRIDE frames at BOTH ends (01 only lost the first).
+        n_processable = len(frame_paths) - 2 * STRIDE
+        print(f"{label}: {len(frame_paths)} frames ({n_processable} processable, "
+              f"STRIDE={STRIDE} lost at each end)")
 
-        diff_panels    = []
+        back_panels    = []
+        fwd_panels     = []
         mask_panels    = []
         det_panels     = []
         detections_out = []   # (frame_number, u, v) for frames with a detection
-        prev_img       = None
 
-        for path in frame_paths:
-            img = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
+        for i in range(STRIDE, len(frame_paths) - STRIDE):
+            img_prev = cv2.imread(str(frame_paths[i - STRIDE]), cv2.IMREAD_GRAYSCALE)
+            img_curr = cv2.imread(str(frame_paths[i]),           cv2.IMREAD_GRAYSCALE)
+            img_next = cv2.imread(str(frame_paths[i + STRIDE]),  cv2.IMREAD_GRAYSCALE)
+            name = frame_paths[i].stem
 
-            if prev_img is None:
-                prev_img = img
-                continue           # frame 0: no predecessor, skip output
+            back = cv2.absdiff(img_curr, img_prev)
+            fwd  = cv2.absdiff(img_next, img_curr)
+            img_bgr = cv2.cvtColor(img_curr, cv2.COLOR_GRAY2BGR)
 
-            name    = path.stem
-            diff    = cv2.absdiff(img, prev_img)
-            prev_img = img         # slide window forward
-            img_bgr = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+            candidates, best, mask = run_detection(back, fwd, cam_name)
 
-            candidates, best, mask = run_detection(diff, cam_name)
+            # --- back diff panel ---
+            bp = scale_to_width(cv2.cvtColor(back, cv2.COLOR_GRAY2BGR), PANEL_W)
+            put_text(bp, f"{name} back", y=18, color=(255, 255, 255))
+            back_panels.append(bp)
 
-            # --- diff panel: raw absdiff, grayscale → BGR ---
-            diff_bgr = cv2.cvtColor(diff, cv2.COLOR_GRAY2BGR)
-            dp_raw = scale_to_width(diff_bgr, PANEL_W)
-            put_text(dp_raw, name, y=18, color=(255, 255, 255))
-            diff_panels.append(dp_raw)
+            # --- fwd diff panel ---
+            fp = scale_to_width(cv2.cvtColor(fwd, cv2.COLOR_GRAY2BGR), PANEL_W)
+            put_text(fp, f"{name} fwd", y=18, color=(255, 255, 255))
+            fwd_panels.append(fp)
 
-            # --- mask panel ---
+            # --- AND+morph mask panel (post exclusion, so the corner cut is visible too) ---
             mask_bgr = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
             mp = scale_to_width(mask_bgr, PANEL_W)
-            put_text(mp, name, y=18, color=(255, 255, 255))
+            put_text(mp, f"{name} AND+morph", y=18, color=(255, 255, 255))
             mask_panels.append(mp)
 
             # --- detection panel: annotate at full res, scale, then text ---
@@ -163,24 +177,27 @@ for flight_name in FLIGHTS:
 
             det_panels.append(dp)
 
-        # ---- assemble contact sheet ----
-        n = len(diff_panels)
-        blank = np.zeros_like(diff_panels[0])
+        # ---- assemble 4-row contact sheet (back / fwd / AND+morph / detection) ----
+        n = len(back_panels)
+        blank = np.zeros_like(back_panels[0])
         rows  = []
 
         for i in range(0, n, COLS_PER_ROW):
-            chunk_d = diff_panels[i : i + COLS_PER_ROW]
+            chunk_b = back_panels[i : i + COLS_PER_ROW]
+            chunk_f = fwd_panels [i : i + COLS_PER_ROW]
             chunk_m = mask_panels[i : i + COLS_PER_ROW]
             chunk_v = det_panels [i : i + COLS_PER_ROW]
             # pad last row-group if not full
-            if len(chunk_d) < COLS_PER_ROW:
-                pad = COLS_PER_ROW - len(chunk_d)
-                chunk_d += [blank] * pad
+            if len(chunk_b) < COLS_PER_ROW:
+                pad = COLS_PER_ROW - len(chunk_b)
+                chunk_b += [blank] * pad
+                chunk_f += [blank] * pad
                 chunk_m += [blank] * pad
                 chunk_v += [blank] * pad
-            rows.append(np.hstack(chunk_d))   # row 0: diff
-            rows.append(np.hstack(chunk_m))   # row 1: mask
-            rows.append(np.hstack(chunk_v))   # row 2: detection
+            rows.append(np.hstack(chunk_b))   # row 0: back diff
+            rows.append(np.hstack(chunk_f))   # row 1: fwd diff
+            rows.append(np.hstack(chunk_m))   # row 2: AND+morph mask
+            rows.append(np.hstack(chunk_v))   # row 3: detection
 
         grid = np.vstack(rows)
         flight_folder = flight_dir.parents[1]

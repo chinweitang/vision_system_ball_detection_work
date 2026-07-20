@@ -205,7 +205,7 @@ def main():
     csv_path = (args.output.resolve() if args.output
                 else DEFAULT_OUT / f"{folder.name}_labels.csv")
 
-    frames = sorted(folder.glob("*.png"), key=frame_num)
+    frames = sorted(folder.glob("frame_*.png"), key=frame_num)
     if not frames:
         print(f"No PNG files found in {folder}")
         return

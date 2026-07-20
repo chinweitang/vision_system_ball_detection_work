@@ -38,14 +38,14 @@ import numpy as np
 from picamera2 import Picamera2
 
 # --- Locked settings ---
-EXPOSURE = 5000          # microseconds
+EXPOSURE =1000          # microseconds
 GAIN     = 4.0
 WIDTH, HEIGHT = 1456, 1088
 TARGET_FPS    = 60
 FRAME_PERIOD_MS = 1000.0 / TARGET_FPS
-BURST_SECONDS = 5.0
+BURST_SECONDS = 3.0
 COUNTDOWN_S   = 3
-SESSION_NAME  = "2026-07-14_gym_stereo_arc"     # <-- EDIT per session
+SESSION_NAME  = "2026-07-15_gym_arc"     # <-- EDIT per session
 # ------------------------
 
 session_dir = Path.home() / "captures" / SESSION_NAME
