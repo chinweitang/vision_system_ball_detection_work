@@ -44,8 +44,8 @@ WIDTH, HEIGHT = 1456, 1088
 TARGET_FPS    = 60
 FRAME_PERIOD_MS = 1000.0 / TARGET_FPS
 BURST_SECONDS = 3.0
-COUNTDOWN_S   = 3
-SESSION_NAME  = "2026-07-15_gym_arc"     # <-- EDIT per session
+COUNTDOWN_S   = 2
+SESSION_NAME  = "2026-07-21-gym_arc"     # <-- EDIT per session
 # ------------------------
 
 session_dir = Path.home() / "captures" / SESSION_NAME

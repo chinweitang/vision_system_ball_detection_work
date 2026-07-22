@@ -1,0 +1,51 @@
+Stereo extrinsic calibration - fisheye rig
+Convention: cam0 = RIGHT camera (first), cam1 = LEFT camera (second)
+R, T map the cam0/right frame into the cam1/left frame: X_left = R @ X_right + T
+
+Pairs kept / found: 23 / 24
+Checkerboard: 7x11 internal corners, square size = 67.5 mm
+
+----------------------------------------------------------------------
+Anomalies (excluded from the solve)
+----------------------------------------------------------------------
+Removed as pose outliers (1) - detection succeeded in both views but the implied cam0->cam1 rigid transform for that pair did not match the rest of the session (see POSE_OUTLIER_* thresholds in the script):
+img_0018: REMOVED (pose-outlier) - implied baseline=3408.7 mm (median 859.9 mm, +296%), implied rotation=179.98 deg (median 0.46 deg). Likely a corner-order mismatch between cam0/cam1 for this pose, or the board moved between the sequential cam0/cam1 shutter triggers.
+
+stereoCalibrate RMS reprojection error: 0.4087 px [PASS]
+Independent triangulation mean reprojection error: 0.1952 px
+
+Baseline |T| = 848.91 mm (expected ~850 mm, -0.1%)
+T (mm): x=848.4995 y=-3.8124 z=-26.1073
+
+R:
+[[ 9.99996991e-01 -6.93750172e-04  2.35318747e-03]
+ [ 6.98603665e-04  9.99997629e-01 -2.06232408e-03]
+ [-2.35175115e-03  2.06396182e-03  9.99995105e-01]]
+
+======================================================================
+Baseline convergence sweep (kept pairs shuffled, seed=0)
+======================================================================
+  N |  baseline_mm |   rms_px
+  4 |       857.66 |   0.3230
+  5 |       856.71 |   0.2939
+  6 |       859.47 |   0.2982
+  7 |       854.70 |   0.3374
+  8 |       854.69 |   0.3359
+  9 |       853.31 |   0.3616
+ 10 |       851.86 |   0.4151
+ 11 |       852.47 |   0.4255
+ 12 |       853.13 |   0.4157
+ 13 |       845.85 |   0.4351
+ 14 |       845.80 |   0.4206
+ 15 |       845.69 |   0.4123
+ 16 |       845.81 |   0.4288
+ 17 |       846.55 |   0.4256
+ 18 |       847.06 |   0.4227
+ 19 |       847.87 |   0.4166
+ 20 |       848.38 |   0.4182
+ 21 |       847.94 |   0.4138
+ 22 |       848.27 |   0.4105
+ 23 |       848.91 |   0.4087
+
+Convergence verdict: CONVERGED
+  Final N=23 baseline=848.91 mm, last-3 mean=848.37 mm, last-3 spread=0.97 mm

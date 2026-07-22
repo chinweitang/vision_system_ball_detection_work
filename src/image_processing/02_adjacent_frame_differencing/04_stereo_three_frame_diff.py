@@ -26,13 +26,13 @@ import cv2
 # ---- paths ----
 HERE       = Path(__file__).resolve().parent
 REPO_ROOT  = HERE.parents[2]
-BALL_FLIGHTS_DIR = REPO_ROOT / "data" / "2026_07_15_gym" / "ball_flights"
+BALL_FLIGHTS_DIR = REPO_ROOT / "data" / "2026_07_21_gym" / "ball_flights"
 
 sys.path.insert(0, str(REPO_ROOT))
 from src.image_processing.exclusion_mask import apply_exclusion
 
 # ---- which flights/cams to process ----
-FLIGHTS = ["2 ball contacts ground before plane/flight_01"]
+FLIGHTS = ["flight_1"]
 CAMS    = ["cam0", "cam1"]
 
 # ---- verification-run output override ----
