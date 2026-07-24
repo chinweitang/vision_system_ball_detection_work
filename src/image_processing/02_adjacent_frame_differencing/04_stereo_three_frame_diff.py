@@ -32,7 +32,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from src.image_processing.exclusion_mask import apply_exclusion
 
 # ---- which flights/cams to process ----
-FLIGHTS = ["flight_1"]
+FLIGHTS = [f"flight_{i}" for i in range(29, 127)]
 CAMS    = ["cam0", "cam1"]
 
 # ---- verification-run output override ----
