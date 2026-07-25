@@ -75,8 +75,27 @@ MAX_SPEED_PX_PER_FRAME, MIN_RUN_LENGTH = CFG["max_speed_px_per_frame"], CFG["min
 
 
 def find_flight_dirs(base: Path):
-    """Yield (flight_label, flight_dir) for every dir with a populated
-    ball_in_frame, at any depth - same convention as 07_artifact_audit.py."""
+    """Yield (flight_id, flight_dir) for every dir with a populated
+    ball_in_frame, at any depth - same enumeration convention as
+    07_artifact_audit.py, but flight_id is session-qualified
+    ("<session_name>/<relative_path>"), NOT just flight_dir.name.
+
+    2026_07_21_gym covers flight_1-149 and 2026_07_15_gym separately has
+    flight_11-60 (plus nested subfolders) - 36 of its 37 flight numbers
+    collide with a same-named flight in the other session. Using bare
+    flight_dir.name as an identifier silently overwrote contact sheets
+    across sessions and produced indistinguishable duplicate CSV rows the
+    first time this ran across the full dataset - session-qualifying fixes
+    both.
+
+    Uses flight_dir.name (not the full relative path) after the session
+    prefix - confirmed no basename collides with another flight WITHIN the
+    same session, so this stays unique, and it matters: the one nested
+    flight ("2 ball contacts ground before plane/flight_01") produced a
+    281-character path once session-prefixed AND fully-nested, over
+    Windows' 260-char MAX_PATH - both its contact sheets silently failed to
+    write. Dropping the intermediate subfolder from the identifier (session
+    + basename only) fixes the path length while staying unique."""
     seen = set()
     for bif in sorted(base.rglob("ball_in_frame")):
         if not any(bif.glob("frame_*.png")):
@@ -85,7 +104,12 @@ def find_flight_dirs(base: Path):
         if flight_dir in seen:
             continue
         seen.add(flight_dir)
-        yield flight_dir.name, flight_dir
+        flight_id = f"{base.parent.name}/{flight_dir.name}"  # base.parent.name e.g. "2026_07_15_gym"
+        yield flight_id, flight_dir
+
+
+def sanitize_for_filename(flight_id: str) -> str:
+    return flight_id.replace("/", "_").replace(" ", "_")
 
 
 def load_labels_for_flight(flight_dir: Path) -> dict:
@@ -123,14 +147,14 @@ def process_flight_cam(args):
     what the orchestrating process needs to compute combined_rate (the
     processable set and the kept-detections dict) plus labeled-recall
     ingredients for the 2 labeled flights."""
-    flight_dir_str, flight_label, cam = args
+    flight_dir_str, flight_id, cam = args
     flight_dir = Path(flight_dir_str)
     cam_dir = flight_dir / cam / "ball_in_frame"
     frame_paths = sorted(cam_dir.glob("frame_*.png"))
 
     processable = dc.processable_frame_numbers(cam_dir, STRIDE)
     if len(frame_paths) <= 2 * STRIDE:
-        return flight_dir_str, flight_label, cam, processable, {}, 0, 0
+        return flight_dir_str, flight_id, cam, processable, {}, 0, 0
 
     imgs = [cv2.imread(str(p), cv2.IMREAD_GRAYSCALE) for p in frame_paths]
     raw = dc.run_detection(cam_dir, cam, STRIDE, DIFF_THRESHOLD, OPEN_KERNEL, CLOSE_KERNEL,
@@ -213,10 +237,10 @@ def process_flight_cam(args):
 
     grid = np.vstack(rows)
     CONTACT_SHEETS_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = CONTACT_SHEETS_DIR / f"{flight_label}_{cam}_contact.png"
+    out_path = CONTACT_SHEETS_DIR / f"{sanitize_for_filename(flight_id)}_{cam}_contact.png"
     cv2.imwrite(str(out_path), grid)
 
-    return flight_dir_str, flight_label, cam, processable, kept, n_kept, n_rejected
+    return flight_dir_str, flight_id, cam, processable, kept, n_kept, n_rejected
 
 
 def main():
@@ -235,8 +259,8 @@ def main():
         futures = {ex.submit(process_flight_cam, t): t for t in tasks}
         done = 0
         for fut in as_completed(futures):
-            flight_dir_str, flight_label, cam, processable, kept, n_kept, n_rejected = fut.result()
-            per_flight.setdefault(flight_dir_str, {"label": flight_label})
+            flight_dir_str, flight_id, cam, processable, kept, n_kept, n_rejected = fut.result()
+            per_flight.setdefault(flight_dir_str, {"label": flight_id})
             per_flight[flight_dir_str][cam] = (processable, kept)
             done += 1
             if done % 40 == 0 or done == len(tasks):

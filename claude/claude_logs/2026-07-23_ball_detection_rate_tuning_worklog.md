@@ -920,6 +920,63 @@ aggregates for labeled recall (flight_01 + flight_22).
 
 Launched in background - running now.
 
+### First run - completed but wrong: silent flight-label collision bug
+
+Ran successfully (exit 0), reported `avg_combined_rate=0.9667`,
+`labeled_recall=0.9250`, "Wrote 326 contact sheet(s)". But only 254 files
+existed on disk. Investigated rather than trust the printed count:
+
+**Root cause**: `2026_07_21_gym` covers `flight_1`-`flight_149`;
+`2026_07_15_gym` separately has `flight_11`-`flight_60` (plus nested
+subfolders) - **36 of its 37 flight names collide** with a same-named flight
+in the other session. The script used bare `flight_dir.name` as the
+identifier for BOTH the contact-sheet filename and the CSV's `flight`
+column, so:
+- Contact sheets: whichever session's flight got processed second silently
+  overwrote the first's PNG on disk (36 collisions x 2 cams = 72 missing
+  files - exactly matching 326-254=72).
+- CSV: NOT lost (the per-flight aggregation dict was correctly keyed by the
+  full unique directory path internally), but both sessions' `flight_22`
+  rows printed as identical, indistinguishable text - confirmed via `grep`,
+  found exactly 2 "flight_22" rows with different numbers, no way to tell
+  them apart.
+
+**Fix**: `find_flight_dirs()` now yields a session-qualified `flight_id`
+(`f"{session_name}/{flight_dir.name}"`, e.g. `"2026_07_15_gym/flight_22"`)
+instead of the bare name, used consistently for both the CSV `flight` column
+and (sanitized, `/`->`_`) the contact-sheet filename. Verified no basename
+collides WITHIN a single session before relying on this.
+
+**Second run - still wrong, this time a path-length limit**: fixed script
+still only produced 324/326 files. The 2 missing were BOTH cams of the one
+nested flight, `"2 ball contacts ground before plane/flight_01"` - its full
+session-qualified, sanitized filename produced a 281-character path,
+over Windows' 260-char MAX_PATH (`cv2.imwrite` fails silently past this
+limit, no exception). Fix: `flight_id` uses only `flight_dir.name` after the
+session prefix (drops the intermediate subfolder), not the full relative
+path - confirmed this stays unique (no basename collisions within either
+session) while cutting the path to 245 chars, safely under the limit.
+
+**Third run - correct**: 326/326 contact sheets on disk, 163/163 unique CSV
+rows (verified programmatically, not just by eye), same
+`avg_combined_rate=0.9667`/`labeled_recall=0.9250` as both earlier runs
+(confirms the fixes only changed naming/identity, not detection logic).
+
+(Deleted the two prior broken `contact_sheets/03_.../` folders before each
+re-run without asking first - both were output from THIS session's own
+immediately-prior buggy runs, not pre-existing data, and were being
+immediately regenerated correctly; flagged this to the user transparently
+rather than silently.)
+
+**Final full-dataset result**: `data/detector_tuning/
+candidate_config_validated_results.csv` now covers all 163 flights (not the
+10-flight sample) - `avg_combined_rate=0.9667` (vs. the 10-sample's 0.9784 -
+expected, the full set includes flights that weren't cherry-picked as
+representative), `labeled_recall=0.9250` (identical to the 10-sample
+measurement, as it should be - same 2 labeled flights regardless of how many
+others are included). Contact sheets for all 163 flights x 2 cams in
+`data/detector_tuning/contact_sheets/03_stride1_thresh16_openk3_area30_circ0.3/`.
+
 ## Not yet done / open questions
 
 - `flight_22`'s two-consecutive-false-detection / `min_run_length` bug
@@ -927,13 +984,17 @@ Launched in background - running now.
   - intentionally left unfixed across rounds 2 and 3, per user's explicit
   scoping decisions each time. Two fix options still on the table: raise
   `min_run_length` to 3+, or extend de-spike to test removing pairs.
-- Haven't yet re-run the FULL dataset (all 163 flights) with the final
-  config to produce real per-flight `analysis_4` outputs + an updated
-  `detection_rate_summary.csv` - all validation so far has been on the
-  10-flight sample (by design, to keep iteration fast) plus full-dataset
-  artifact AUDITS (which check for false positives, not full detection
-  output). This full-dataset production run is the natural next step once
-  the user is satisfied with the current state.
+- ~~Haven't yet re-run the FULL dataset...~~ **DONE (2026-07-25)** - see
+  "Full-dataset production run" section above. Went with a different (better)
+  approach than originally sketched here: rather than per-flight `analysis_4`
+  folders + an updated `detection_rate_summary.csv` (the
+  `04_stereo_three_frame_diff.py`/`05_detection_rate_summary.py` convention),
+  kept everything centralized under `data/detector_tuning/` - user's call,
+  since 163 scattered `analysis_N` folders across 2 session directories is
+  hard to browse. `candidate_config_validated_results.csv` now covers all
+  163 flights directly (superseding the 10-flight-sample version), and
+  contact sheets for all 163 flights x 2 cams live in one place:
+  `data/detector_tuning/contact_sheets/03_stride1_thresh16_openk3_area30_circ0.3/`.
 - Static background subtraction (fallback for the near-zero-relative-motion
   blind spot, e.g. apex-of-arc frames) not attempted - not yet needed given
   how far combined_rate has come (0.28 -> 0.98).

@@ -1,0 +1,204 @@
+Volleyball Rebounder Robot — Project Context (consolidated, current)
+
+Single self-contained handoff document for a new Claude chat. MSc Design Engineering, Imperial College London, Dyson School. This file replaces all earlier context files. Archive/delete them.
+
+Scope authority: the submitted Interim Report (25 June 2026) is the source of truth for scope and objectives. Where memory or older docs disagree with the report, the report wins.
+
+Last updated: mid-July 2026 (calibration validated; triangulation characterised).
+
+Recent changes since last version (mid-July, calibration/triangulation):
+
+Calibration validated end-to-end. Intrinsics (fisheye, both cams), extrinsics (two sessions), and triangulation accuracy all measured against checkerboard ground truth. Triangulation is well inside the ±100 mm budget at 5 m (see §4.8).
+The "88 mm P1-P2 error" was diagnosed as WORLD-REGISTRATION error, NOT triangulation error. Grazing-angle geometry on floor markers + fat-court-line manual clicking dominated it. The stereo geometry itself is ~1-5 mm at 5 m. This is the single most important correction (see §4.8).
+Extrinsics vs world-registration are DIFFERENT transforms - do not conflate (this conflation caused the 88 mm confusion). Extrinsics (cam-to-cam R,T) survive rig transport IF the two cameras stay rigidly clamped to each other; world-registration (cam-to-floor) does NOT survive and is per-session.
+Report signed bias + scatter + RMS + p95, not max. Max is fragile. For the predictor, bias matters, scatter averages down over the arc fit.
+Checkerboard board-frame (Kabsch/Umeyama) validation established as the triangulation-quality method: fitted scale = calibration scale health, per-axis residual = precision, out-of-plane = warp. Non-circular for scale/warp; NOT an absolute-position check.
+Next: stop optimising triangulation - it is characterised and inside spec. Move to arc capture → detection error (Link B) → predictor (Pattern A). The predictor error, not triangulation, is what the ±100 mm actually constrains.
+
+Previous changes (late June):
+
+Camera placement DECIDED: side-on stereo. Stereo sync RESOLVED (free-running). Width hit/miss spec (±0.1 m). Error budget three-term (A/B/C). Test plan two captures. Supervisor (26-06-22) pushed binning a large dataset.
+0. STALE — do not reintroduce
+
+These framings appear in old documents / earlier memory and are WRONG for the current project. Delete on sight:
+
+❌ "squash ball (40 mm)" as the testbed → it is a full-scale regulation volleyball.
+❌ "flat rigid plate first, mesh as extension" → it is a mesh rebounder from the start; no flat-plate stage.
+❌ "characterise, don't match / scaled self-consistent rig" → not the framing. Vision/prediction/mesh are full-scale on the real volleyball; only actuation is scaled (bench HIL).
+❌ "top-mounted camera decided", "camera placement still open", "hardware trigger is the gate", "gym access pending" → all superseded (see below).
+1. Owner, programme, constraints
+Programme: MSc Design Engineering, Imperial (Dyson School). Owner: Chin Wei Tang.
+Background: mechanical engineering. Thin on computer-vision / ML — explain those from first principles, plain language, minimal jargon. Asking for simpler restatements is expected.
+Budget: £500 hard cap. No ball machine (Mazdak's is Premier-League-spec, inaccessible) → input throws are manual and not reproducible.
+Key dates: Interim/Gateway report submitted ~25 June. Gateway presentation week of 29 June–3 July. Away 2–8 July (wedding). Thesis (8,000 words) late Aug. Viva 7–11 Sept. Hard experimental freeze ~3 weeks before thesis (~6 Aug); writeup begins then.
+Working / communication style — advisor mode (strict): challenge the assumption first; tag confidence ([Certain]/[Likely]/[Guessing]); lead with the uncomfortable truth; disagree with structure; hold position under pushback unless given genuinely new information; no em-dashes (use " - "); terse, plain text. Pushes back when advice is off and is usually right — reconsider rather than restate. Makes content decisions himself before Claude drafts.
+2. The vision (what the robot does)
+
+A vision-guided actuated mesh rebounder that lets a solo amateur practise the pepper drill (continuous hit → receive → set loop) by playing the partner. Vision observes the incoming ball, predicts its trajectory, actuates the rebounder to shape the return. Novelty: making a normally-passive rebounder smart. 1-DOF: returns vary in the vertical plane only — target is a 1D line, not a 2D area. Static base (users preferred fixed; aiming at a static target is part of the practice).
+
+3. Scope & objectives (from the Interim Report — authoritative)
+
+Three scope decisions narrow the project:
+
+Vision + prediction are full-scale on a regulation volleyball (detection and flight behaviour are ball-specific, must be validated on the real object). Actuation is scaled down to a bench-top hardware-in-the-loop (HIL) validation, not a full build (a full rebounder is expensive/slow to iterate).
+Mesh rebounder surface (existing rebounders use mesh; lighter, quieter, lower actuation load). Trade-off: mesh rebounds differently at different surface points → adds impact-characterisation complexity.
+Staged: vision + prediction validated first; actuation only starts if it meets the timing budget.
+
+Four objectives:
+
+O1 — Vision: real-time stereo pipeline that detects and computes the 3D position of a regulation volleyball across the pepper speed/height range, within the timing budget.
+O2 — Prediction: physics-based trajectory predictor estimating landing point + velocity early enough to actuate before arrival; validated against full-flight vision data.
+O3 — Mesh characterisation: experimentally produce an input-output map of return velocity vs incoming velocity, rebounder angle, and impact location on the mesh.
+O4 — Actuation (STRETCH, descopable buffer): scaled actuation mechanism validated via HIL, demonstrating both static repositioning and active energy injection. Gated on O1+O2; deferred first if schedule slips.
+
+In scope: active swing / energy injection during contact (passive angle aiming is insufficient — see §7). Out of scope: spin/Magnus (vision can't measure it within latency budget; ball is large/low-spin anyway), 2D aiming, full-scale actuated build, topspin hits.
+
+4. Vision system
+4.1 Hardware
+Raspberry Pi 5; two identical Innomaker IMX296 mono global-shutter cameras (1456×1088, ~60 fps). Fisheye CW-6MM lenses (6 mm f/1.2) — use cv2.fisheye, NOT pinhole; severe barrel distortion.
+Mono is correct (light sensitivity, motion-freeze, clean contours). Never mix mono + colour in a stereo pair. If one mono unit fails, replace with a matched pair, re-calibrate.
+Networking: direct ethernet (Pi 192.168.50.1, laptop .2, static via nmcli); scp -i <key> chinnywei@192.168.50.1. .local/mDNS unreliable over IPv6 link-local; eduroam blocks device-to-device SSH. Hostname volley-pi, user chinnywei.
+Capture: manual trigger, buffer to RAM, write to SD after each flight. Pair frames by SensorTimestamp (Picamera2 metadata), not arrival order. Force frame rate via FrameDurationLimits (not the fps hint). post_callback for timestamps.
+Storage ceiling (supervisor flagged, compute before each gym session): ~0.5 MB/image × 60 fps × 2 channels ≈ 6 MB/s; 64 GB SD ≈ ~10,600 s continuous, but you capture ~1–2 s/flight and offload between flights → storage is not the real ceiling; fatigue/time is. Bake a transfer cadence into the protocol.
+4.2 Camera placement — DECIDED: side-on stereo
+Both cameras side-on, bolted to a rigid aluminium extrusion, looking across the flight. Baseline 850 mm (upgraded from 500 mm; cuts width error ~40%). Stand-off ~5 m, constant along the flight (rig square to the side), so width error is ~flat along the flight.
+Why side-on (the geometry argument, plain): stereo measures position best within the image plane and worst along the look direction (the "depth" axis). Side-on puts the depth axis on the across-court / width axis — the one you care least about — while range and height sit in the accurate image plane. Top-down/head-on would put depth on range (the axis you most need) AND reintroduce the low-displacement detection collapse. Supervisor also prioritised side-on.
+Mount angle (10° vs 20° tilt): OPEN, test empirically. The binding constraint is vertical FOV (a ~6 m arc at 5 m stand-off needs ~59° vertical; fisheye likely clears it). Pick the angle that frames the whole arc, in both cameras, with margin for throw scatter. Don't over-optimise tilt for distortion (intrinsic calibration removes most). Print intermediate angles if neither works.
+Stand-off decision rule: use the minimum stand-off that frames the full arc with margin — fitting the arc pulls stand-off out, width resolution (∝ stand-off²) pulls it in; the minimum that fits is the optimum. (Open: confirm final stand-off, 5 m vs slightly more.)
+4.3 Stereo sync — RESOLVED (free-running sufficient)
+Free-running cameras: ~5.6 ms true phase offset, ~11 µs jitter — ~200× under the 2.3 ms target. Constant per-session offset is trivially correctable (measure and subtract); jitter is what matters and is negligible. Global shutter → no rolling-shutter smear.
+Decision: free-running / software capture is enough; the hardware trigger is a convenience/robustness contingency, not an accuracy requirement. Contingency wiring (if ever needed): Arduino Nano (ATmega328PB), pins D9/D10 (Timer1); IMX296 XTR input is current-driven through an on-board PS2901-1 optocoupler with 200 Ω series resistor — no external voltage divider; one pin per camera; power the trigger board from the Pi's USB (avoid ground loops). Pi trigger-mode setup via i2c (bus 6 cam0, bus 4 cam1).
+The residual sync error enters the moving-ball error budget analytically as Δt × ball speed (§4.6 term C) — not via a separate moving-ball test.
+4.4 Two recording environments — distinct roles
+Dyson library, mono, 62 flights (already captured): development / dress-rehearsal. Harder background than the gym → conservative. Use for detector selection, labelling workflow, the displacement/apex story. Never report headline accuracy from library data. High sets fit the library ceiling (confirmed in mono testing).
+Library, stereo (now): because the library physically provides the same ~5 m stand-off and 850 mm baseline, it can host the full static grid + arc method-validation. Method validates here; headline still comes from the gym.
+Ethos gym, stereo (access GRANTED, RA approved): the deployment/headline environment under real lighting. Headline detection-fed accuracy and the binned predictor dataset come from here.
+Transfers: detector choice, labelling workflow, scoring scripts, geometry/calibration width resolution IF stand-off matched within ~10% and calibration is as good. Does NOT transfer: detection-fed accuracy (lighting-dependent), exposure tuning, extrinsics (per-mounting). Keep thresholds in re-sweepable config.
+4.5 Detection pipeline
+Adjacent frame differencing → threshold → morphological open/close → contour/blob detection filtered by area + circularity (background subtraction rejected: flags the moving player). Manual ground-truth comparison for detection rate + centroid accuracy.
+Root variable = normalised displacement = inter-frame pixel displacement ÷ ball diameter ("ball-widths"). Detection collapses below ~0.1–0.2 ball-widths (apex: ball present but undetected — Zhang's "crescent/waning moon"), centroid accuracy degrades above ~0.3 (blob splits into two above ~1 ball-width); sweet spot ~0.2–0.3 (the interim headline figure).
+Stride trade-off is fundamental: low stride accurate but fails at low displacement; high stride recovers the slow ball but worsens centroid and splits blobs. No single fixed stride spans the flight → adaptive per-frame stride selection is the principled fix. Three-frame differencing improves centroid but adds latency (~52 ms = 3×16.6 ms).
+Toward-leg only (analogue of the ball arriving). Within it, in-line (points at lens, apex dropout) vs across (lateral drift keeps displacement alive). Phases are physics-anchored (apex = min vertical displacement; near/far = manual ball diameter), not frame-count thirds.
+Reference centroid methods seen in lit: Zhang's GSP (grows a cross inside the crescent to find true centre) is the centroid fix for the differencing artefact; Gomez avoids the apex problem entirely via background subtraction (viable because no players in solo practice — possible fallback if differencing apex-dropout proves fatal).
+4.6 Error budget — three-term decomposition (key framework)
+
+Total moving-ball, detection-fed 3D error = A ⊕ B ⊕ C:
+
+A — geometry/calibration: true position → manual-triangulated. NOW MEASURED BY THE CHECKERBOARD (board-frame Kabsch, §4.8) - sub-pixel corners give a better, ground-truth-clean geometry number than a manually-labelled ball on a floor grid. Environment-independent. Result: ~1-5 mm at 5 m, inside spec. (The old static-ball-on-grid Link A is now largely redundant for A - the checkerboard supersedes it.)
+B — detection penalty: manual-triangulated → detection-triangulated, on the same frames. Geometry error is common-mode and cancels, so this isolates detection alone. Needs moving arcs but NO external ground truth (the manual label is the reference). Lighting-dependent → headline from gym. STILL ESSENTIAL - the checkerboard cannot measure this (no ball). Orthogonal to A.
+C — sync: Δt × ball speed, computed analytically from the measured sync offset (§4.3). Not measured by any moving-ball test.
+GAP (owner-identified, must bound): manual-labelling error is invisible in this decomposition - the checkerboard uses sub-pixel corners (near-zero label error) for A, and B uses manual labels as the reference (so their error passes through into "truth" silently). Neither captures how far a manual ball-click sits from the ball's true centre. Bound it separately: click-repeatability test (label the same ~20 ball frames 3× each, take the spread → a σ for manual labelling), then A+B+C+σ_manual is a complete honest budget. Optionally fold in via a light end-to-end static ball-at-known-points capstone.
+4.7 Width resolution & hit/miss spec
+Width (across-court) is the depth axis = worst-resolved. The system does not need fine width measurement — only hit/miss against the 1 m-wide rebounder (edges at ±0.5 m from centre).
+Spec: ±0.1 m (10 cm) width error. → a 10 cm "dead band" at each edge where the call is unreliable; ~80% of the rebounder width reliably classified. Round, defensible, and roughly where the hardware lands at 850 mm / 5 m.
+Resolution = accuracy, not discrimination: test by placing the ball at well-separated known width positions and measuring (true − triangulated) error; do NOT place balls 0.1 m apart (that tests tape precision, not stereo).
+Constrain-it-out (operating decision): the drill aims for the rebounder centre; width is treated as a tolerance, not sensed in real time for the return. But width must still be measured in validation to prove the band holds and keep error attribution clean.
+Reproducibility caveat (supervisor): with no ball machine, input is not reproducible, so you cannot assume the ball stays in a central band by launcher design. Instead bin throws post-hoc and characterise the spread (§4.9).
+Benchmarks for the viva: table-tennis robots achieve ~6.5 mm (Zhang) / <1 cm per axis (Chen) at ~1–2 m stand-off; broadcast volleyball single-camera 140–180 mm (Chen 2012). ±100 mm sits between — justified by the depth/width axis, 5 m stand-off, larger ball, longer extrapolation, and hit/miss-not-precision. Be ready to defend this (the report does not state an accuracy number; ±0.1 m is the owner's derived O1 success criterion).
+4.8 Calibration — VALIDATED (triangulation characterised, inside spec)
+
+Status: intrinsics, extrinsics, and triangulation accuracy all validated against checkerboard ground truth. Triangulation is comfortably inside the ±100 mm budget at 5 m. Stop optimising it - move to arc capture.
+
+Intrinsics (DONE, both cams): fisheye model definitively required over pinhole (fisheye RMS 0.13 px vs pinhole 1.90 px; pinhole gives physically-nonsensical fx≠fy). Both cams converged (fx≈fy≈969-986 matched, principal point sane, distortion settled by N≈16). Saved cam0/cam1_intrinsics_fisheye.npz. Lock the focus ring (tape it - focus drift is the real risk), focus at ~5 m, coverage to frame edges (barrel distortion bites at corners). Transfers if focus locked + stand-off matched ~10%. Two identical cameras still need separate calibration. Convergence/low-RMS only prove self-consistency, NOT accuracy - only external ground truth (checkerboard distances) proves accuracy.
+
+Extrinsics (two-camera relative pose R,T): solved for two sessions (2026_07_11 gym, 2026_07_12). Baseline recovered ~848 mm vs ~850 expected (~0.2%). Convergence sweep finding: need ≥~15 usable pairs for a stable solve; the earlier 11-pair solve was in the unstable region. Capture ~25-30 raw (≈40% attrition from corner-order mismatch + non-detection) → ~15+ usable. Returns die past ~20 pairs.
+
+CRITICAL DISTINCTION (caused the 88 mm confusion - do not repeat): extrinsics = cam-to-cam R,T. World-registration = cam-to-floor. DIFFERENT transforms. Extrinsics survive rig transport IF the two cameras stay rigidly clamped to each other (they are - bolted to one extrusion). World-registration does NOT survive and is per-session. So: validating gym-extrinsics on lab-images is legitimate because the cameras did not move relative to each other, even though the rig moved.
+Depth-spread matters: solving extrinsics from boards all at one depth under-constrains R at other depths. Present boards across the working volume (~3-6 m). (Empirically the depth-spread re-shoot did NOT beat the 2 m solve at 5 m - a wash - because extrinsic depth-extrapolation was never the dominant error; see the 88 mm finding below.)
+Corner-order mismatch bug: findChessboardCorners can number from either physical end → cam0/cam1 correspondence flips → silently-wrong triangulation. solve_extrinsic.py has a pose-consistency outlier check (mono solvePnP per view, compare implied transform to session median) that catches it. This median-based check does NOT protect small-N validation (no median with 1-4 boards) - validation scripts need their own per-pair order guard.
+
+The 88 mm P1-P2 finding (the key correction): the large world-registration errors (P1-P2 88 mm, max 180 mm on floor markers) were NOT triangulation/calibration error. Checkerboard validation at 5 m shows triangulation is ~1-5 mm. The 88 mm was world-registration error: (1) grazing viewing angle on floor markers (side-on cams see the floor nearly edge-on → tiny click error throws the ray far), and (2) fat painted-court-line manual clicking (~1 px on a blurry line). Floor-registration error ≠ triangulation error. Fix registration by: reference points off the floor (higher up, ~1.1 m helped), sub-pixel targets not painted lines, and line-fitting (click several points along each line, least-squares fit, intersect analytically) instead of clicking fuzzy intersections.
+
+Triangulation accuracy (checkerboard ground truth, VALIDATED):
+
+Method: board-frame Kabsch/Umeyama. Triangulate the 77 corners; fit camera→board transform two ways. Rigid (Kabsch, R+t): residual = scale error + warp. Similarity (+ scale, Umeyama): fitted scale factor = calibration scale accuracy (one clean %), residual after = pure warp/scatter = precision. Per-axis in board frame: in-plane = lateral scatter, out-of-plane (z) = warp. Non-circular for scale/warp (rigid fit has only 6 DOF, cannot absorb per-corner error); self-referential only for absolute board pose (so NOT an absolute-position validation - that never mattered for the ball anyway, since a common-mode offset barely moves an arc fit or a rebounder-plane crossing).
+Results at 5 m: precision ~1-2 mm/axis scatter, bias ~3 mm (from the separate relative-distance test), scale scattered across boards (+0.23/+0.51/-0.76/+1.33% → NO systematic scale error, it is per-board noise), warp ~1.9 mm. Error grows with depth (Z², expected) and with corner separation (~1.5-2% at long spans). All 5-50× inside the ±100 mm budget.
+After Kabsch/similarity, per-axis BIAS is ~0 by construction (the fit re-centres the cloud) - so board-frame gives precision (scatter), not accuracy. Accuracy/bias comes from the relative-distance test. Quote each from the test that measures it; do not call board-frame per-axis numbers "accuracy."
+Report signed mean (bias) + std (scatter) + RMS + p95, NOT max. Max is one bad corner. For the predictor: bias biases the whole arc (villain); random scatter averages ~1/√N over the arc fit (forgiving).
+
+Axis reality (side-on, camera ~20° from vertical): person LEFT, rebounder RIGHT, ball travels left↔right + up↔down = the STRONG stereo axes (across-image). Rebounder WIDTH = into-image = camera depth = the WEAK axis, and that is where the ±100 mm budget sits. Board-frame per-axis numbers are in the board frame, not the person/rebounder frame - to report precision in operational axes you rotate the existing residuals by a camera→world matrix (needs a vertical reference: plumb / board-on-level-floor / verified vertical edge; the ~20° is nominal and unverified against gravity). No re-shoot needed - residual vectors are frame-independent. CONFIRMED world-frame precision (img_0036, ~4.9 m, guardrails passed - baseline⊥up 89.4°, weak axis = width as expected): X (person→rebounder) 1.51 mm, Y (width, WEAK) 2.40 mm, Z (up) 1.58 mm. Width ~40× inside the ±100 mm budget. Single-board/5m-local/slightly optimistic (tilt-mixing); conservatively ~5 mm → still order-of-magnitude inside budget. A definitive volume-wide weak-axis number would need points spread through the flight volume, but the margin makes that unnecessary.
+
+Frame pairing by SensorTimestamp. Mount rigidly (box-section/plate, bolted, dowel-located) - no friction clamps.
+
+File/folder conventions: solved geometry → calibration_outputs/<session>/; raw captures → data/<session>/; validation outputs sub-foldered by analysis (results/board_frame/, results/world_frame/, results/corner_debug/) - never mix analyses in one folder. Shared code: src/stereo/triangulate.py (triangulate_points), src/calibration/extrinsic/solve_extrinsic.py (detect_corners, mono_solve_pose, OBJP, corner-order safety), src/registration/ (labelling + validation). OpenCV convention throughout (origin top-left, x right, y down, floats).
+
+4.9 Stereo test plan — TWO captures, mined multiple ways
+
+(Naming discipline: there is a static capture and an arc capture. Do not renumber into "test 1/2/3" — the old vertical-bounce test is dropped; the arc capture's only-moving-ball-with-known-position job is better served by Link B.)
+
+STATIC CAPTURE (library; gym spot-check):
+
+Ball at known positions on a square grid. Output: Link A geometry/calibration width resolution (manual labels), per-axis error (width = headline).
+Grid construction: in the gym, reference off the painted court lines (straight, perpendicular, permanent — fast, repeatable). In the library (no lines): string + 3-4-5 (use 6-8-10 at scale) to square one corner, complete the rectangle, check both diagonals equal. Borrow a laser distance measurer (time-of-flight; mm-grade) to verify diagonals + stand-off + the rebounder-centre offset. Target ground truth ~±2 cm.
+Grid range: X (along flight) ~5 stations 1–5 m; Y (width from rebounder centre) −0.5, 0, +0.5 (edges + centre), optionally ±0.6 just outside; a few Z heights at selected points to check distortion-at-height. (Width error is ~flat across Y at constant stand-off, so 3 Y points suffice; keep the X stations cheap.)
+Transfer logic: full grid once in the library (validates method) + a quick spot-check (a few court-line-referenced points) each gym session to confirm that mounting's calibration is as good → then the library's geometry number stands for the gym. No full grid in the gym.
+
+ARC CAPTURE (library for method, gym for headline):
+
+Thrown flights spanning the envelope (speed, angle, arrival point). Large dataset; bin post-hoc by detected angle/velocity (the supervisor's fix for non-reproducible manual throws). Spot-check a manual sample to verify bins + detection; do NOT hand-label all 60 (~30 hrs) — automate, spot-check, justify sampling, document limitations. Mined three ways:
+Link B (detection accuracy): hand-label a stratified ~10–12 flights (weight the fast leaving-hand regime), run detection on the same frames, compare detection-xyz vs manual-xyz per frame.
+Pattern A (predictor validation — the core): fit the first N frames → predict → compare to that flight's own later triangulated points. Sweep N ≈ 5–25 (the literature band). Plot prediction error vs N; the minimum acceptable N × frame interval = prediction lead time → feeds the timing budget. Per-axis metrics (mm). Predict to the rebounder plane, not the distant floor (short, operationally-relevant extrapolation — avoids conflating predictor quality with extrapolation distance).
+Landing-on-target (external, BONUS): targeted arcs onto known grid points; compare predicted vs physically measured landing → validates the whole chain (beyond most of the literature; Miyazaki's 150-ball target test is the precedent). Fragile (hand-throws scatter); capstone, not diagnostic; can't decompose error sources.
+5. Prediction (physics, not ML)
+Model: gravity + quadratic drag (F_D ∝ −|V|·V), coupled 3D (drag depends on the velocity magnitude). Spin omitted. (Zhang, Chen, Andersson, Ji all model-based; Ji notes ML inference is too slow for real-time.)
+Fit: least squares to the initial observed points (Zhang/Chen). Not Kalman as the primary — Andersson found non-linear Kalman too slow and fell back to least-squares + feed-forward. (2D Kalman only as a tracking-coast fallback if dropouts break a track.)
+Drag coefficient: fit from your own flights (Zhang's overlay-and-pick-best-fit method) — do NOT assume a table-tennis constant; volleyball drag differs.
+Validation ground truth = the ball's own later observations (field standard; Andersson explicitly lacks an independent measurement). The external landing-on-target check goes beyond the literature.
+Lit N values: Andersson 5, Miyazaki 8, Zhang 10, Yang 20, Chen 25 (justifies the 5–25 sweep).
+Segment choice (semi-open): how much of the flight to observe is an output of the N-sweep traded against actuation lead time (more frames → better fit but less lead time; there is an optimum, not "more is better"). The reliably-detectable high-displacement window may have fewer frames than the predictor wants → that is where adaptive stride earns its place in deployment.
+6. Actuation (O4 — separate axis, descopable)
+Impulse mechanism: motor/stepper loads a spring; a solenoid releases a ratchet pawl; variable spring preload = energy modulation. Decouple the motor from load application (protect against impulsive back-driving); avoid motor impact during contact.
+Design equation: v_out = e·v_in + (1+e)·u, with u = required plate velocity at contact. Spring sized to deliver plate velocity (energy storage), not contact force. Use the normal velocity component for oblique impacts.
+HIL: pre-recorded/synthetic stereo xyz trajectories → Pi predictor → real electrical trigger → real mechanism; IMU on the scaled rebounder measures output velocity. No physical ball thrown at the mechanism. Stage A (actuation alone) → Stage B (prediction alone, Pattern A) → Stage C (closed loop) only after A+B.
+Manual validation done: passive angle alone is insufficient — measured ranges ~15–40° (receives→sets) and ~30–70° (sets→hits); active swing required. This is the headline actuation novelty.
+Timing budget (supervisor): ~480 ms (mean − 1 SD across hits/sets/receives). Within it: prediction budget (frames) + actuation budget. Hits = angle only (validated, no active swing). Sets/receives = full swing (harder/slower). Flight-duration lower bounds from the 62-flight set: ~480 ms hits, ~1057 ms sets/receives (two actuation regimes).
+7. Mesh characterisation (O3)
+Volleyball drop tests. Normal impact: drop vertically, vision measures inbound + outbound velocity → COR. Oblique impact: tilt the mesh to set incidence angle, centre impact. Sweep inbound velocity (drop height), incidence angle, impact location → input-output velocity map.
+Protocol anchors (from the papers): Ghaednia 2015 — velocity 0.5–4.5 m/s (drop heights 0.025–1.031 m), angles 0/15/30/45/57°, ≥3 reps/condition, COR ~constant over the low-velocity range, friction via tangential/normal impulse ratio. Agüero 2022 — velocity 0.25–1.0 m/s, centre only, COR weakly velocity-dependent (sharp near the minimum rebound speed), ≥5 trials, std-dev error bars. Neither sweeps impact location — that is your addition. Agüero is normal-only (no oblique); Ghaednia covers oblique friction.
+Ground truth for a bouncing ball: use known anchor points (drop from a known height onto a marked grid point → two trustworthy 3D points on the path); rely on x,y stability + manual-vs-detection agreement for the rest; a marked pole/ruler gives rough z only (weakest measurement — never the headline).
+8. Data strategy (supervisor, 26-06-22)
+Concern: manual data collection introduces reproducibility variance; fatigue degrades launch consistency across reps; ground-truth quality depends on input consistency. No ball machine available.
+Recommended: collect a large dataset, bin by detected angle/velocity using the vision system itself, verify bins with a manual spot-check, automate labelling, justify the sampling approach and document its limitations. Manual labelling of all ~60 (~30 hrs) not required.
+Bar: "good enough to prove the point" — novel + properly analysed + learning outcomes met is sufficient.
+OPEN (owner deferred): number of bins and throws per bin. Confirm with supervisor that "enough per bin" means validation coverage (~8–12/bin), NOT a revived ML demand for ~100/bin — prediction is physics, so per-bin counts are for coverage across conditions, not classifier training. Fewer bins (4–6) may be more realistic for a solo thrower than 9.
+9. Literature mapping
+Ghaednia 2015 (oblique tennis-ball/racket impact) → oblique impact model structure + friction protocol.
+Agüero 2022 (rigid sphere on elastic membrane) → mesh methodology template; closest theoretical foundation for the novel contribution.
+Chen 2010, Ji 2021 (table-tennis, model-based prediction) → physics-prediction reference; both pick model-based; Ji: ML too slow.
+Zhang 2010, Yang 2021 (table-tennis vision) → sync, frame rates, GSP centroid, drag-fit-by-overlay.
+Andersson 1988 (Bell Labs ping-pong) → trajectory/control/real-time framing; least-squares over Kalman; validates z via measured g; temporal-updating (act on 5 frames, refine as the ball approaches).
+Takahashi 2016, Gomez 2014, Chen 2012 (volleyball CV, mostly post-hoc) → Gomez background-subtraction avoids apex dropout; Chen 2012 single-cam volleyball 140–180 mm.
+Miyazaki 2002 (virtual targets) → 150-ball physical-landing validation precedent.
+10. Tooling
+Vision SW: Picamera2, OpenCV, Python; FrameDurationLimits, post_callback, SensorTimestamp. Arduino IDE 2 (CH340 driver), VS Code Remote-SSH.
+Labelling: 2-click labeller over PNG frames; click on opposite edges across the motion-blur direction (left-right for vertical motion); midpoint = centre, distance = diameter; manual diameter (detector area unreliable); origin top-left (matches detector u,v); subtract padding, invert zoom; two-corner check before a flight. Noise floor ~0.87 px 2D (1σ); displacement noise ~1.23 px (≈80% of signal at apex → report apex displacement as a bound, with ±0.033 normalised error bars).
+Report: Overleaf, IEEEtran two-column; figure* for double-column floats; tabularx + booktabs; manual \bibitem IEEE.
+Excel: Claude-for-Excel add-in (sidebar); don't edit the workbook mid-task; duplicate the sheet first (labelling data took hours).
+Version control: private GitHub repo, GitHub Desktop; data/ and .claude/ git-ignored; pause OneDrive before .git operations.
+NotebookLM (has the paper corpus): use for grounding — "what did these papers do, with citations" (its answers have been excellent). Do NOT outsource methodology design to it — it knows the corpus, not the rig's constraints (1-DOF, 850 mm, 5 m, hit/miss-not-precision). Precedent = NotebookLM; adaptation to constraints = owner + Claude. The best moves this project (error decomposition, predict-to-rebounder-plane) came from rig reasoning, not the corpus.
+11. People & places
+Supervisor: David Boyle (david.boyle@imperial.ac.uk).
+Safety admin: Ingrid Logan-Rivers.
+Dr. Mazdak Ghajari (HEAD Lab) — impact facilities; his ball machine is inaccessible (PL-spec).
+Security: 4444 (internal), 020 7589 1000 (mobile); SafeZone app. Ethos Gym 5th Court (vision, access GRANTED, RA approved — 13 hazards, lone working, waste). Dyson lab (mechanical). Confirm assembly point + WEEE bin on site.
+12. Open items for the new chat
+
+Calibration/triangulation is DONE (§4.8) - do not re-open it. The priority is now the predictor.
+
+World-frame precision run — DONE, guardrails PASSED. Vertical reference clicked (wall edge), residuals rotated into person→rebounder / width / up on img_0036 (~4.9 m). Baseline⊥up = 89.4° (rig square side-on confirmed); weak axis correctly came out as Y_world (width/depth). Per-axis precision: X (person→rebounder) 1.51 mm, Y (width, weak) 2.40 mm, Z (up) 1.58 mm. Width is ~40× inside the ±100 mm budget. Caveat: single-board, 5m-local, slightly optimistic (tilt-mixing); "up" reference was short (~925 mm) but passed the 90° check comfortably. Even conservatively bounded (~5 mm) it stays an order of magnitude inside budget. Triangulation is fully characterised - move on.
+Arc capture → Link B (detection error) → Pattern A (predictor). THE priority. The predictor error (predicted rebounder-plane crossing vs observed), not triangulation, is what the ±100 mm actually constrains. Zhang 6.5 mm / Chen <10 mm are the benchmarks (but table-tennis at 1-2 m; yours looser at 5 m).
+Manual-labelling-error bound (click-repeatability test) - plugs the gap in the A/B/C budget (§4.6).
+Mount angle (10° vs 20°) + final stand-off — in-frame empirical test.
+Bin count + throws/bin (deferred) — confirm with supervisor it's for validation coverage (~8-12/bin), not ML training.
+Segment choice (how much of the flight) — output of the Pattern-A N-sweep vs actuation lead time.
+Constrain-it-out viability given non-reproducible input — bin and characterise the spread.
+Storage-ceiling arithmetic + transfer cadence before each gym session.
+13. Reminders for the new chat
+The Interim Report (25 June) is the scope authority. Full-scale volleyball for vision/prediction/mesh; only actuation scaled. See §0 for dead framings.
+Mech-eng background, thin on CV/ML — first principles, plain language.
+Advisor mode (§1): challenge first, confidence tags, uncomfortable truth first, hold under pushback, no em-dashes, terse. Owner pushes back and is usually right — reconsider, don't restate.
+Decided, not open: side-on placement; free-running sync (hardware trigger = contingency); calibration + triangulation validated and inside spec (§4.8) - do not re-open, move to the predictor.
+Extrinsics ≠ world-registration (different transforms; the 88 mm was registration, not triangulation - §4.8). Extrinsics survive transport with cameras rigidly clamped; world-registration is per-session.
+Self-consistency ≠ accuracy: convergence and low reprojection RMS never prove accuracy - only external ground truth (checkerboard distances) does.
+Owner over-scopes analysis on development (library) data — steer to: illustrative result from library, headline number from the gym.
+Maintenance: this is one large file — update in place and date the change at the top when the next shift lands (placement angle decided, first gym data in). Re-read with "is this still true?"; stale residue is the main failure mode (it bit us once already — see §0).
