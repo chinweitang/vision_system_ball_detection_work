@@ -1,11 +1,10 @@
-const todos = [
- # Todos - 2026-07-25
+# Todos - 2026-07-25
 
 ## Critical / Blocking
 
 - [ ] Double-check triangulation timestamp offset is under 7ms
       - Re-verify **per session**, not once - sync offset is stable within a session but random between sessions.
-- [ ] 21/07 flights (flight 61 onwards) use a **new world frame**
+- [x] 21/07 flights (flight 61 onwards) use a **new world frame**
       - Do not mix with pre-flight-61 world registration in any batch analysis. Flag in filenames or a session manifest.
 
 ## Detection Validation
@@ -84,3 +83,30 @@ const todos = [
 - Should I also try an appearance based approach like hough detection just to see how good it is? 
 - but i guess like with the artifact audit run on all flights - it's already picked up some of the false detections e.g like the hands being picked up rihgt? Can that be used to make the detection rate more accurate - like with artifact audit, when it picks up stuff that doesn't fit the trajectory, you kind of know it's a incorrect detection then no? 
 - I don't fully understand how Trajectory-consistency filter works and teh alternatives rejected
+
+
+# Post flight binning & sync correction
+## data\flight_binning\flight_velocity_angle.csv
+- ok so I'm looking at the acceleration magnitudes and gravity cross check angle diff (difference between fitted gravity angle and down) and they're quite a bit off
+    - quite a few of them are quite different from 9.81 for acceleration
+    - a lot of the angle diff are like 20-30 degrees - quite different from down
+
+## data\sync_correction_validation_tuned_detections
+- so I'm looking at the pngs like data\sync_correction_validation_tuned_detections\flight_120_shift.png, the arcs actually look quite good - i feel like the detections are pretty good
+
+
+## Questions / thoughts:
+- how am i 100% sure that gravity only trajectory fitting isn't working? yes there's the RMS from data\sync_correction_validation_tuned_detections\residual_comparison.csv however what matters in teh end of the day is the end-to-end pipeline error - like the error in detection. So 
+    - try different trajectory fittings like gravity + drag - compare their predictions to a final manually labelled point 
+        - sweep different N frames - but the thing is all flights have different number of frames so how do I put all flights N sweeping for different trajectry fittings onto one graph
+        - should i labelled the final point on all flights? it's like ~300 images - not too bad - i've labelled already like ~300 for the 2 flights - like do i have to take a stratified sample
+        - Also do i label the very final point since I'm using 3 frame approach so there's some frames I'm not using e.g first and last frame
+        - also I need to apply pixel velocity correction as well
+
+- also I need to understand more about how gravity + drag fitting works. Some papers were talking about K - or like trying different Ks. Like the drag coefficient. 
+    - dv/dt = g - k·|v|·v
+        - to get the k, there's 2 methods: nonlinear fit (numerically integrate ODE - RK4) or grid sweep over Ks
+        - starts with grid sweep, then get a rough K then do nonlinear fit. But does that mean that you fit the K over the whole flight trajectory not do prediction initially? Like compare different Ks for fitting with gravity only for the full trajectory then can compare the residuals? 
+
+- from claude 'The biggest-blob/hand-pickup bug (flight_50/flight_12) is real but lower-leverage right now. It's confirmed and localized to specific flights where a sustained false run clears min_run_length. Worth fixing eventually, but it doesn't explain today's findings — flight_60/flight_92's degraded fits, and 79% of binner rows landing outside the tight gravity band, happen on flights with clean, smooth per-camera trajectories. The model-degree gap is systemic (every flight); the candidate-selection bug is a rare contaminant. Fix the thing that's silently biasing every number first.' 
+- I have multiple implementations of trajectory fitting - there needs to be common centralised method for trajectory fitting

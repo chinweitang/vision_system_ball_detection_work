@@ -337,11 +337,256 @@ flagged as "out of scope, asking first" rather than created unilaterally.
 
 ---
 
-*Scope note: this log covers the whole session (both the detector-tuning
-work and the `claude_rules.md` rewrite), numbered continuously rather than
-split into separate lists, since both involved genuine decisions with
-rejected alternatives. Execution details without a real competing
-alternative (e.g. exact pixel margins chosen for a given exclusion zone,
-which followed directly from the safety-check data rather than a judgment
-call) are covered in the worklog's evidence trail, not repeated here as
+## Pixel-velocity sync correction (error-budget term C)
+
+Cross-referenced against
+`claude/claude_logs/2026-07-25_pixel_velocity_sync_correction_worklog.md`,
+which has the full narrative/evidence for each of these.
+
+**27. Use `calibration_outputs/2026_07_21/test2/stereo_extrinsic.npz` for
+triangulation, not the top-level `calibration_outputs/2026_07_21/stereo_extrinsic.npz`.**
+Both exist, committed together 4 minutes apart with no notes distinguishing
+them. Chose `test2` for its tighter RMS (0.4087px vs 0.4757px) and baseline
+closer to the nominal 850mm (848.91mm vs 853.76mm). **Alternative
+considered**: the top-level file (more raw pairs, 25/30 vs 23/24).
+**Rejected** in favor of solve quality over raw pair count.
+
+**28. Correct sync per-flight, not per-session — re-derive the offset from
+each flight's own timestamps rather than one fixed session-wide constant.**
+Justified by the sync audit: residual drifts ~continuously across a session
+(`2026_07_15_gym`: +4.82 to -6.67ms; `2026_07_21_gym`: a larger drift that
+wraps the audit's bounded representation twice), not sitting at a fixed
+value. **Alternative considered**: measure one representative offset per
+session and apply it uniformly. **Rejected** because a fixed session
+constant would be off by several ms at either end of a drifting session -
+exactly the term-C error this task exists to remove.
+
+**29. Correction direction decided per-pair from the actual signed delta-t
+(whichever timestamp is earlier gets shifted forward), not a fixed "always
+correct camera X" rule.**
+Necessary because which camera leads flips sign mid-session (confirmed in
+the audit - residual crosses zero within `2026_07_21_gym` itself).
+**Alternative considered**: pick whichever camera the session-level average
+offset says leads, and always correct that one. **Rejected** since that
+would apply the shift backwards for roughly half of any drifting session.
+
+**30. Sub-frame velocity: unsmoothed finite difference between a point's
+nearest surviving temporal neighbors, not a fitted/smoothed estimate.**
+Chosen because the gap being corrected is sub-frame (a few ms out of
+~16.6ms) - deliberately kept simple rather than over-engineered for a
+small correction. **Still open, not rejected**: the 2026-07-25 tuned-
+detections rerun found the correction sometimes made results worse on
+lower-point-count flights, plausibly because one noisy neighbor-pair
+estimate has more room to overshoot with sparse data. A smoothed velocity
+estimate remains a live option pending further diagnosis - no decision made
+either way yet, since the same rerun surfaced two other confounding issues
+(decisions 33-34) that need resolving first to even isolate whether the
+velocity estimate itself is the problem.
+
+**31. Cross-camera pairing gap cutoff set to half a frame period (8.5ms),
+not 1.5x the frame period (25ms).**
+First implementation used 25ms, copying `stereo_flight_sync_table.py`'s
+`DROP_GAP_FACTOR` convention for detecting dropped frames within one
+camera's own sequence. Found wrong by direct testing: on `flight_5`, a
+per-camera coverage gap (3 frames dropped by the trajectory filter) let 3
+stale nearest-timestamp matches (~16-17ms gaps, under the 25ms cutoff)
+through, each reusing the same stale cam1 point for multiple different
+cam0 frames - one of them 100mm+ of triangulation error. **Alternative
+considered**: keep 25ms, matching the existing convention. **Rejected**
+because that threshold answers a different question (dropped frames within
+one camera). The correct bound for a genuine cross-camera correspondence is
+half the frame period - the sync audit already establishes real offsets
+never exceed that range.
+
+**32. `triangulate_flight.py`'s "naive" mode uses RAW (unfiltered)
+detections with same-index pairing; "paired_only"/"corrected" use the
+per-camera trajectory-filtered set.**
+Chose this asymmetry because "naive" represents what the pipeline does
+TODAY if nothing changes - today's pipeline doesn't run the trajectory
+filter before triangulating. **Alternative considered**: apply the same
+filtering to all 3 modes so only pairing/correction differs. **Rejected**
+as answering a subtly different, less useful question - "naive" needs to be
+the real as-is baseline, not a hypothetical already-filtered one, for the
+3-mode comparison to mean anything.
+
+**33. Fixed a stale-data bug: load ball detections from the final-tuned-
+detector output (`data/detector_tuning/detections/...`), not each flight's
+own `analysis_3/*_detections3.csv`.**
+Confirmed directly (`flight_5_cam0`: 19 rows in `analysis_3` vs 37 in the
+tuned-detector output) that `analysis_3` was stale, pre-tuning baseline
+detector output, not the current ~97%-recall detector. **Alternative
+considered**: keep using `analysis_3` since it was already wired up.
+**Rejected** once confirmed - validating the sync correction against stale,
+sparse detections both understated real point density and (per decision
+34) risked confusing a fit-methodology artifact with a property of the
+correction itself.
+
+**34. After the tuned-detections rerun showed worse residuals almost
+everywhere, investigated the cause rather than concluding "the correction
+doesn't help."**
+Found that detection SPAN, not just density, grew substantially (e.g.
+`flight_60`: 27 frames pre-tuning vs 92 frames tuned - the whole arc
+instead of a short late segment). This likely confounds the fit-based
+comparison, since a bare quadratic-in-time is a much worse global model
+over a full rise-apex-descent arc than over a short segment (context.md's
+own physics model needs drag precisely because a pure parabola isn't
+sufficient over a full flight). **Alternative considered**: report the
+worse numbers as a finding that the correction/pairing doesn't help.
+**Rejected** as premature - concluding anything about the correction
+method from numbers produced by a validation methodology that may no
+longer isolate the thing being tested risks being wrong for an unrelated
+reason. No fix decided yet; flagged for the user before proceeding.
+
+**35. Root-caused `flight_50`'s 657mm outlier by checking cam1 specifically
+(not just cam0) and viewing the actual contact-sheet frames, rather than
+accepting "widest arc in the sample" as sufficient explanation.**
+The arc-length theory was tempting (`flight_50`'s u-span was the widest of
+the sample) but didn't hold up numerically (only modestly wider than the
+next-widest flight, not the 10-20x the residual gap would imply). Checking
+cam1's frame-to-frame speed found a single 1121px/frame jump (vs. 9-29
+px/frame everywhere else) at frame 116; the contact sheet confirmed the
+detector locks onto a person crouched in-frame from that point on, tracked
+as if it were the ball. **Alternative considered**: accept the arc-length
+theory and move on, since it was a plausible-sounding, cheaper explanation.
+**Rejected** because the numbers didn't actually support it, and stopping
+there would have missed a real, generalizable finding - the trajectory
+filter's `min_run_length` gate doesn't protect against an artifact that
+sustains its own internally-smooth run of detections.
+
+---
+
+## Flight velocity/angle binner
+
+Cross-referenced against
+`claude/claude_logs/2026-07-25_flight_velocity_angle_binner_worklog.md`,
+which has the full narrative/evidence for each of these.
+
+**36. World-frame "up" reference: `solve_world_frame()` (checkerboard-pose
+solve), not `world_frame_precision_single.py`'s manually-clicked vertical
+line.**
+That script's guardrails need a vertical-line CSV produced by an interactive
+GUI click tool; no such data exists for either `2026_07_21_gym` or
+`2026_07_15_gym` (the only one that exists is for a different, unrelated
+session, and world-registration doesn't survive across sessions).
+**Alternatives considered (put to the user directly, via AskUserQuestion)**:
+(a) eyeball-estimate a vertical-line click myself from viewing the images and
+write the CSV directly; (b) have the user do the real manual clicking
+themselves, pausing the task until they did. **Rejected**: (a) because a
+GUI-free pixel estimate is far less precise than a real click-and-zoom, and
+this feeds the "up" reference for every flight's angle number; (b) not
+chosen by the user, who picked `solve_world_frame()` instead - already used
+elsewhere in this codebase (`predict_sweep.py`) for exactly this purpose, no
+manual step required. The guardrail CHECKS themselves (baseline-
+perpendicular-to-up angle, weak-axis-must-be-width, corner-residual
+precision) were kept, reused unmodified - only the source of `up_vec`
+changed.
+
+**37. Validated all 4 world-registration candidate images for
+`2026_07_15_gym`, rather than trusting the 2 that already had pre-existing
+corner-debug crops as sufficient evidence.**
+Only `img_0029`/`img_0030` had leftover corner-debug PNGs from some earlier,
+undocumented investigation - suggestive but not conclusive evidence that
+`img_0026`/`img_0028` were already ruled out. **Alternative considered**:
+skip validating `img_0026`/`img_0028` and assume the pre-existing debug
+images meant they'd already been tried and rejected. **Rejected** because
+the provenance was ambiguous (no note explaining why only those 2 had
+debug crops) and validating is cheap - running it confirmed the guess anyway
+(`img_0026`/`img_0028` had no detectable checkerboard at all), but that was
+verified, not assumed.
+
+**38. Regenerated detection CSVs at the CURRENT tuned detector config
+(`candidate_config.json` + exclusion mask v4), rather than continuing to
+feed the binner from each flight's existing `analysis_3/*_detections3.csv`.**
+The user pointed out mid-task that `analysis_3` predates the detector-tuning
+session entirely - it's the OLD/untuned default config (thresh=20, open_k=7,
+min_area=200, no exclusion mask), not the ~0.97-combined-rate tuned config.
+**Alternative considered**: keep using `analysis_3` since it was already
+wired up and the binner's own `filter_trajectory_outliers()` step provides
+some cleanup regardless. **Rejected** once flagged - continuing on stale,
+sparse, pre-tuning detections would have silently produced a
+worse/misleading distribution and defeated the point of the detector-tuning
+work already done.
+
+**39. New detection-CSV output centralized under
+`data/detector_tuning/detections/<stage>/<session>/`, not per-flight
+`analysis_4` folders.**
+The user asked directly which they should be, offering both options.
+**Alternative considered**: per-flight `analysis_4` subfolders (matching
+`04_stereo_three_frame_diff.py`'s original convention). **Rejected** in
+favor of mirroring decision 17 above (already made, for the same config, by
+this same user, one session earlier) - scattering ~150+37 flight folders
+across 2 session directories was already rejected as hard to browse in favor
+of centralizing under `data/detector_tuning/`, where this config's contact
+sheets and validated-results CSV already live.
+
+**40. Fit-window size (N) stayed frame-COUNT-based (moved from (5,10) to
+(20,30)), rather than switching to real-time-span-based windows.**
+Switching to the tuned (much denser) detector initially made results WORSE,
+not better (implausible-accel skip rate 23%->66%) - root-caused to "first N
+paired frames" now spanning only ~150ms of real time under the denser
+detector (vs. 166-350ms under the old sparse one), too short to resolve
+gravity's curvature against noise. **Alternatives considered (put to the
+user via AskUserQuestion)**: (a) keep frame-count windowing but raise N to
+empirically-verified stable values (20, 30); (b) redefine windows by target
+real-time span instead (e.g. "first ~200ms"/"first ~400ms" of paired
+frames), robust to future detector-density changes; (c) let the user specify
+custom values. User picked (a) - simpler, smaller code change, empirically
+verified (N=20 -> 0/29 implausible fits in a 30-flight check) - over (b)'s
+more-principled-but-larger refactor.
+
+**41. Multi-session flight list is derived from which tuned-detector
+detection CSVs actually exist on disk, not by re-walking/re-enumerating the
+raw `ball_flights` folder tree a second time inside the binner.**
+`11_generate_detections_csv.py` already resolves the (non-trivial, nested-
+subfolder) flight enumeration once per session when generating the CSVs.
+**Alternative considered**: re-implement the same nested-folder-safe
+enumeration inside the binner itself, and keep writing an explicit
+"skipped, missing csv" CSV row for every flight lacking completed
+`ball_in_frame` curation (matching the single-session version's behavior).
+**Rejected** as needless duplicated logic; changed the observable behavior
+as a side effect (uncurated flights are now a single per-session log count
+rather than individual CSV rows) - flagged as a real behavior change, not
+silently swapped.
+
+**42. Cross-session binning output relocated to a new top-level
+`data/flight_binning/`, not left under `data/2026_07_21_gym/flight_binning/`
+(where it was first written, single-session).**
+The user caught this mid-task: once the binner covered both sessions, its
+output no longer belonged under either session's own folder.
+**Alternative considered**: leave it where it was (already working, lowest
+effort). **Rejected** - user was right, a cross-session artifact nested
+under one session's folder is structurally misleading regardless of
+convenience. Per-session outputs (world-frame validation) correctly stayed
+under each session's own folder, since registration genuinely is a
+per-session concept and the binning result isn't.
+
+**43. Diagnosed the post-detector-swap accel-implausibility regression
+before reporting a distribution, rather than either reporting the worse
+numbers as-is or reverting to the stale detector.**
+Implausible-accel skips jumped from 23% to 66% immediately after switching
+to the tuned (better) detector - a counter-intuitive direction that could
+easily have been mistaken for "the tuned detector introduced a problem."
+**Alternatives considered**: (a) report the degraded distribution as the
+new, more-accurate answer since it came from better underlying detections;
+(b) revert to the stale detector on the theory that it was giving better
+numbers. **Rejected both** - (a) would have silently handed over a visibly
+worse, unexplained result; (b) would have reverted the exact fix the user
+had just asked for, based on a misdiagnosis (the detector wasn't the
+problem, the frame-count window's now-changed real-time meaning was).
+Diagnosing first (checked real-time span of the fit window across 30
+flights, then swept N directly to confirm the mechanism) found the actual
+cause and the actual fix (decision 40) - see the worklog's "unexpected: STOP
+immediately" reasoning for why this triggered a full stop rather than a
+silent proceed.
+
+---
+
+*Scope note: this log covers the whole session (detector tuning, the
+`claude_rules.md` rewrite, the pixel-velocity sync-correction task, and the
+flight velocity/angle binner task), numbered continuously rather than split
+into separate lists, since all four involved genuine decisions with rejected
+alternatives. Execution details without a real competing alternative (e.g.
+exact pixel margins chosen for a given exclusion zone, which followed
+directly from the safety-check data rather than a judgment call) are
+covered in the relevant worklog's evidence trail, not repeated here as
 numbered decisions.*
