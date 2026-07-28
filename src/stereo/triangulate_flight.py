@@ -38,6 +38,8 @@ from triangulate import triangulate_points  # noqa: E402
 from stereo_flight_sync_table import load_timestamps  # noqa: E402
 from pixel_velocity_correction import (  # noqa: E402
     load_detections3, build_corrected_pairs, DEFAULT_MAX_PAIR_GAP_MS)
+sys.path.insert(0, str(REPO_ROOT))
+from src.stereo.trajectory_fit import fit_constant_accel, predict_at  # noqa: E402
 
 DEFAULT_EXTRINSIC_2026_07_21 = REPO_ROOT / "calibration_outputs" / "2026_07_21" / "test2" / "stereo_extrinsic.npz"
 INTRINSICS_CAM0 = REPO_ROOT / "calibration_outputs" / "cam0_intrinsics_fisheye.npz"
@@ -106,16 +108,23 @@ def paired_only(kept0, kept1, ts0, ts1, max_pair_gap_ms=DEFAULT_MAX_PAIR_GAP_MS)
 
 
 def fit_quadratic_residual_rms(t_ms, xyz):
-    """Degree-2 polyfit per axis vs time -> per-axis + overall RMS residual
-    (mm, same units as the triangulation output, since T is in mm)."""
+    """Degree-2 fit per axis vs time -> per-axis + overall RMS residual (mm,
+    same units as the triangulation output, since T is in mm). Uses the
+    shared fit_constant_accel/predict_at (Model A) from trajectory_fit.py --
+    same polynomial family (p0 + v0*t + 0.5*a*t^2) as the old standalone
+    np.polyfit-per-axis call this replaced, just parametrized as
+    (p0, v0, a) instead of raw polyfit coefficients. Confirmed numerically
+    equivalent residuals (matches to float precision on a synthetic check;
+    see 2026-07-27 worklog) before this replacement -- t is centered on its
+    own mean first, matching the old convention (not required for
+    correctness, kept for numerical stability of the linear solve)."""
     t0 = np.asarray(t_ms, dtype=np.float64)
     t0 = t0 - t0.mean()
+    p0, v0, a = fit_constant_accel(t0, xyz)
+    fit = np.array([predict_at(p0, v0, a, tt) for tt in t0])
     residuals = {}
     for i, axis in enumerate("xyz"):
-        y = xyz[:, i]
-        coeffs = np.polyfit(t0, y, 2)
-        fit = np.polyval(coeffs, t0)
-        residuals[axis] = float(np.sqrt(np.mean((y - fit) ** 2)))
+        residuals[axis] = float(np.sqrt(np.mean((xyz[:, i] - fit[:, i]) ** 2)))
     overall = float(np.sqrt(np.mean([r ** 2 for r in residuals.values()])))
     return residuals, overall
 

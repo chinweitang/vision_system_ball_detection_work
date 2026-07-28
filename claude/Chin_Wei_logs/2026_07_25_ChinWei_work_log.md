@@ -110,3 +110,68 @@
 
 - from claude 'The biggest-blob/hand-pickup bug (flight_50/flight_12) is real but lower-leverage right now. It's confirmed and localized to specific flights where a sustained false run clears min_run_length. Worth fixing eventually, but it doesn't explain today's findings — flight_60/flight_92's degraded fits, and 79% of binner rows landing outside the tight gravity band, happen on flights with clean, smooth per-camera trajectories. The model-degree gap is systemic (every flight); the candidate-selection bug is a rare contaminant. Fix the thing that's silently biasing every number first.' 
 - I have multiple implementations of trajectory fitting - there needs to be common centralised method for trajectory fitting
+
+
+
+# post trajectory iteration stuff 
+
+## Looking at data\trajectory_fit_comparison\phase1\residual_vs_K.png
+
+- ok looking at the graph, the flight 01 and flight 22 have slightly different refined Ks - i think i should run this optimisation over all flights - just use the detection points instead of having to use manual labels so that the K value is more generalised for all flights
+    - however looking at data\trajectory_fit_comparison\phase1\residual_vs_K.png and data\trajectory_fit_comparison\phase2\prediction_sweep_flight_22.png, the gravity + drag have similarish errors - 100-200mm rms. Actually it seems like flight 1 might be a bit better than flight 2. Even though i would have thought that the K is more similar to the flight 22 K
+- how is pooled weighted done? by pooling the 2 flight points together then trying different Ks? 
+- how is K fitting done in papers? maybe generate a notebookLM prompt to ask the papers in the notebookLM how K is found?
+
+
+## data\trajectory_fit_comparison\phase1\models_full_arc_residual.png
+- for these 2 flights, gravity + drag is best, then fitting gravity, then fixed gravity
+- for headline number, need to run over all flights and aggregate
+
+## for prediction - data\trajectory_fit_comparison\phase2\prediction_sweep_flight_01.png and data\trajectory_fit_comparison\phase2\prediction_sweep_flight_22.png
+- errors ffor gravity + drag are in range 100-400mm error post 20 frames for flight 22 and under 200mm for fight 1 early on 
+- for fixed gravity and gravity + drag models, the error between label and detection doesn't seem that big - like 20mm - much less difference than fr the free gravity. this emphasises the importance for further improving detection accuracy less
+- free gravity is much more unstable at the start - massive errors. the fixed models are much more accurate for first few frames - can potentially provide a faster prediction. However for flight 1, free gravity drops below the fixed models for labels at around 13 frames. However free gravity is always worse than gravity + drag for flight 22. SO we need to run it on all flights to see if it's a pattern. 
+    - like potentially (not sure if it's possible) have a fusion model, like at the start fixed model to have the early stability and good prediction, then use fitting later when it outperforms
+- should i also do a small K sweep for stage 2 prediction as well? 
+- for flight 22, there's a massive error spike a bit past 40 frames because of a detection error when it picks up the hand (looking at data\detector_tuning\contact_sheets\03_stride1_thresh16_openk3_area30_circ0.3\2026_07_15_gym_flight_22_cam1_contact.png). Need to build something to handle this error before feeding into the predictor otherwise it messes up the prediction. So it needs to be handled somewhere in the pipeline earlier on. I think there's multiplle options:
+    - Need to imporve the blob detection algorithm because I think it picks up the biggest blob right? Need to handle that. Like implement trajectory filtering in blob detection - like if the blob isn't in the trajectory arc, don't use it
+    - or could also implement in prediction - like if the point doesn't fit the 
+    - also how will a non detection be handled for prediction
+    - maybe look into implementing RANSAC model? exactly how does it work? it's good for rejecting points right? 
+
+
+## overall
+- but what even is my target error? 100mm? 
+
+## next steps:
+- [x] prompting notebookLM:
+
+- [] need to handle the bad detections corrupting the prediction
+    - [x] try RANSAC first. 
+        - if that doesn't wokr, might need to implement a detector level correction - like improve blob detection to not just pick up the biggest blob - using some trajectory logic - if the blob candidate doesn't fit the trajectory, get rid of it
+
+- need to also try the non linear K fit - after getting a K starting point? see if the non linear K fitting outperforms the K from the sweep? 
+    - do i do the non linear K fitting in the full trajectory to find the K then compare the accuracy in prediction for fixed gravity, free gravity, K from sweep, K from non linear fit?
+
+- [] generalise to all flights
+    - run the K picker over all flights to pick K
+    - need to run prediction over all flights - the final points have all been labelled. 
+    
+- also need to remember to do correct timestamp pairing and pixel velocity offset when doing triangulation - has this been done for the last test? 
+- maybe i should generate like a system diagram so that i can see the full data pipeline? then I can see the full pipeline easier and which points I can optimise. ALso i'm getting confused what is implemented where. Like the trajaectory filter? where is that implemented? is that part of blob detection? 
+- feel like everthing is slightly messy - like i not sure what is handled where. like there might be code duplications, and like i'm not sure what is run e.g for this test, i;'m not sure if the timestamp frame matching and pixle offset is done for triangulation. 
+
+
+## From notebookLM
+- gravity is fixed value not fitted
+- everyone uses gravity + drag
+- most papers use Least Mean Square (LSM) method for model fitting. 
+    - one paper used RANSAC method for estimating initial parameters
+    - one paper fit the initial velocity via iterative feedback correction loop based on position feedback
+- everyone optimses K with a sweep - trying to minimise residuals 
+
+
+## RANSAC
+- rejects the outliers well for flight 22 - data\trajectory_fit_comparison\phase2\prediction_sweep_ransac_flight_22.png
+- it's worked very well 
+- but flags a lot of frames at higher N 

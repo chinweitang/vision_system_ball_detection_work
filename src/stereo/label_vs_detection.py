@@ -33,6 +33,12 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+HERE      = Path(__file__).resolve().parent
+REPO_ROOT = HERE.parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from src.stereo.trajectory_fit import fit_parabola_axis  # noqa: E402
+
 FRAME_DT = 16.652e-3  # s per frame, as given
 
 # ---- validation-gate expectations (see VALIDATION GATE section of main()) ----
@@ -115,11 +121,7 @@ def project_fisheye(xyz, K, D, rvec, tvec):
     return img.reshape(-1, 2)
 
 
-def fit_parabola_axis(t, p):
-    """p(t) = p0 + v0*t + 0.5*a*t^2, least squares. Returns (p0, v0, a)."""
-    A = np.stack([np.ones_like(t), t, 0.5 * t ** 2], axis=1)
-    coef, *_ = np.linalg.lstsq(A, p, rcond=None)
-    return coef
+from src.stereo.trajectory_fit import fit_parabola_axis  # noqa: E402
 
 
 # ---- summary txt ---------------------------------------------------------

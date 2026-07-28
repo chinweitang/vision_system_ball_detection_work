@@ -12,7 +12,7 @@
 #   triangulate, load_calib, ACCEL_HARD_LO/HI, ACCEL_NOMINAL_LO/HI, FRAME_DT
 #       <- src/stereo/label_vs_detection.py
 #   fit_constant_accel
-#       <- src/stereo/predict_sweep.py
+#       <- src/stereo/trajectory_fit.py
 #   filter_trajectory_outliers
 #       <- src/image_processing/02_adjacent_frame_differencing/detector_core.py
 #          (imported via a sys.path trick, matching the existing pattern used
@@ -64,7 +64,7 @@ from src.stereo.label_vs_detection import (
     triangulate, load_calib, ACCEL_HARD_LO, ACCEL_HARD_HI,
     ACCEL_NOMINAL_LO, ACCEL_NOMINAL_HI, FRAME_DT,
 )
-from src.stereo.predict_sweep import fit_constant_accel
+from src.stereo.trajectory_fit import fit_constant_accel
 
 DETECTOR_DIR = ROOT / "src" / "image_processing" / "02_adjacent_frame_differencing"
 if str(DETECTOR_DIR) not in sys.path:

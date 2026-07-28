@@ -292,3 +292,25 @@ Output confirms: "Target queue: 326 total (252/74)" and "Output CSV: ...
 (38 target(s) already labelled)" -- correctly recognizes the existing 19
 flights and will resume at flight_20/cam0, using the new paired-selection
 logic for everything from here on.
+
+## [complete] User finished the ENTIRE queue in one sitting
+
+Background task `bd0ftvz3s` completed (exit 0) -- notification arrived as
+a background-task event, not a user message, so verified everything
+against the actual CSV before reporting rather than trusting the log tail's
+"Quit." alone.
+
+`data/final_point_labels/final_point_labels.csv`: **326/326 rows, one per
+target, 0 duplicate keys** (the log tail showed
+`2026_07_15_gym/flight_60/cam1` printed twice -- a re-save of the same key,
+not a duplicate row, confirmed by the unique-key count matching row count
+exactly). Session split: 252 `2026_07_21_gym` + 74 `2026_07_15_gym`,
+exactly matching the verified queue counts. **6 "no ball visible" rows**
+(empty click/centroid/diameter, session+flight+cam+frame_number still
+recorded): `2026_07_21_gym` flight_50/cam1, flight_74/cam1, flight_80/cam1,
+flight_88/cam1; `2026_07_15_gym` flight_13/cam0 AND cam1 (both cams -- the
+only flight with neither camera producing a labellable frame).
+
+Labelling is DONE. Task complete: tool built, sync-pairing bug found and
+fixed mid-task (verified against real Δt numbers before resuming), and the
+user has now fully labelled all 326 real-time-paired final points.

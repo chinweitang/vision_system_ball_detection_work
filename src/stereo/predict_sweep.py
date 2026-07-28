@@ -33,9 +33,10 @@ HERE      = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 from src.stereo.label_vs_detection import (
-    load_points_csv, load_calib, triangulate, fit_parabola_axis,
+    load_points_csv, load_calib, triangulate,
 )
 from src.stereo.world_registration import solve_world_frame, world_transform
+from src.stereo.trajectory_fit import fit_constant_accel, predict_at
 
 DEFAULT_WORLD_IMAGE = (REPO_ROOT / "data" / "2026_07_15_gym" /
                         "world_registration&rebounder_registration" / "cam0" / "img_0030.png")
@@ -50,21 +51,6 @@ def gate_stop(msg):
     print(f"\n*** VALIDATION GATE FAILED: {msg}")
     print("*** Stopping.")
     sys.exit(1)
-
-
-def fit_constant_accel(t, xyz):
-    """Fit p(t) = p0 + v0*t + 0.5*a*t^2 per axis (free a, no imposed gravity
-    direction -- gravity is not axis-aligned in an arbitrary camera frame).
-    Returns (p0, v0, a) each as a 3-vector, reusing fit_parabola_axis verbatim
-    per axis (identical model to label_vs_detection.py's own gate)."""
-    p0 = np.zeros(3); v0 = np.zeros(3); a = np.zeros(3)
-    for ax in range(3):
-        p0[ax], v0[ax], a[ax] = fit_parabola_axis(t, xyz[:, ax])
-    return p0, v0, a
-
-
-def predict_at(p0, v0, a, t):
-    return p0 + v0 * t + 0.5 * a * t ** 2
 
 
 def main():
