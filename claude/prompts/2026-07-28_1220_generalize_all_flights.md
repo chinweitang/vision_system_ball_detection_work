@@ -71,7 +71,9 @@ drag help, and by how much, across the real dataset" instead of a 2-flight anecd
    lesson from the binner's own N=5/10-vs-N=20/30 problem), y-axis `error_mm` —
    with a binned median/IQR trend line per model overlaid. Plus a summary table:
    median and p90 error per model at a handful of representative lead times (e.g.
-   100/300/500/1000ms).
+   100/300/500/1000ms). Exact filenames for this and every other output are in the
+   OUTPUT FILES section below — that section is the authoritative list, don't
+   improvise different names/locations.
 
 6. **RANSAC health-check flag**: for each `(flight, model, N)`, compute the
    rejected-point fraction, bucket by lead-time (not raw N), and flag a flight as
@@ -188,9 +190,9 @@ SCOPE - WHAT TO DO
 4. Fit the final pooled K via one joint nonlinear fit across all flights'
    RANSAC-inlier points (decision #4).
 
-5. Report the velocity-vs-K correlation finding (coefficient, direction, a scatter
-   plot), the distribution of per-flight K estimates (and how many flights had
-   "insufficient data"), and the final pooled K.
+5. Produce all `phase1/` outputs per the OUTPUT FILES section above, and report
+   the velocity-vs-K correlation finding, the per-flight K distribution (including
+   how many flights had "insufficient data"), and the final pooled K.
 
 6. **Checkpoint 1 — conditional (decision #8)**: log the full Phase 1 summary
    regardless. STOP and wait for direction only if one of decision #8's three
@@ -202,17 +204,19 @@ SCOPE - WHAT TO DO
    held-out target: triangulate that flight's labelled cam0/cam1 pair (already
    correctly timestamp-paired at labelling time) to get the target position. Sweep
    N (per-flight, same mechanism as before), fit Models A/B/C with RANSAC (K fixed
-   from step 4/Checkpoint 1), on both label-track and detector-track data where
-   both exist. Apply the RANSAC health-check flag (decision #6).
+   from step 4/Checkpoint 1) on the DETECTOR track for every flight — only
+   flight_01/flight_22 have a label track at all, so there is no population-scale
+   "label vs. detector" comparison to make here (that comparison stays a 2-flight
+   thing, already captured in the pilot's own outputs). Apply the RANSAC
+   health-check flag (decision #6).
 
-8. Produce the aggregated results per decision #5: pooled scatter + binned trend
-   per model, summary table, and a report of any RANSAC health-check-flagged
-   flights (with enough detail to look at them individually if needed).
+8. Produce all `phase2/` outputs per the OUTPUT FILES section above: the pooled
+   scatter + binned trend, the summary table, and the RANSAC health-check flags
+   with enough detail to look at any flagged flight individually.
 
-9. Save all outputs under a NEW location,
-   `data/trajectory_fit_comparison/all_flights/` — do not touch or overwrite the
-   existing `phase1/`/`phase2/` folders (those are the validated 2-flight pilot,
-   keep them as a reference point).
+9. All outputs go under `data/trajectory_fit_comparison/all_flights/` per the
+   OUTPUT FILES section — do not touch or overwrite the existing `phase1/`/`phase2/`
+   folders (those are the validated 2-flight pilot, keep them as a reference point).
 
 10. **STOP at Checkpoint 2**: report the full aggregate finding — does drag help,
     by how much, at which lead times, across the real dataset — plus the
@@ -303,8 +307,9 @@ SUCCESS CRITERIA
    with the pooled-scatter-plus-trend visualization and summary table
 ✅ RANSAC health-check flags only anomalies relative to same-lead-time peers, not
    the already-understood large-N effect
-✅ All new output under `data/trajectory_fit_comparison/all_flights/`; existing
-   pilot outputs untouched
+✅ All 12 files named in the OUTPUT FILES section exist at their exact specified
+   paths under `data/trajectory_fit_comparison/all_flights/{phase1,phase2}/`;
+   existing pilot outputs untouched
 ✅ Existing worklog continued, updated in real time throughout
 ✅ No commits made
 

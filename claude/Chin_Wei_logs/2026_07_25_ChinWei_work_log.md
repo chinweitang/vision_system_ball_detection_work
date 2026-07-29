@@ -153,11 +153,11 @@
 - need to also try the non linear K fit - after getting a K starting point? see if the non linear K fitting outperforms the K from the sweep? 
     - do i do the non linear K fitting in the full trajectory to find the K then compare the accuracy in prediction for fixed gravity, free gravity, K from sweep, K from non linear fit?
 
-- [] generalise to all flights
+- [x] generalise to all flights
     - run the K picker over all flights to pick K
     - need to run prediction over all flights - the final points have all been labelled. 
     
-- also need to remember to do correct timestamp pairing and pixel velocity offset when doing triangulation - has this been done for the last test? 
+- [x] also need to remember to do correct timestamp pairing and pixel velocity offset when doing triangulation - has this been done for the last test? 
 - maybe i should generate like a system diagram so that i can see the full data pipeline? then I can see the full pipeline easier and which points I can optimise. ALso i'm getting confused what is implemented where. Like the trajaectory filter? where is that implemented? is that part of blob detection? 
 - feel like everthing is slightly messy - like i not sure what is handled where. like there might be code duplications, and like i'm not sure what is run e.g for this test, i;'m not sure if the timestamp frame matching and pixle offset is done for triangulation. 
 
@@ -175,3 +175,15 @@
 - rejects the outliers well for flight 22 - data\trajectory_fit_comparison\phase2\prediction_sweep_ransac_flight_22.png
 - it's worked very well 
 - but flags a lot of frames at higher N 
+
+
+
+- continue thinking about RANSAC over large N and how it has high rejection
+- also how prediction works if there's no pairs for that point in time? like does fitting work with time e.g if there's 3 frames skipped because of no pairs, is that time gap taken into account when I'm fitting pre gap and post gap points if that makes sense
+
+- also should teh timestamp be averaged between the 2 points? I thought i was running the correction so that which ever camera image is behind, it's corrected so that it corrected forwards to match the timestamp. e.g if cam 0 is beheind, stemp cam1 timestamp as t=0 abnd pixel correction all cam 0s forward in time based on the time offset? 
+
+# running on all flights
+- the thing is, I'm not sure if I can be plotting prediction error vs lead time since all flights have different durations so it's not really a good plot. like if a flight is only 500ms, you're only using and the lead time is 400ms, then you're only using like not many frames for prediction whereas for a flight is 1500ms, at 500ms, you're using 1000ms for prediction which isn't like a fair comparison. 
+      - like maybe a better common metric is using N frames / time needed for prediction - e.g like 100ms for predicition so you're comparing the similar number of frames for prediction
+a

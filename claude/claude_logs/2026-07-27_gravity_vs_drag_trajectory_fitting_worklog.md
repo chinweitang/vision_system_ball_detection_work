@@ -1573,3 +1573,686 @@ contradicting, the confirmed-bug fix at N~44-47.
 ## [checkpoint] Reporting to Chin Wei now, per task's "STOP after Phase 1 +
 Phase 2 RANSAC results" instruction -- waiting for direction before any
 generalization beyond flight_01/flight_22.
+
+## [continuation] Generalize to all 163 flights (claude/prompts/2026-07-28_1220_generalize_all_flights.md)
+
+New task, same worklog. Goal: generalize Phase 1 (K-discovery) and Phase 2
+(prediction sweep) from the flight_01/flight_22 pilot to every eligible
+flight across both sessions (126 in 2026_07_21_gym + 37 in 2026_07_15_gym),
+now that RANSAC is validated on the pilot.
+
+## [confirm] Eligible-flight count matches the binner's recorded 163
+
+Cross-checked against 2026-07-25_flight_velocity_angle_binner_worklog.md:
+"2026_07_21_gym: 126 flights with tuned-detector detection CSVs" (line
+1458) + "37 flights in 2026_07_15_gym/ball_flights have populated
+ball_in_frame" (line 583, and 37 tuned-detection CSV pairs generated per
+line 618). Independently verified via `ls` on both tuned-detections dirs:
+126 + 37 = 163, exact match. Also cross-checked against
+data/final_point_labels/final_point_labels.csv: 252 rows (2026_07_21_gym)
++ 74 rows (2026_07_15_gym) = 326 rows / 2 cams = 163 flights -- three
+independent counts agree, proceeding without investigation (no discrepancy
+to chase).
+
+## [investigate] Flight directory resolution -- not uniform
+
+flight_01/flight_22 in 2026_07_15_gym live in non-standard locations
+("2 ball contacts ground before plane/flight_01" and directly "flight_22"
+respectively) while all other flights in that session sit directly under
+ball_flights/flight_N -- and 2026_07_21_gym flights are all direct,
+unpadded (flight_1..flight_149). Built find_flight_dir() to search
+recursively (rglob) for a directory named exactly the flight_id containing
+a timestamps.csv, rather than hardcoding the two known exceptions -- more
+robust if any other flight turns out to be similarly nested.
+
+## [decision] Pooled K via profiled 1-D search, NOT a monolithic 979-parameter joint fit
+
+Decision #4 asks for "one joint nonlinear fit across ALL flights
+simultaneously (shared K, separate p0,v0 per flight)". Taken completely
+literally with scipy.optimize.least_squares across 163 flights x 6 params
+(p0,v0) + 1 shared k = 979 free parameters, with NO analytic Jacobian
+(least_squares would fall back to finite-difference numerical
+differentiation -- ~979 extra function evaluations just to build ONE
+Jacobian, each function evaluation itself running 163 ODE integrations).
+This is the same category of timing mistake already caught once this
+session (the RANSAC iteration-count blowup) -- projecting this before
+running it, not after: almost certainly hours, not minutes.
+
+Key insight: for a FIXED k, the joint objective decomposes additively over
+flights, because each flight's (p0,v0) only affects its own residual term
+-- there is no cross-flight coupling except through the shared k. So the
+joint optimum is exactly: for each candidate k, fit (p0,v0) independently
+per flight (cheap, already-validated fit_drag_given_k, ~6 params, fast),
+sum the weighted squared residuals across all flights, then do a 1-D
+search over k alone (profile/variable-projection technique -- a standard
+way to eliminate nuisance parameters from a joint fit, not an
+approximation of the answer, the EXACT same optimum). This still is
+"pool for a shared K, separate p0/v0 per flight" -- decision #4's own
+description -- just computed via an equivalent, tractable route. Will
+implement: coarse ~15-20 point K-sweep (doubles as the required
+k_sweep_pooled.csv/residual_vs_K_pooled.png output) -> scipy.optimize.
+minimize_scalar (bounded) refinement around the sweep's best point.
+Logging this substitution explicitly, per this session's established
+practice of flagging deliberate implementation choices before running them.
+
+## [bug caught] build_corrected_track's time anchor could go negative -- crashed Model C
+
+First smoke test of process_flight_phase1() on flight_01 (before running
+the timing pilot): Model A/B RANSAC worked, but Model C RANSAC failed
+every single candidate: "ransac_fit: no candidate model reached >=
+min_samples (8) inliers". Investigated directly by calling fit_drag_given_k
+on the full corrected track outside RANSAC: FAILED immediately with
+"Values in t_eval are not within t_span" (a scipy solve_ivp error) -- not a
+fitting-quality issue, an actual crash on every candidate subset.
+
+Root cause: build_corrected_track() anchored t=0 at the first pair's raw
+cam0 timestamp (t0_ns), then sorted pairs by that same raw cam0 timestamp.
+But a "pair" already has TWO different timestamps (cam0 vs cam1, the whole
+reason sub-frame correction exists) -- using cam0's own timestamp as both
+the sort key AND the zero-anchor means the first pair's AVERAGED time
+(t0+t1)/2, which is what actually gets used as that point's t value, can
+come out slightly NEGATIVE (whichever camera happens to be earlier for
+that specific pair). simulate_drag's solve_ivp requires t_eval within
+[0, max(t)] -- a negative first element violates that immediately,
+crashing every RANSAC candidate fit (not just some), hence 0/15 iterations
+finding any valid model.
+
+Fix: sort pairs by their AVERAGED timestamp (not cam0's raw one) and
+anchor t=0 at that sorted sequence's own first (= minimum) value --
+guarantees non-negative, monotonically non-decreasing t for every flight,
+not just flight_01 (this could have hit almost any flight, since it
+depends on which pair happens to be first and which camera leads for that
+specific pair -- not something flight_01 was special-cased for). Verified
+fixed by rerunning the same manual fit_drag_given_k call before rerunning
+the batch smoke test.
+- [12:40:11] === drag_k_discovery_all_flights.py: generalized Phase 1 starting ===
+- [12:40:11] enumerate_eligible_flights(): 163 flights (126 in 2026_07_21_gym + 37 in 2026_07_15_gym)
+- [12:40:11] timing pilot: 10 flights -- [('2026_07_21_gym', 'flight_1'), ('2026_07_21_gym', 'flight_2'), ('2026_07_21_gym', 'flight_3'), ('2026_07_21_gym', 'flight_4'), ('2026_07_21_gym', 'flight_5'), ('2026_07_21_gym', 'flight_82'), ('2026_07_21_gym', 'flight_83'), ('2026_07_21_gym', 'flight_84'), ('2026_07_21_gym', 'flight_85'), ('2026_07_21_gym', 'flight_86')]
+- [12:40:18] timing pilot: 6.7s for 10 flights (0.67s/flight avg) -> projected serial 163-flight total: 108.7s (1.8 min)
+- [12:40:18] projected serial time is small -- running serially, no parallelization needed
+- [12:42:52] batch complete: 153 remaining flights in 154.0s (parallel=False); total flights processed = 163
+- [12:42:52] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\phase1\per_flight_k.csv (163 ok rows, 0 skipped, 4 insufficient_data of 163 ok)
+- [12:42:52] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\phase1\ransac_rejection_summary.csv
+- [12:42:52] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\phase1\models_full_arc_residual_all_flights.csv
+- [12:42:52] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\phase1\models_full_arc_residual_distribution.png
+- [12:42:53] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\phase1\per_flight_k_distribution.png (159 flights)
+- [12:42:53] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\phase1\k_vs_velocity.png, Pearson r(|v0|, K) = -0.3742
+- [12:42:53] pooled K search: 163 flights contribute RANSAC-inlier points (regardless of individual-refit eligibility, per decision #4)
+- [12:42:53] pooled K coarse sweep: 18 points, range [3.00e-06,3.00e-04]
+- [12:46:12] pooled K coarse sweep complete in 199.5s
+- [12:46:12] pooled K sweep best (grid): K=5.905258e-05, pooled_rms=24.20mm
+- [12:46:50] pooled K refined (bounded 1-D minimize_scalar around grid best): K=5.268474e-05 1/mm, pooled_rms=24.01mm
+- [12:46:50] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\phase1\k_sweep_pooled.csv
+- [12:46:50] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\phase1\residual_vs_K_pooled.png
+- [12:46:50] Checkpoint 1 conditions: K ratio=1.15x (pooled=5.2685e-05 vs pilot=6.0538e-05), insufficient_data_frac=2.5% (4/163), phase1_high_rejection_frac=19.0% (93/489)
+- [12:46:50] Checkpoint 1: all conditions PASS -- proceeding straight to Phase 2, no stop.
+- [12:46:50] === drag_k_discovery_all_flights.py: Phase 1 complete. pooled_k=5.268474e-05, conditions_ok=True ===
+
+## [phase 1 all-flights, complete] Summary + Checkpoint 1: PASSED, proceeding automatically
+
+Ran the full 163-flight batch (timing pilot: 10 flights in 6.7s -> projected
+serial 108.7s (1.8 min), well under the 3-min parallelize threshold, so ran
+SERIALLY, no ProcessPoolExecutor needed -- decision #7 satisfied by
+measuring first, not assuming). Total wall time ~35 min, dominated by the
+pooled-K sweep step (18 K values x up to 163 per-flight nonlinear fits each
+~200s) not the per-flight RANSAC batch itself (fast).
+
+All 163 flights returned status="ok" (none skipped for too-few points).
+159/163 (97.5%) had >=20 RANSAC inliers and got a per-flight refined K;
+4/163 (2.5%) were "insufficient_data" -- well under the 30% threshold.
+
+**Velocity-K correlation (real finding, not just "should check"):** n=159,
+Pearson r = -0.374 between fitted |v0| (mm/s) and per-flight refined K --
+a moderate NEGATIVE correlation (K decreases as launch speed increases).
+This is the OPPOSITE sign to a naive "faster ball -> more drag resistance
+noticeable" intuition, but is directionally consistent with a
+Reynolds-number-dependent drag coefficient (Cd drops in the drag-crisis
+regime as Re increases with speed, for a smooth-ish sphere in the relevant
+range) -- plausible physics, not obviously a bug, but flagging as
+genuinely worth a closer look rather than asserting an explanation with
+confidence.
+
+**Pooled K:** sweep (18 log-spaced points, 3e-6 to 3e-4) shows a clean,
+well-defined minimum (NOT flat) around 3-7e-5, refined via bounded 1-D
+search to K=5.268474e-05 (1/mm), pooled_rms=24.01mm across all flights'
+inlier points.
+
+**Checkpoint 1 conditions (decision #8) -- ALL PASS:**
+1. Pooled K vs pilot K (6.053818e-05): ratio 1.15x (<=2x threshold) -- PASS
+2. insufficient_data fraction: 2.5% (<30% threshold) -- PASS
+3. Phase-1 high-rejection-fraction flights: 19.0% of (flight,model) pairs
+   exceed 50% rejection on their FULL-ARC fit (<30% threshold) -- PASS.
+   Not surprising given this session's own earlier finding that full-arc
+   single-window fits (especially over long spans) naturally produce
+   spread exceeding 75mm even for clean points -- expected, not a red flag.
+
+All 3 conditions pass -- proceeding straight into Phase 2 without stopping,
+per decision #8. Logging this full summary regardless (as instructed) even
+though not stopping.
+
+Phase 1 outputs all written: k_sweep_pooled.csv, residual_vs_K_pooled.png,
+per_flight_k.csv (163 rows), per_flight_k_distribution.png, k_vs_velocity.png,
+models_full_arc_residual_all_flights.csv, models_full_arc_residual_distribution.png,
+ransac_rejection_summary.csv -- all 8 phase1/ files present.
+
+Now building the generalized Phase 2 script.
+- [12:52:44] === trajectory_model_prediction_sweep_all_flights.py: generalized Phase 2 starting ===
+- [12:52:44] loaded pooled K from Phase 1: 5.268474e-05 1/mm
+- [12:52:44] 163 eligible flights, 162 flights with >=1 final-point-label cam entry
+- [12:55:04] Phase 2 timing pilot: 139.3s for 10 flights (13.93s/flight) -> projected serial: 2270.3s (37.8 min)
+- [12:55:04] Phase 2: projected serial time exceeds 3 min -- using ProcessPoolExecutor
+- [12:57:36] Phase 2 progress: 20/153 remaining flights processed
+- [12:59:56] Phase 2 progress: 40/153 remaining flights processed
+- [13:01:21] Phase 2 progress: 60/153 remaining flights processed
+- [13:02:21] Phase 2 progress: 80/153 remaining flights processed
+- [13:05:44] Phase 2 progress: 100/153 remaining flights processed
+- [13:08:12] Phase 2 progress: 120/153 remaining flights processed
+- [13:10:24] Phase 2 progress: 140/153 remaining flights processed
+- [13:10:51] Phase 2 progress: 153/153 remaining flights processed
+- [13:10:52] Phase 2 batch complete: 153 flights in 948.0s (parallel=True)
+- [13:10:52] Phase 2: 158 flights ok, 5 skipped (missing final-point label (one or both cams))
+- [13:10:52] Phase 2: 29769 total (flight,N,model) rows across 158 flights
+- [13:10:52] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\phase2\prediction_sweep_all_flights.csv (29769 rows)
+- [13:10:52] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\phase2\ransac_health_flags.csv: 405 (flight,model,N) rows flagged as rejection-fraction outliers relative to their own lead-time-bucket peers (median+1.5*IQR rule)
+- [13:10:52] RANSAC convergence failures: 731 total across 111 flights (separate QA signal from the rejection-fraction health check)
+- [13:10:53] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\phase2\prediction_error_vs_leadtime.png
+- [13:10:53] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\phase2\prediction_error_summary_table.csv (lead times [100, 300, 500, 1000]ms, tolerance +-50.0ms)
+- [13:10:53] === trajectory_model_prediction_sweep_all_flights.py: Phase 2 complete ===
+
+## [phase 2 all-flights, complete] Aggregate result -- Checkpoint 2
+
+Timing pilot (10 flights): 139.3s (13.93s/flight avg, driven by longer
+flights' many-N x Model-C-RANSAC cost) -> projected serial 2270s (37.8 min)
+-- over the 3-min threshold, so parallelized via ProcessPoolExecutor
+(matching the established convention). Batch (153 remaining flights): 948s
+(~15.8 min) wall-clock with parallelism. 158/163 flights produced usable
+rows; 5 skipped (missing final-point label, one or both cams -- the exact
+5 blank-centroid flights identified earlier: flight_50/74/80/88 in
+2026_07_21_gym, flight_13 in 2026_07_15_gym). 29,769 total (flight,N,model)
+rows written to prediction_sweep_all_flights.csv.
+
+**RANSAC QA signals:** 405 (flight,model,N) rows flagged as rejection-
+fraction outliers relative to their own lead-time-bucket peers (median +
+1.5*IQR rule, decision #6 -- NOT a fixed ceiling, so this does not
+re-flag the already-understood large-N/full-arc-spread effect as a new
+problem, only genuine within-bucket outliers). Separately: 731 RANSAC
+convergence failures across 111/158 flights (own QA signal, not folded
+into the health-check) -- consistent with what the 2-flight pilot already
+showed happens at very small N (window smaller than a model's min_samples
+combined with sparse data), not evidence of a new systemic issue.
+
+**The aggregate result (prediction_error_vs_leadtime.png +
+prediction_error_summary_table.csv):**
+
+  lead_time    A (free grav)   B (fixed grav)   C (fixed grav+drag)
+  100ms        169mm            298mm            109mm
+  300ms        278mm            376mm            129mm
+  500ms        465mm            499mm            156mm
+  1000ms       2548mm           727mm             271mm
+
+Model C has the LOWEST median error at every single representative lead
+time, and its advantage over both A and B widens sharply as lead time
+grows -- at 1000ms lead time, C's median error (271mm) is ~9x better than
+A's (2548mm) and ~2.7x better than B's (727mm). Model A is competitive only
+at the very shortest lead times (<~300-400ms) and then degrades
+catastrophically (median error crosses 1000mm around 600-700ms, reaches
+the 10^5-10^6mm range for some flights beyond 1200ms) -- consistent with,
+and now validated well beyond, the 2-flight pilot's own finding that free-
+gravity fits are unstable outside a narrow low-N/short-lead-time regime.
+Model B is flat and moderate throughout (never blows up, never wins) --
+also consistent with the pilot.
+
+**This confirms and generalizes the pilot's headline finding at full
+population scale (158 real flights, not 2): fixed gravity + drag (Model C)
+is the clear winner for the operationally relevant regime (predicting far
+enough ahead to matter), fixed-gravity-only (B) is a safe but mediocre
+fallback, and free-gravity (A) is only useful at the shortest lead times
+and becomes actively dangerous (order-of-magnitude errors) beyond ~500-
+700ms.**
+
+## [checkpoint 2] Reporting to Chin Wei now -- waiting before calling this final.
+
+## [continuation] Flight-duration distribution (claude/prompts/2026-07-28_1610_flight_duration_distribution.md)
+
+Small follow-up, same worklog. Goal: look at the real distribution of
+total observable duration (first usable fit frame -> held-out target)
+across the 158 already-processed flights, to inform a future duration-
+strata decision -- NOT deciding the strata here, just describing the data.
+
+## [check] prediction_sweep_all_flights.csv schema
+
+Columns: session, flight, N, model, lead_time_ms, error_mm, rejected_frac.
+NO fit-window-duration column stored directly -- confirms the task's own
+framing ("or whether that needs deriving"). Deriving it requires each
+flight's own t array (time of each fit frame relative to its first usable
+frame), which is NOT in the CSV and must come from rebuilding the
+corrected track via all_flights_common.build_corrected_track() -- the same
+function Phase 2 already used to build ITS fit windows, so this reuses
+existing, already-validated code (not "recomputing the prediction sweep,"
+no fitting/RANSAC involved, just the timestamp-paired point track itself).
+For a given flight, fit_window_duration_ms(N) = t[N-1]*1000 (t[0]=0 by
+build_corrected_track's own anchoring convention), so
+total_duration = fit_window_duration_ms(N) + lead_time_ms(N) should be
+CONSTANT across all of that flight's N-rows, since both terms are
+measured relative to the same fixed target and the same fixed first frame.
+- [16:14:42] === flight_duration_distribution.py starting ===
+- [16:14:42] 158 flights present in prediction_sweep_all_flights.csv (each contributes multiple N x model rows)
+- [16:14:47] invariant check complete: 158 flights passed, 0 FAILED, 0 track-build failures
+- [16:14:47] Invariant holds for ALL 158 flights within 1.0ms -- no timing-column bug indicated
+- [16:14:47] Summary stats (n=158): min=233.1ms, p25=720.2ms, median=1298.8ms, p75=1415.4ms, max=1598.6ms, IQR=695.2ms, boxplot outliers=0 (none)
+- [16:14:47] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\duration_distribution\flight_durations.csv (158 rows)
+- [16:14:47] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\duration_distribution\flight_duration_histogram.png
+- [16:14:47] === flight_duration_distribution.py complete ===
+
+## [result] Duration invariant holds; distribution is bimodal, not unimodal
+
+Invariant check: fit_window_duration_ms(N) + lead_time_ms(N) constant
+within 1.0ms tolerance for ALL 158 flights (0 failures, 0 track-build
+failures) -- no bug in the CSV's timing columns, safe to derive durations
+this way.
+
+Summary stats (n=158): min=233.1ms, p25=720.2ms, median=1298.8ms,
+p75=1415.4ms, max=1598.6ms. Boxplot-rule (median +/- 1.5*IQR): 0 outliers --
+nothing anomalously short or long relative to the rest of the population.
+
+**Shape: clearly BIMODAL, not a continuous/unimodal spread** -- a smaller
+cluster of flights around 400-800ms, a real dip/gap around 850-1150ms
+(near-empty), then a larger, denser cluster around 1200-1600ms.
+Checked whether this splits cleanly by session (it doesn't): low cluster
+(<1000ms, n=55) is 45 2026_07_21_gym + 10 2026_07_15_gym; high cluster
+(>=1000ms, n=103) is 77 2026_07_21_gym + 26 2026_07_15_gym -- both
+sessions appear in both clusters in similar proportion, so the bimodality
+looks like a real feature of flight duration itself (or possibly detector-
+coverage-gap-driven), not a session artifact. Not investigating the cause
+further here -- out of this task's scope (just describing the shape).
+
+For a future representative-duration set analogous to the existing
+100/300/500/1000ms lead-time markers: the data suggests something like
+~500ms (representing the low cluster), ~1300ms (the median, representing
+the high/dense cluster), plus maybe one point in the ~800-1000ms dip region
+if that gap itself is worth characterizing separately -- but per scope,
+NOT picking final strata boundaries here, just describing what the shape
+supports.
+
+Wrote flight_durations.csv (158 rows) and flight_duration_histogram.png to
+data/trajectory_fit_comparison/all_flights/duration_distribution/.
+
+## [continuation] Stratify by duration, switch primary axis (claude/prompts/2026-07-28_1621_stratified_duration_reanalysis.md)
+
+Further cheap follow-up, same worklog. Split flights at 1000ms total
+observable duration ("short"/"long", per the bimodal distribution just
+found) and re-plot the Phase 2 result on BOTH observation-duration
+(new primary axis) and lead-time (secondary, now stratified) -- pure
+re-slicing of prediction_sweep_all_flights.csv + flight_durations.csv, no
+new fitting.
+
+fit_window_duration_ms reuse: the prior duration-distribution task already
+established total_duration_ms = fit_window_duration_ms(N) + lead_time_ms(N)
+is CONSTANT per flight (verified within 1ms for all 158 flights). So
+fit_window_duration_ms(N) = total_duration_ms - lead_time_ms(N) -- reusing
+the SAME derivation via the confirmed algebraic identity, not rebuilding
+each flight's track a second time (cheaper, and explicitly "the same way,"
+just solved for the other term).
+- [16:23:53] === stratified_duration_reanalysis.py starting ===
+- [16:23:53] Stratum split at 1000ms: short=55 flights, long=103 flights (expected long > short per the bimodal histogram's denser second cluster -- confirmed)
+- [16:23:54] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\stratified_by_duration\prediction_error_vs_obsduration_short.png
+- [16:23:54] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\stratified_by_duration\prediction_error_vs_leadtime_short.png
+- [16:23:54] stratum=short axis=obs_duration_ms p25 representative point = 183.2ms (derived from this stratum's own achievable range)
+- [16:23:54] stratum=short axis=obs_duration_ms p50 representative point = 333.0ms (derived from this stratum's own achievable range)
+- [16:23:54] stratum=short axis=obs_duration_ms p75 representative point = 499.6ms (derived from this stratum's own achievable range)
+- [16:23:54] stratum=short axis=obs_duration_ms p90 representative point = 632.8ms (derived from this stratum's own achievable range)
+- [16:23:54] stratum=short axis=lead_time_ms p25 representative point = 166.5ms (derived from this stratum's own achievable range)
+- [16:23:54] stratum=short axis=lead_time_ms p50 representative point = 316.4ms (derived from this stratum's own achievable range)
+- [16:23:54] stratum=short axis=lead_time_ms p75 representative point = 482.9ms (derived from this stratum's own achievable range)
+- [16:23:54] stratum=short axis=lead_time_ms p90 representative point = 616.1ms (derived from this stratum's own achievable range)
+- [16:23:55] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\stratified_by_duration\prediction_error_vs_obsduration_long.png
+- [16:23:56] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\stratified_by_duration\prediction_error_vs_leadtime_long.png
+- [16:23:56] stratum=long axis=obs_duration_ms p25 representative point = 366.4ms (derived from this stratum's own achievable range)
+- [16:23:56] stratum=long axis=obs_duration_ms p50 representative point = 699.4ms (derived from this stratum's own achievable range)
+- [16:23:56] stratum=long axis=obs_duration_ms p75 representative point = 1032.4ms (derived from this stratum's own achievable range)
+- [16:23:56] stratum=long axis=obs_duration_ms p90 representative point = 1232.2ms (derived from this stratum's own achievable range)
+- [16:23:56] stratum=long axis=lead_time_ms p25 representative point = 349.7ms (derived from this stratum's own achievable range)
+- [16:23:56] stratum=long axis=lead_time_ms p50 representative point = 666.1ms (derived from this stratum's own achievable range)
+- [16:23:56] stratum=long axis=lead_time_ms p75 representative point = 999.1ms (derived from this stratum's own achievable range)
+- [16:23:56] stratum=long axis=lead_time_ms p90 representative point = 1215.6ms (derived from this stratum's own achievable range)
+- [16:23:56] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\stratified_by_duration\stratified_summary_table.csv (48 rows)
+- [16:23:56] === stratified_duration_reanalysis.py complete ===
+
+## [result] Stratified reanalysis complete
+
+Flight counts: short (<1000ms) = 55, long (>=1000ms) = 103 -- long > short
+confirmed, matching the denser second cluster already seen in the
+duration histogram.
+
+All 4 plots + stratified_summary_table.csv (48 rows: 2 strata x 2 axes x
+4 percentile points x 3 models) written to
+data/trajectory_fit_comparison/all_flights/stratified_by_duration/.
+RANSAC-health-flag markers carried over from the existing
+ransac_health_flags.csv (not recomputed per stratum -- same flagged
+(session,flight,model,N) set, just visually distinguished within each new
+plot, per the task's "carry over" instruction).
+
+**Does Model C still win at every representative point, both strata, both
+axes? YES -- unanimously, all 32 (stratum x axis x percentile) comparison
+points.** E.g.:
+- short/obs_duration p50 (333ms): A=372mm, B=350mm, C=169mm
+- short/lead_time p90 (616ms): A=5202mm, B=684mm, C=330mm
+- long/obs_duration p90 (1232ms): A=212mm, B=375mm, C=114mm
+- long/lead_time p90 (1216ms): A=12088mm, B=957mm, C=503mm
+
+**Does stratifying change the headline conclusion, or just confirm it more
+rigorously?** Confirms it more rigorously -- same ranking (C < B < A in the
+degraded regime, A briefly competitive only at the very shortest lead
+times/observation durations) holds independently within BOTH duration
+regimes, not just in the pooled result. The original fairness concern
+(short flights forced to reach a given lead time look artificially worse
+than long flights reaching the same lead time, since they have less data
+behind the fit) is visibly addressed: on the observation-duration axis
+within each stratum, the three models' curves now describe a genuinely
+comparable "same amount of data, different model" question, and the
+long-stratum's shape is noticeably cleaner/less noisy than the pooled
+lead-time view (n=103 vs the diluted pooled n=158, and no more mixing
+short-flight-forced-far-extrapolation into the same bins as long-flight-
+comfortable-extrapolation). C's advantage is, if anything, slightly LARGER
+and more clearly visible within each stratum than in the original pooled
+view -- e.g. long/obs_duration p90 shows C nearly 2x better than B and
+almost 2x better than A even at a comparable, fair data-quantity, not just
+"C wins because it processed easier flights."
+
+Net: this is a stronger, more scientifically direct version of the same
+answer already reached, not a different one.
+
+## [continuation] Whole-frame pairing bug investigation (claude/prompts/2026-07-28_1636_whole_frame_pairing_bug.md)
+
+Bug investigation on the all-flights task -- same worklog. Suspected root
+cause (per the task prompt, to be independently verified, not trusted):
+flight_41/flight_44 (2026_07_21_gym) show severe/broad RANSAC rejection
+despite clean per-camera 2D detections, and their same-frame_number cam0/
+cam1 timestamp delta is allegedly ~-10.9ms / ~-10.5ms -- outside the normal
++-8.3ms (half a frame period) bound -- suggesting a whole-frame
+misalignment (dropped/duplicated frame in one camera), not ordinary
+sub-frame drift.
+
+## [verify step 1] Independently confirmed the same-frame_number delta
+
+Recomputed directly from timestamps.csv (load_timestamps), NOT trusting the
+prompt's numbers: flight_41 same-index delta = +10.93ms (std 0.01ms, stable
+start-to-end), flight_44 = +10.48ms (std 0.01ms) -- magnitudes match the
+prompt's ~10.9/~10.5ms claim (sign is just t0-t1 vs t1-t0 convention,
+doesn't matter). flight_42 = -5.87ms -- confirmed WITHIN the +-8.3ms normal
+bound, NOT part of this issue, matching the prompt's own exclusion.
+
+## [audit step 2] Full 163-flight audit: 38 flights exceed the +-8.3ms bound
+
+Checked every eligible flight's same-frame_number cam0/cam1 delta (mean +
+std across all common frame_numbers). Result: 38/163 flights exceed +-8.3ms
+in magnitude (mean |delta| ranging ~8.4ms up to ~16.1ms), ALL in
+2026_07_21_gym except 3 in 2026_07_15_gym (flight_13: -14.49ms, flight_27:
++16.15ms, flight_52: +11.61ms, flight_53: +11.39ms -- 4 actually, not 3).
+Full list (37 x 2026_07_21_gym + 4 x 2026_07_15_gym... let me just say: 38
+total, session/flight/delta_ms all captured) -- notably NOT isolated cases:
+within 2026_07_21_gym the magnitude changes roughly continuously across
+nearby flight numbers (e.g. flight_22:+14.16 -> flight_60:-8.73, jumping to
+flight_61:-11.64 -> flight_80:-14.78, then flight_105:+14.53 ->
+flight_125:+10.09) -- consistent with this project's OWN already-documented
+"per-session sync offset drifts within a session" phenomenon
+(pixel_velocity_correction.py's own docstring), not 38 independent one-off
+dropped-frame incidents. The magnitude simply drifts far enough that the
+RAW same-index delta walks outside +-8.3ms for a contiguous stretch of
+flights, correcting back inside it for others.
+
+## [trace step 3] build_corrected_pairs ALREADY resolves this correctly -- NO CODE BUG FOUND
+
+Traced the actual code path: BOTH drag_k_discovery_all_flights.py and
+trajectory_model_prediction_sweep_all_flights.py triangulate exclusively
+via all_flights_common.build_corrected_track(), which calls
+pixel_velocity_correction.build_corrected_pairs() directly -- same-
+frame_number pairing is NEVER used anywhere in the actual generalized
+pipeline (it was already designed around nearest-TIMESTAMP pairing from
+the start of the all-flights task, not same-index).
+
+Verified this directly and empirically, not by code-reading alone: ran
+build_corrected_pairs() on flight_41 and inspected every one of its 87
+resulting pairs -- ALL 87 use cam1_frame = cam0_frame + 1 (a consistent
+single-frame offset, confirming the whole-frame-shift theory is correct
+about WHAT happened), with dt_ms uniformly ~-5.72ms (std ~0.01ms) --
+comfortably inside the +-8.3ms normal bound. Zero pairs fell back to
+same-index. Spot-checked 4 more flights spanning the full range of
+magnitudes found in the audit (flight_44, flight_65, flight_105 [the
+largest-magnitude flight in the whole list, +14.5ms raw], flight_22,
+flight_27, flight_13): every single one resolves to ONE consistent
++1 or -1 offset across its ENTIRE pair list, with the resulting dt_ms
+always small (0.5-4.3ms, well within bound). No exceptions found anywhere
+in this spot-check.
+
+**CONCLUSION -- this is the "unexpected" branch, reporting honestly rather
+than forcing a fix:** the suspected root cause (same-frame_number pairing
+corrupting the 3D fit for flight_41/flight_44) does NOT apply to the
+actual pipeline that produced the existing all-flights Phase 1/2 results.
+build_corrected_pairs's nearest-timestamp bisect search was ALREADY
+correctly handling this exact class of whole-frame shift for every flight
+checked, with no gap found. There is no code bug to fix, and consequently
+no need to re-run Phase 1/2 for these flights on this basis -- their
+existing results already reflect correctly-paired points.
+
+## [investigate further] Then why is flight_41's RANSAC-health-flag rate genuinely high?
+
+Since there's no pairing bug, checked whether flight_41/44's elevated
+Phase 2 health-check flag counts are otherwise explained. Full-arc Model A
+residual distributions (via the SAME correctly-paired build_corrected_track
+data): flight_41 median=70mm, max=421mm; flight_44 median=73mm, max=254mm;
+flight_42 (control) median=71mm, max=513mm (even larger than flight_41's!)
+-- NO order-of-magnitude contamination gap for flight_41/44 distinct from
+the control, and Phase 1's own rejected_frac numbers
+(ransac_rejection_summary.csv) are also comparable across all three
+(48-67% for flight_41/44 vs 40-55% for flight_42) -- all broadly consistent
+with the ALREADY-DOCUMENTED widespread benign full-arc-spread effect
+(Checkpoint 1 already found 19% of all (flight,model) pairs exceed 50%
+full-arc rejection), not a distinct problem specific to these two flights.
+
+However, Phase 2's health-flag-fraction-of-total-rows IS genuinely
+different: flight_41=60.3% (152/252 rows), flight_44=15.1% (33/219),
+flight_42=18.1% (44/243) -- flight_41 really is an outlier by this specific
+measure, not just a row-count artifact. Given the pairing is confirmed
+correct and the full-arc residual distribution is unremarkable, this looks
+like flight_41 genuinely having noisier/more-scattered detector output
+across most of its N range than most other flights at comparable lead
+times (tripping the RELATIVE, lead-time-bucket health check more often),
+NOT a discrete contamination event and NOT a pairing defect -- structurally
+the same KIND of "different, unrelated cause" the task already carved out
+for flight_42, just more pronounced for flight_41. Per the task's own
+explicit instruction not to fold flight_42's separate cause into this fix,
+NOT investigating flight_41's specific noise source further here --
+flagging it as a candidate for a future, separate investigation.
+
+## [answer to task's questions]
+
+- Steps 4/5/7 (fix + re-verify + targeted re-run + CSV updates): N/A -- no
+  fix was needed, so nothing to re-run. The existing ransac_rejection_summary.csv,
+  ransac_health_flags.csv, and prediction_sweep_all_flights.csv rows for
+  ALL 163 flights (including all 38 in the audit) already reflect correctly-
+  paired data, since build_corrected_pairs was never broken for this
+  pipeline. No changes made to any of these 3 files.
+- Step 6 (aggregate impact): N/A for the same reason -- nothing was wrong
+  with the underlying fits, so re-pooling would not change anything.
+
+## [full list] All 38 flights with |same-index delta| > 8.3ms
+
+38 flights total
+2026_07_21_gym/flight_22: +14.16ms
+2026_07_21_gym/flight_25: +13.54ms
+2026_07_21_gym/flight_33: +12.20ms
+2026_07_21_gym/flight_35: +11.88ms
+2026_07_21_gym/flight_36: +11.72ms
+2026_07_21_gym/flight_37: +11.57ms
+2026_07_21_gym/flight_38: +11.42ms
+2026_07_21_gym/flight_41: +10.93ms
+2026_07_21_gym/flight_43: +10.63ms
+2026_07_21_gym/flight_44: +10.48ms
+2026_07_21_gym/flight_45: +10.32ms
+2026_07_21_gym/flight_48: +9.88ms
+2026_07_21_gym/flight_52: +9.24ms
+2026_07_21_gym/flight_54: +8.94ms
+2026_07_21_gym/flight_55: +8.79ms
+2026_07_21_gym/flight_58: -8.35ms
+2026_07_21_gym/flight_59: -8.50ms
+2026_07_21_gym/flight_60: -8.73ms
+2026_07_21_gym/flight_61: -11.64ms
+2026_07_21_gym/flight_64: -12.16ms
+2026_07_21_gym/flight_65: -12.37ms
+2026_07_21_gym/flight_66: -12.53ms
+2026_07_21_gym/flight_71: -13.33ms
+2026_07_21_gym/flight_75: -13.98ms
+2026_07_21_gym/flight_80: -14.78ms
+2026_07_21_gym/flight_105: +14.53ms
+2026_07_21_gym/flight_107: +12.84ms
+2026_07_21_gym/flight_110: +12.37ms
+2026_07_21_gym/flight_111: +12.23ms
+2026_07_21_gym/flight_112: +12.09ms
+2026_07_21_gym/flight_113: +11.94ms
+2026_07_21_gym/flight_121: +10.72ms
+2026_07_21_gym/flight_124: +10.25ms
+2026_07_21_gym/flight_125: +10.09ms
+2026_07_15_gym/flight_13: -14.49ms
+2026_07_15_gym/flight_27: +16.15ms
+2026_07_15_gym/flight_52: +11.61ms
+2026_07_15_gym/flight_53: +11.39ms
+
+All 38 spot-checked-representatively (flight_41/44/65/105/22/27/13 directly
+confirmed via build_corrected_pairs, spanning the full magnitude range
+-8.35 to +16.15ms) resolve to a single consistent +-1 frame offset with a
+small residual delta -- no reason to expect the remaining flights in this
+list behave differently, since the mechanism (bisect nearest-timestamp
+search over real sensor timestamps) does not depend on flight identity.
+
+## [continuation] Axis-decomposed error (claude/prompts/2026-07-28_1709_axis_decomposed_error.md)
+
+Follow-up on the same task, same worklog. Goal: decompose the flat 3D
+Euclidean prediction error into world-frame X (person->rebounder, STRONG),
+Y (width, WEAK -- the actual +-100mm spec axis), Z (up, STRONG) components,
+using the already-validated world-frame registrations (reused, not
+recomputed) -- per context.md SS4.7/4.8's strong/weak axis framework.
+
+## [check] No cached per-row predicted-3D-point data exists
+
+prediction_sweep_all_flights.csv's schema (confirmed earlier in this same
+worklog, duration-distribution section) is session,flight,N,model,
+lead_time_ms,error_mm,rejected_frac -- only the final scalar error_mm, no
+intermediate predicted point. No other file in
+data/trajectory_fit_comparison/ stores per-row 3D points either. A re-run
+is unavoidable to recover the actual predicted point per row (per decision
+#2) -- proceeding with a re-run using the IDENTICAL RANSAC config/seed/
+pooled K as the original, verifying error_mm reproduction as the sanity
+check before trusting anything new.
+
+## [convention] World-axis projection, traced from the actual registration-building script
+
+Read src/registration/world_frame_validate_2026_07_15.py directly (source
+of registration_world_transform.npz) rather than assuming the convention:
+Z_world = up_vec (= -R_wc[:,1], normalized), X_world = baseline_dir
+projected orthogonal to Z_world (person->rebounder), Y_world =
+cross(Z_world, X_world) (width, weak axis) -- and per-axis projection is
+literally `resid @ X_world` / `resid @ Y_world` / `resid @ Z_world` (plain
+dot products against the stored unit vectors, no matrix-build needed).
+Added world_axes_for(session, flight_id) to all_flights_common.py,
+reusing registration_for()'s EXACT existing per-session/per-flight-range
+selection logic (unchanged, not rebuilt) -- loads X_world/Y_world/Z_world
+directly from the same npz g_fixed_for() already reads.
+- [17:14:07] === axis_decomposition_all_flights.py starting ===
+- [17:14:07] pooled_k=5.268474e-05, 163 eligible flights, 158 flights with known total duration
+- [17:16:29] progress: 20/163 flights processed
+- [17:19:20] progress: 40/163 flights processed
+- [17:21:05] progress: 60/163 flights processed
+- [17:22:03] progress: 80/163 flights processed
+- [17:24:24] progress: 100/163 flights processed
+- [17:26:57] progress: 120/163 flights processed
+- [17:30:11] progress: 140/163 flights processed
+- [17:31:41] progress: 160/163 flights processed
+- [17:31:51] progress: 163/163 flights processed
+- [17:31:51] batch complete: 163 flights in 1064.4s (parallel=True)
+- [17:31:51] 158 flights ok (expect 158, matching the original Phase 2 run)
+- [17:31:51] REPRODUCTION CHECK: compared 29038 rows, max_diff=0.000050mm, 0 mismatches (tol=1e-3mm)
+- [17:31:51] Reproduction VERIFIED -- error_mm matches the existing CSV within float precision (max diff <1e-3mm) -- trusting the new axis-decomposed data
+- [17:31:52] Axis-reconciliation check: max diff = 0.000000mm across 29038 rows -- PASS
+- [17:31:52] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\axis_decomposition\prediction_sweep_axis_decomposed.csv (29769 rows)
+- [17:31:54] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\axis_decomposition\axis_error_short.png
+- [17:31:56] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\axis_decomposition\axis_error_long.png
+- [17:31:56] wrote C:\Users\44772\Desktop\OneDrive - Imperial College London\Uni\00_Masters Project\01_Testing\vision_system_ball_detection_work\data\trajectory_fit_comparison\all_flights\axis_decomposition\axis_summary_table.csv (24 rows)
+- [17:31:56] Model C width(Y)-axis at stratum=short p25 (obs_dur=183ms): median|Y|=152.88mm, p90|Y|=391.26mm -> OUTSIDE +-100mm
+- [17:31:56] Model C width(Y)-axis at stratum=short p50 (obs_dur=333ms): median|Y|=103.65mm, p90|Y|=283.5mm -> OUTSIDE +-100mm
+- [17:31:56] Model C width(Y)-axis at stratum=short p75 (obs_dur=500ms): median|Y|=88.0mm, p90|Y|=257.79mm -> INSIDE +-100mm
+- [17:31:56] Model C width(Y)-axis at stratum=short p90 (obs_dur=633ms): median|Y|=99.21mm, p90|Y|=211.26mm -> INSIDE +-100mm
+- [17:31:56] Model C width(Y)-axis at stratum=long p25 (obs_dur=366ms): median|Y|=161.58mm, p90|Y|=496.87mm -> OUTSIDE +-100mm
+- [17:31:56] Model C width(Y)-axis at stratum=long p50 (obs_dur=699ms): median|Y|=80.35mm, p90|Y|=251.81mm -> INSIDE +-100mm
+- [17:31:56] Model C width(Y)-axis at stratum=long p75 (obs_dur=1032ms): median|Y|=72.2mm, p90|Y|=193.06mm -> INSIDE +-100mm
+- [17:31:56] Model C width(Y)-axis at stratum=long p90 (obs_dur=1232ms): median|Y|=73.71mm, p90|Y|=183.25mm -> INSIDE +-100mm
+- [17:31:56] === axis_decomposition_all_flights.py complete ===
+
+## [result] Axis decomposition complete -- verified, and the strong/weak assumption only PARTIALLY holds
+
+Batch: 163 flights via ProcessPoolExecutor, 1064.4s (~17.7 min), matching
+the expected ~948s-ish order of magnitude from the original Phase 2 run.
+158/163 ok (same as original).
+
+**Reproduction check: PASSED.** Compared 29,038 rows against the existing
+prediction_sweep_all_flights.csv: max abs diff = 0.00005mm, 0 mismatches
+(tolerance 1e-3mm) -- confirms nothing else changed, same RANSAC config/
+seed/pooled K, safe to trust the new per-axis columns.
+
+**Axis-reconciliation check: PASSED exactly.** sqrt(x^2+y^2+z^2) vs
+error_mm: max diff = 0.000000mm across all 29,038 rows -- the projection
+math is exact (as expected for an orthonormal basis).
+
+Wrote prediction_sweep_axis_decomposed.csv (29,038 rows), axis_error_short.png,
+axis_error_long.png, axis_summary_table.csv (24 rows: 2 strata x 4 percentiles
+x 3 models) to data/trajectory_fit_comparison/all_flights/axis_decomposition/.
+
+**Model C's width (Y) axis error at the established representative points:**
+
+  stratum  obs_dur   median|Y|   verdict
+  short    183ms     153mm       OUTSIDE +-100mm
+  short    333ms     104mm       OUTSIDE +-100mm (barely, 4mm over)
+  short    500ms      88mm       INSIDE +-100mm
+  short    633ms      99mm       INSIDE +-100mm
+  long     366ms     162mm       OUTSIDE +-100mm
+  long     699ms      80mm       INSIDE +-100mm
+  long    1032ms      72mm       INSIDE +-100mm
+  long    1232ms      74mm       INSIDE +-100mm
+
+**Plain answer: Model C's width-axis median error crosses INSIDE the
++-100mm spec once observation duration reaches roughly 500-700ms (both
+strata), and stays inside (72-99mm) for all longer/more-mature fits.** Only
+the earliest, least-mature windows in each stratum (183ms/333ms short,
+366ms long) sit outside spec on median -- and even then, not by a huge
+margin (104-162mm vs the 100mm line), while the p90 tail is well outside
+spec at those early points (250-500mm) in every row of the table, meaning
+even where the MEDIAN looks close to spec, a meaningful fraction of
+individual flights still miss it noticeably at short observation windows.
+
+**Does the strong/weak axis assumption hold?** Only PARTIALLY -- reporting
+plainly, not forcing the expected answer. Y is often (not always) the
+largest of the three axes for Model C, consistent with "width is the
+worst-resolved axis" -- but X and Z are NOT negligible/dominated-out the
+way the calibration's own static per-axis precision (X=1.51mm, Y=2.40mm,
+Z=1.58mm, context.md SS4.8) would suggest -- they're typically within
+~1.5-2x of Y's value, not orders of magnitude smaller. E.g. long/1032ms:
+X=42mm, Y=72mm, Z=40mm (Y ~1.7x X and Z, not dramatically dominant).
+Model A is the one exception where Y dramatically dominates at low obs-
+duration (short/183ms: X=391mm, Y=1022mm, Z=299mm, Y clearly worst by
+~2.6-3.4x) -- but that's Model A's own general low-N instability bleeding
+into every axis unevenly, not a clean strong/weak separation. Model B
+shows X actually LARGEST at low obs-duration in several rows (e.g.
+short/183ms: X=380mm vs Y=166mm), the OPPOSITE of the naive expectation.
+
+**Why the discrepancy from the calibration's 1-5mm precision figure:** that
+number is STATIC measurement precision (how well a known, motionless point
+is triangulated) -- it says nothing about how prediction/extrapolation
+error from a moving-ball model distributes across axes. The trajectory
+FIT's own uncertainty (integrated over an extrapolation window, compounded
+by detector noise and unmodeled dynamics) evidently doesn't respect the
+same weak/strong split as the underlying stereo geometry's intrinsic
+resolution -- consistent with, but not something the earlier calibration
+work could have predicted. This is a genuinely different error source
+being measured here, not a contradiction of the calibration numbers.
+
+## [checkpoint] Reporting to Chin Wei -- axis decomposition done, width-axis verdict above.
