@@ -581,12 +581,187 @@ silent proceed.
 
 ---
 
+## Final point labelling tool
+
+Cross-referenced against
+`claude/claude_logs/2026-07-27_final_point_labelling_tool_worklog.md`.
+
+**44. Fixed `build_target_queue()` to pick each flight's cam0/cam1 target
+frames as a real-time-paired pair (via `select_paired_target()`), not each
+camera choosing its own "last valid-range frame" independently.**
+Chosen after the user flagged that the same `frame_number` in cam0 vs cam1
+is not the same real instant (free-running cameras, per-flight sync offset
+drifts up to +/-8.3ms) - at final-point ball speeds an uncorrected mismatch
+is tens of mm of error, contaminating the exact ground-truth reference the
+label exists to provide. **Alternative considered**: leave independent
+per-camera selection, since it was already built and the labelling session
+was already in progress. **Rejected** once flagged - re-verified against
+the real label file (MD5-unchanged before/after) that the fix didn't lose
+any of the 19 already-labelled flights, then relaunched.
+
+**45. Killed the old buggy background labelling process (`TaskStop` on
+`bs0y0iq7c`) after the user explicitly asked, overriding the general
+"don't touch the user's live session" default.**
+The user closed the cv2 window via the X button, not `q`/Esc, which doesn't
+reliably terminate the underlying Python process (`cv2.waitKeyEx` keeps
+blocking) - `tasklist` confirmed PID 46828 was still alive. **Alternative
+considered**: leave it running since killing another session's process is
+normally out of bounds. **Rejected** because the user explicitly asked for
+it, it was orphaned (not being actively used), and it was still running the
+confirmed-buggy independent-selection logic - verified the CSV's line
+count/MD5 were unchanged after the kill before doing anything else, to
+confirm no corruption.
+
+---
+
+## Gravity vs. drag trajectory fitting (+ RANSAC, all-flights generalization)
+
+Cross-referenced against
+`claude/claude_logs/2026-07-27_gravity_vs_drag_trajectory_fitting_worklog.md`,
+which also covers 3 same-worklog follow-up tasks (RANSAC robust fitting,
+generalizing to all 163 flights, and axis-decomposed/duration-stratified
+error analysis).
+
+**46. Golden-output strategy for the Phase 0 refactor check: capture fresh
+baselines by rerunning each of the 4 consumer scripts UNMODIFIED right now,
+rather than trying to match numbers quoted from prior worklogs.**
+Chosen because this was a fresh session with no access to the exact run
+artifacts those old numbers came from. **Alternative considered**: treat a
+mismatch against the old worklog numbers as a gate failure. **Rejected** -
+a same-environment before/after diff is a stronger correctness check
+anyway (guarantees apples-to-apples) and still verifies the actual intent
+(refactor is behavior-neutral); confirmed harmless when the fresh
+`triangulate_flight.py` run landed on 31.05mm vs. an old worklog's
+29.71mm - logged as a visibility note, not a gate failure, since the
+underlying detection files may have been regenerated since.
+
+**47. Pooled K-discovery fits a SEPARATE (p0, v0) per flight but a SINGLE
+shared K, rather than the literal single `fit_drag_free_k` joint call the
+task named.**
+A single p0/v0 forced across both physically-unrelated flights would
+answer a different, less useful question ("can one trajectory awkwardly
+pass through two unrelated arcs") than the real point of pooling ("does
+one K work for both flights"). **Alternative considered**: implement the
+literal single joint call as specified. **Rejected** as not physically
+meaningful; still produces exactly one final K, so it satisfies the actual
+intent via an equivalent route - flagged explicitly as a deliberate
+substitution, not silently done.
+
+**48. Upgraded scipy in-place (1.7.3 -> 1.13.1) rather than hand-rolling
+RK4+LM, when scipy import broke (numpy 2.x removed `np.Inf`, which the old
+scipy pin relied on).**
+User's explicit choice when asked. **Alternative considered**: hand-roll
+RK4 integration + Levenberg-Marquardt to avoid touching the shared
+environment (scipy has never been imported elsewhere in `src/`, so no
+other code depends on the old pin). **Rejected by the user** in favor of
+the simpler upgrade; verified safe via a `load_g_fixed()` smoke test
+(`|g_fixed|=9810.00` exact) before proceeding.
+
+**49. RANSAC inlier threshold: kept ONE value (75mm) everywhere (Phase 1
+and Phase 2), reverting a same-session attempt to use two different
+thresholds per phase.**
+The two-threshold idea was based on investigating flight_22's DETECTED
+track's full-arc spread, but Phase 1 (K-discovery) only ever fits the
+LABELLED track - re-checked and found the labelled track has no
+order-of-magnitude outlier cluster at all (a human labeller doesn't
+accidentally click a hand; the known contamination is a detector failure
+mode). **Alternative considered**: keep the two-threshold split (Phase 1
+1500mm / Phase 2 75mm) since it was already reasoned through and matched
+an empirically-confirmed gap. **Rejected** after catching that the
+investigation used the wrong dataset for what Phase 1 actually computes -
+caught before writing it into the real scripts, not after.
+
+**50. Lowered the RANSAC iteration-count formula's own inputs
+(`outlier_fraction` 0.3->0.15, `success_prob` 0.999->0.99) instead of
+capping iteration count directly, after Model C's projected Phase 2
+runtime blew past the task's ~10-minute budget by 3x+ (~30+ min).**
+Root cause: each Model C RANSAC iteration is a full nonlinear
+`fit_drag_given_k` call (its own internal scipy convergence), so iteration
+count multiplies cost far more steeply than for the closed-form A/B
+models. **Alternative considered**: just hardcode a lower iteration count
+directly. **Rejected** in favor of adjusting the formula's own
+probabilistic inputs (0.15 is still ~2x flight_22's true known
+contamination rate of ~8%, so still a conservative worst case) - keeps the
+iteration count principled/derived rather than an arbitrary cap. Verified
+the ~10x speedup by re-timing before running the real sweep, and confirmed
+Phase 1's RANSAC results were unchanged by the lower iteration count
+(same inlier/outlier split found either way, since the split itself is not
+ambiguous for A/C).
+
+**51. All-flights pooled-K search: profiled 1-D search over K (fit p0/v0
+per flight per candidate K, sum residuals, then 1-D-search K alone),
+NOT a literal monolithic joint `least_squares` fit across all 163 flights'
+979 combined parameters.**
+The literal interpretation (163 x 6 params + 1 shared k, no analytic
+Jacobian) would need finite-difference numerical differentiation - ~979
+extra function evaluations to build one Jacobian, each running 163 ODE
+integrations - projected at almost certainly hours, not minutes (caught by
+projecting before running, the same category of timing mistake as decision
+50, applied preemptively this time). **Alternative considered**: run the
+literal joint fit as specified, accepting the long runtime. **Rejected**
+once the objective was shown to decompose additively over flights for a
+fixed K (no cross-flight coupling except through K) - profiling out K is
+the exact same optimum via a tractable route, not an approximation, so it
+satisfies the same "shared K, separate p0/v0 per flight" description.
+
+**52. Fixed a bug in `build_corrected_track()`: anchor t=0 at the
+AVERAGED-timestamp-sorted sequence's own minimum, not at the first pair's
+raw cam0 timestamp.**
+Root-caused a hard Model C RANSAC failure (every candidate crashed with
+"Values in t_eval are not within t_span") to the first pair's averaged
+`(t0+t1)/2` time value sometimes coming out negative, depending on which
+camera happened to lead for that specific pair - `solve_ivp` requires
+`t_eval` within `[0, max(t)]`. **Alternative considered**: none seriously
+entertained - this was a straightforward correctness bug once traced (sort
+key and zero-anchor need to use the same, correct, time value). Verified
+fixed by a direct manual `fit_drag_given_k` call before rerunning the
+batch smoke test; noted this could have hit almost any flight (not
+flight_01-specific), since it depends on which pair is first and which
+camera leads for it.
+
+**53. Whole-frame pairing bug investigation: concluded there was NO code
+bug to fix, and reported that honestly rather than forcing a fix or
+silently dropping the investigation.**
+The task suspected same-`frame_number` pairing was corrupting flight_41/
+flight_44's 3D fits (whole-frame misalignment, ~10.5-10.9ms same-index
+delta, outside the +/-8.3ms normal bound). Independently re-confirmed the
+deltas, then traced the actual code path and found
+`build_corrected_track()`/`build_corrected_pairs()` already does
+nearest-TIMESTAMP pairing, never same-index pairing - verified empirically
+on flight_41 (all 87 pairs use a consistent +1 frame offset, dt_ms
+~-5.72mm, well within bound) and spot-checked across the full magnitude
+range of all 38 flights exceeding the bound. **Alternative considered**:
+implement a fix anyway since the task assumed one was needed, or quietly
+report the aggregate results without flagging the discrepancy from the
+task's premise. **Rejected both** - the honest "unexpected: no bug found"
+answer is what the evidence supported; forcing a fix onto correctly-working
+code would be a needless, unrequested change to a pipeline already
+validated across 163 flights.
+
+**54. Did not chase flight_41's elevated Phase 2 RANSAC-health-flag rate
+(60.3% of rows vs. ~15-18% for comparable flights) further, despite
+confirming it's a real (not artifact) outlier.**
+Checked and ruled out both suspected causes (the pairing bug from decision
+53, and contamination matching the full-arc residual pattern of the
+already-masked detector artifacts) - concluded it's most likely flight_41
+genuinely having noisier detector output across most of its N range,
+tripping the relative lead-time-bucket health check more often. **Alternative
+considered**: investigate the specific noise source now, since it's a
+confirmed, measurable outlier. **Rejected** per the task's explicit scope
+boundary (already carved out an analogous case, flight_42, as a separate
+cause not to fold into this fix) - flagged as a candidate for a future,
+separate investigation instead.
+
+---
+
 *Scope note: this log covers the whole session (detector tuning, the
-`claude_rules.md` rewrite, the pixel-velocity sync-correction task, and the
-flight velocity/angle binner task), numbered continuously rather than split
-into separate lists, since all four involved genuine decisions with rejected
-alternatives. Execution details without a real competing alternative (e.g.
-exact pixel margins chosen for a given exclusion zone, which followed
-directly from the safety-check data rather than a judgment call) are
-covered in the relevant worklog's evidence trail, not repeated here as
-numbered decisions.*
+`claude_rules.md` rewrite, the pixel-velocity sync-correction task, the
+flight velocity/angle binner task, the final-point labelling tool, and the
+gravity-vs-drag trajectory fitting task with its RANSAC/all-flights/
+axis-decomposition follow-ons), numbered continuously rather than split
+into separate lists, since all of these involved genuine decisions with
+rejected alternatives. Execution details without a real competing
+alternative (e.g. exact pixel margins chosen for a given exclusion zone,
+which followed directly from the safety-check data rather than a judgment
+call) are covered in the relevant worklog's evidence trail, not repeated
+here as numbered decisions.*
