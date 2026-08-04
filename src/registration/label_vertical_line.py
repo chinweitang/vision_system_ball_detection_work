@@ -159,11 +159,17 @@ def main():
     ap.add_argument("--image", required=True,
                     help="Path to this camera's frame showing the vertical edge (same session, "
                          "cameras must not have moved since the img36 board capture).")
+    ap.add_argument("--out", default=None,
+                    help="Full path to the output CSV. Overrides the default hardcoded "
+                         "location (OUTPUT_DIR / vertical_{cam}.csv) - use this whenever "
+                         "labelling points unrelated to the original vertical-edge/world-frame "
+                         "session, so runs for different sessions/purposes never share (and "
+                         "silently overwrite) the same output file.")
     args = ap.parse_args()
 
     cam = args.cam
     img_path = Path(args.image)
-    csv_path = OUTPUT_DIR / f"vertical_{cam}.csv"
+    csv_path = Path(args.out) if args.out else (OUTPUT_DIR / f"vertical_{cam}.csv")
 
     if not img_path.is_file():
         print(f"Image not found: {img_path}")

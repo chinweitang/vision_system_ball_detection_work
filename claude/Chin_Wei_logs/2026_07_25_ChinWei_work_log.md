@@ -187,3 +187,11 @@
 - the thing is, I'm not sure if I can be plotting prediction error vs lead time since all flights have different durations so it's not really a good plot. like if a flight is only 500ms, you're only using and the lead time is 400ms, then you're only using like not many frames for prediction whereas for a flight is 1500ms, at 500ms, you're using 1000ms for prediction which isn't like a fair comparison. 
       - like maybe a better common metric is using N frames / time needed for prediction - e.g like 100ms for predicition so you're comparing the similar number of frames for prediction
 a
+
+
+
+# Real time performance
+
+## claude\claude_logs\2026-08-03_pi_realtime_benchmark_worklog.md and data\pi_benchmarking\two_axis_sweep
+- so rect morph for one camera for one images costs ~9ms. so I'll need to run the cameras in parallel
+- looking at data\pi_benchmarking\two_axis_sweep\figures\figure1_W_vs_time_consumed.png - 
