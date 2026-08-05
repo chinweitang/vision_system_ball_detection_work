@@ -238,3 +238,170 @@ finding.
 CONVERGENCE result against the full-arc Model-C fit (already frozen in
 `01_`), not ground truth -- manual crossing-bracket labels are not ready
 yet. This entire analysis needs to be re-run once they are.
+
+---
+
+## 2026-08-05 12:35 -- Corrected feasibility figures (t + latency vs deadline)
+
+Task prompt: `claude/prompts/2026-08-05_1233_pi_pipeline_sweep_new_graphs.md`
+
+### Why this correction is needed
+
+The earlier figures (`figures/figure3_latency_vs_t.png`, decision 76) plotted
+`latency(t)` alone against the 490ms deadline -- this drops the observation
+term `t` itself, making feasibility look trivially easy (latency alone never
+exceeds ~320ms). The TRUE constraint a live system faces is: a prediction
+made using points up to cutoff `t` isn't actually AVAILABLE until
+`T_ready(t) = t + latency(t)` has elapsed on the launch-relative clock (t=0
+= first-usable-fit-frame, same clock as the crossing deadline from
+`05_budget_by_elevation_bin`). Feasibility is `T_ready(t) < deadline`, i.e.
+`margin(t) = deadline - t - latency(t) > 0`. This section corrects that.
+
+**Worst-case pairing**: the guarantee uses `latency_p95(t)` (the tail, not
+the average) against each regime's own deadline -- `margin_p95(t) = deadline
+- t - latency_p95(t)`. Median latency is plotted only as a lighter
+companion reference line, never as the feasibility boundary itself, per
+the task's explicit instruction (an average-case guarantee is not a real
+guarantee).
+
+**Deadlines used** (launch-to-crossing, from `05_budget_by_elevation_bin`,
+decision 74): FLAT=**490ms** (NOT the P5=502ms -- FLAT's n=35 is thin and
+P5 sits right at the edge of the sample; anchored to the population MIN
+instead, 491ms, rounded to 490ms, as the more conservative/defensible
+choice per the task's explicit instruction). MID=710ms (P5, n=12). LOB=
+1080ms (P5, n=60).
+
+### STOP -- per-component velocity error does not exist in any read-only-accessible output
+
+Checked BOTH `pipeline_sweep_raw.csv` (columns: `... position_error_mm,
+velocity_error_mm_s, hit_miss_match, latency_ms ...`) AND the underlying
+`data/pi_benchmarking/pipeline_sweep_full_20260804.json` (`t_row` keys:
+`... position_error_mm, velocity_error_mm_s, cls_own, hit_miss_match ...`)
+directly -- **only the scalar `velocity_error_mm_s` (the Euclidean norm
+`||vel_own - vel_ref||`) was ever computed and persisted, for every
+`(flight, T)` row, in both files.** The per-axis vectors themselves
+(`vel_own`, `ref_row["crossing_vel_xyz"]`) existed in memory during the
+original Pi run (`prediction_pipeline_sweep_pi.py`) but only their norm was
+written out -- the per-component breakdown was never saved anywhere.
+
+**Per the task's explicit instruction, NOT re-running the Pi to backfill
+this.** Figure 4 (velocity error by axis) is BLOCKED pending a decision:
+(a) modify `prediction_pipeline_sweep_pi.py` to also persist per-axis
+`(vx,vy,vz)` for both `vel_own` and the reference, then re-run the full
+107-flight x 24-T sweep on the Pi (~14min, same cost as the original run);
+(b) some other approach. Proceeding with everything else (Figures 1-3,
+margin/T_ready/max-usable-t analysis, this numeric summary) now, since none
+of it depends on per-component velocity.
+
+### Result: max-usable-t per regime (largest T with margin_p95(T) > 0)
+
+**This is materially different and more sobering than decision 76's
+"latency never binds" framing** -- once the observation term `t` is counted
+alongside latency, the true usable cutoff is much earlier than the nominal
+deadline:
+
+| bin | deadline | max_usable_t | margin_p95 at that t | pos_err_med at that t | n_fit_ok |
+|---|---|---|---|---|---|
+| FLAT | 490ms | **300ms** | 28.9ms | 80.5mm (IQR 67.3) | 35/35 |
+| MID | 710ms | **450ms** | 31.2ms | 77.8mm (IQR 69.9) | 12/12 |
+| LOB | 1080ms | **800ms** | **1.2ms** | 76.7mm (IQR 56.3) | 59/60 |
+
+LOB's margin at its own max-usable-t is razor-thin (1.2ms) -- essentially
+AT the boundary, not a comfortable margin; the next T step (850ms) is
+already infeasible (margin_p95=-58.1ms). FLAT and MID have modest but real
+slack (~29-31ms) at their respective max-usable-t. All three regimes'
+position error AT their feasible operating point sits comfortably under
+the 100mm provisional threshold (76.7-80.5mm) -- accuracy is NOT the
+limiter at the true feasible cutoff for any regime; time budget is.
+
+### Full per-(bin,T) table (all values from margin_analysis.csv, computed
+### from the existing per-flight raw CSV, latency p95 newly aggregated
+### here since the summary CSV only had median+IQR)
+
+**FLAT (deadline=490ms):**
+
+| T_ms | lat_med | lat_p95 | T_ready_med | T_ready_p95 | margin_med | margin_p95 | feasible(p95) | pos_err_med |
+|---|---|---|---|---|---|---|---|---|
+| 150 | 117.1 | 131.0 | 267.1 | 281.0 | 222.9 | 209.0 | YES | 183.4 |
+| 200 | 129.5 | 134.4 | 329.5 | 334.4 | 160.5 | 155.6 | YES | 135.1 |
+| 250 | 138.3 | 155.9 | 388.3 | 405.9 | 101.7 | 84.1 | YES | 107.3 |
+| **300** | 144.8 | 161.1 | 444.8 | 461.1 | 45.2 | **28.9** | **YES** | **80.5** |
+| 350 | 155.2 | 169.7 | 505.2 | 519.7 | -15.2 | -29.7 | NO | 63.9 |
+| 400 | 163.6 | 170.5 | 563.6 | 570.5 | -73.6 | -80.5 | NO | 48.7 |
+| 450 | 173.5 | 182.2 | 623.5 | 632.2 | -133.5 | -142.2 | NO | 41.1 |
+| 490 | 176.3 | 193.3 | 666.3 | 683.3 | -176.3 | -193.3 | NO | 38.8 |
+| 500-1250 | 183.6-201.9 | 195.0-236.7 | -- | -- | -- | -313 to -995 | NO (all) | 20.3-38.0 |
+
+**MID (deadline=710ms):**
+
+| T_ms | lat_med | lat_p95 | T_ready_med | T_ready_p95 | margin_med | margin_p95 | feasible(p95) | pos_err_med |
+|---|---|---|---|---|---|---|---|---|
+| 150 | 128.1 | 141.6 | 278.1 | 291.6 | 431.9 | 418.4 | YES | 170.9 |
+| 200 | 137.5 | 147.5 | 337.5 | 347.5 | 372.5 | 362.5 | YES | 122.2 |
+| 250 | 147.3 | 155.3 | 397.3 | 405.3 | 312.7 | 304.7 | YES | 177.8 |
+| 300 | 158.3 | 172.3 | 458.3 | 472.3 | 251.7 | 237.7 | YES | 128.9 |
+| 350 | 168.8 | 185.8 | 518.8 | 535.8 | 191.2 | 174.2 | YES | 95.1 |
+| 400 | 179.8 | 195.9 | 579.8 | 595.9 | 130.2 | 114.1 | YES | 109.8 |
+| **450** | 190.3 | 228.8 | 640.3 | 678.8 | 69.7 | **31.2** | **YES** | **77.8** |
+| 490 | 194.7 | 228.9 | 684.7 | 718.9 | 25.3 | -8.9 | NO | 85.5 |
+| 500-1250 | 205.7-285.6 | 232.6-346.2 | -- | -- | -- | -38 to -875 | NO (all) | 26.3-67.1 |
+
+**LOB (deadline=1080ms):**
+
+| T_ms | lat_med | lat_p95 | T_ready_med | T_ready_p95 | margin_med | margin_p95 | feasible(p95) | pos_err_med |
+|---|---|---|---|---|---|---|---|---|
+| 150 | 139.6 | 150.5 | 289.6 | 300.5 | 790.4 | 779.5 | YES | 549.5 |
+| 200 | 147.5 | 168.1 | 347.5 | 368.1 | 732.5 | 711.9 | YES | 391.5 |
+| 250 | 156.4 | 175.0 | 406.4 | 425.0 | 673.6 | 655.0 | YES | 373.9 |
+| 300 | 169.6 | 186.5 | 469.6 | 486.5 | 610.4 | 593.5 | YES | 340.8 |
+| 350 | 178.8 | 199.7 | 528.8 | 549.7 | 551.2 | 530.3 | YES | 248.5 |
+| 400 | 185.7 | 202.7 | 585.7 | 602.7 | 494.3 | 477.3 | YES | 224.4 |
+| 450 | 195.4 | 213.2 | 645.4 | 663.2 | 434.6 | 416.8 | YES | 178.5 |
+| 490 | 202.3 | 217.7 | 692.3 | 707.7 | 387.7 | 372.3 | YES | 156.3 |
+| 500 | 202.3 | 224.8 | 702.3 | 724.8 | 377.7 | 355.2 | YES | 171.8 |
+| 550 | 215.6 | 232.9 | 765.6 | 782.9 | 314.4 | 297.1 | YES | 145.7 |
+| 600 | 227.6 | 251.0 | 827.6 | 851.0 | 252.4 | 229.0 | YES | 115.0 |
+| 650 | 228.8 | 249.2 | 878.8 | 899.2 | 201.2 | 180.8 | YES | 110.1 |
+| 700 | 244.1 | 274.9 | 944.1 | 974.9 | 135.9 | 105.1 | YES | 90.7 |
+| 750 | 248.1 | 269.0 | 998.1 | 1019.0 | 81.9 | 61.0 | YES | 91.1 |
+| **800** | 255.5 | 278.8 | 1055.5 | 1078.8 | 24.5 | **1.2** | **YES** | **76.7** |
+| 850 | 263.4 | 288.1 | 1113.4 | 1138.1 | -33.4 | -58.1 | NO | 64.7 |
+| 900-1250 | 273.1-317.6 | 310.5-359.5 | -- | -- | -- | -130 to -530 | NO (all) | 34.2-63.6 |
+
+### What changed vs decision 76's framing, and why
+
+Decision 76 plotted `latency(t)` alone and concluded "latency never binds,
+in any regime, at any T" -- true in isolation, but it silently answered a
+different, easier question (does compute alone fit in 490ms?) than the
+real one (does OBSERVATION + compute fit before the ball crosses?). Once
+`t` is added back in, FLAT's usable window collapses from the full
+150-1250ms sweep range down to `t<=300ms` (deadline 490ms minus ~190ms of
+p95 pipeline overhead), MID to `t<=450ms`, LOB to `t<=800ms`. This is the
+CORRECT way to read the original design question, and it's a materially
+tighter constraint than decision 76 reported -- flagged explicitly here
+rather than letting the two figures coexist without reconciliation.
+
+### Outputs (data/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/figures2/)
+
+- **margin_analysis.csv** (72 rows, bin x T) -- the full numeric backing
+  for every number in this section: `latency_median_ms`, `latency_p95_ms`,
+  `T_ready_median_ms`, `T_ready_p95_ms`, `margin_median_ms`,
+  `margin_p95_ms`, `feasible_p95`, `position_error_median_mm`,
+  `position_error_iqr_mm`, per (bin, T).
+- **figure1_margin.png** -- margin_p95(t) per regime (solid, the real
+  guarantee) with margin_median(t) as a lighter dashed companion; margin=0
+  boundary line, infeasible region shaded, each regime's max-usable-t
+  marked. THE headline feasibility figure.
+- **figure2_feasibility_panels.png** -- 3 panels (one per regime),
+  T_ready_median/T_ready_p95 rising curves against that regime's own
+  deadline (dotted line), infeasible region (above deadline) shaded,
+  max-usable-t marked. The "observation + pipeline vs budget" view.
+- **figure3_position_error_at_operating_point.png** -- position error
+  (median + IQR band) per regime across the full T sweep, 100mm provisional
+  threshold line, vertical lines at each regime's max-usable-t so error is
+  read at the actually-feasible cutoff, not an arbitrary T. Explicitly
+  labelled CONVERGENCE vs full-arc fit (not ground truth), with the ~106mm
+  label-vs-fit reference floor from decision 77 cited directly in the title.
+
+**Figure 4 (velocity error by axis) NOT produced -- BLOCKED, see STOP
+section above.** All other success criteria met.

@@ -124,3 +124,67 @@ Status: STARTING.
   by the residual gate as specified. Reported as-is for Chin Wei's own
   judgement rather than silently adjusting the threshold to make it flag
   something.
+
+## Final summary (for quick reference)
+
+**Model-C reproduction**: all 20 flights exactly reproduced 01_'s stored
+`cls`/`duration_ms` (RANSAC seed=42, fully deterministic) after the
+(session, flight_id) keying fix above.
+
+**Residual gate**: per-flight residuals range 2.5-46.0mm (median 32.9mm),
+none flagged (no single flight exceeds 3x the median, RESIDUAL_FLAG_FACTOR).
+Worth noting honestly: most flights run somewhat above the task's own
+stated ~10-20mm expectation -- a population-level shift, not a single
+outlier, so nothing triggered the gate as specified.
+
+**Pooled position (n=17, clean = symmetric + non-residual-flagged)**:
+bias Y=+7.9mm, RMS Y=111.6mm; bias Z=-34.3mm, RMS Z=65.3mm; median total
+error 105.7mm, p90=199.0mm.
+
+**Pooled velocity (n=17, clean, Model-C minus label)**:
+- depth (X_world): mean diff -13.4mm/s, RMS diff 247.9mm/s, mean label SD ~154.7mm/s
+- width (Y_world): mean diff +47.7mm/s, RMS diff 301.9mm/s, mean label SD ~282.2mm/s
+- up (Z_world): mean diff +30.5mm/s, RMS diff 93.5mm/s, mean label SD ~135.3mm/s
+- speed: mean diff -51.0mm/s, RMS diff 220.4mm/s
+
+Most component gaps sit within ~1 label-SD of zero -- largely consistent
+with label-fit noise rather than a clear systematic Model-C bias, though
+width (Y_world) shows the largest relative gap of the three.
+
+**3 asymmetric flights** (flight_11 n=5, flight_119 n=5, flight_107 n=4)
+reported separately in the per-flight CSV, excluded from all pooled/headline
+numbers above, correctly low-confidence given their reduced point count.
+
+**Per-elevation-bin (FLAT/MID/LOB)**: reported in the per-flight CSV only,
+as INDICATIVE (n~5-7 per bin) -- not restated here as confident numbers,
+per the task's own instruction not to over-read small-n per-bin splits.
+
+## Output files (data/prediction/06_label_vs_fit/)
+
+- **label_vs_fit_per_flight.csv** -- one row per flight (20 rows): identity
+  (flight_id, registration, elevation_bin, symmetric), fit diagnostics
+  (n_points, resid_rms_mm, residual_flagged), the Model-C-reproduction check
+  (reproduced_01, cls_ref, cls_rederived), both fits' own crossing times
+  (t_cross_label, t_cross_modelc), position in both frames (label_Y/Z,
+  modelc_Y/Z, pos_err_Y/Z/total in mm), and velocity per world axis for
+  both the label fit (with its SD) and Model-C (label_vx_depth/vy_width/vz_up
+  + label_v*_sd, modelc_vx_depth/vy_width/vz_up). The full numeric backing
+  for every summary figure above -- reload this for any follow-on analysis
+  rather than re-deriving.
+- **position_scatter.png** -- Y-Z scatter in the plane's local aperture
+  frame (same frame as 01_'s HIT/MISS box), aperture box drawn. Model-C =
+  filled marker, label-fit = open marker, thin line connects each flight's
+  pair so the discrepancy vector is visible at a glance. Colour = elevation
+  bin (FLAT/MID/LOB), marker shape 'x' = the 3 asymmetric/low-confidence
+  flights. This is the position half of the validation, visual form.
+- **velocity_comparison.png** -- three side-by-side panels, one per world
+  axis (X_world=depth, Y_world=width, Z_world=up). Per flight (x-axis,
+  labelled by flight number): open circle = label-fit velocity with its
+  fit-covariance-derived SD as an error bar, filled square = Model-C's
+  re-derived velocity at the same crossing. Colour = elevation bin. This is
+  the velocity half of the validation, visual form -- the error bars are
+  what let you eyeball "is this gap real or just label noise" per flight.
+- **summary.txt** -- plain-text version of the pooled position/velocity
+  numbers in the "Final summary" section above (no per-flight detail,
+  no figures) -- the quick-glance headline result without opening a CSV
+  or image.

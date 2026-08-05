@@ -1370,6 +1370,84 @@ data/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/
 {pipeline_sweep_raw.csv (2568 rows), pipeline_sweep_summary_by_bin_T.csv
 (72 rows), summary.txt, figures/figure{1,2,3}_*.png}.
 
+**77. First real ground-truth check: Model-C's re-derived crossing state vs
+20 manually-labelled crossing brackets -- median position error 105.7mm,
+velocity gaps mostly within ~1 label-SD of zero.** Context: decisions 73-76
+all relied on the full-arc Model-C fit as the accuracy REFERENCE
+(explicitly labelled "convergence, not ground truth" throughout, since
+manual crossing-bracket labels weren't ready) -- this closes that gap for
+the 20 candidate flights selected in `02_candidate_reselection` and
+manually labelled in `03_crossing_labels`. Ran in parallel to decisions
+75-76's Pi work (separate session/task, worklog
+`claude/claude_logs/2026-08-04_1925_label_vs_fit_crossing.md`, prompt
+`claude/prompts/2026-08-04_1925_label_vs_fit_crossing.md`).
+
+**Methodology** (stated up front per the task's own rigor requirements,
+each independently verifiable in the worklog): time origin verified by
+construction to already share `classify_flight()`'s absolute clock (both
+trace back to `build_corrected_track`'s zero-basing) -- no re-anchoring
+needed. Per-axis quadratics fit to the manually-labelled bracket points
+(camera frame, mathematically equivalent to world-rotated fitting for this
+case). Position compared in the SAME plane-local (u,up) aperture frame
+01_'s HIT/MISS box and `crossing_Y`/`crossing_Z` were defined in (not raw
+world axes) -- required for "same plane" comparability. Velocity compared
+in world-semantic axes (depth/width/up), with per-axis OLS covariance
+propagated into a label-fit SD via the standard linear-combination
+variance formula, so component gaps can be judged against label-fit noise,
+not just compared as bare numbers. Each fit (label quadratic, Model-C
+RANSAC) found its OWN `t_cross` via the same depth-root-crossing
+definition, not forced to a shared value.
+
+**Bug caught before any real comparison happened** (a false stop, not a
+real Model-C mismatch): `load_classification()` keyed
+`crossing_classification.csv` by `flight_id` alone -- not globally unique
+across sessions (`flight_13` exists in both `2026_07_15_gym`, cls=
+MISS_SHORT, and `2026_07_21_gym`, cls=HIT, the actual flagged-flat probe
+candidate from `02_`) -- silently compared against the WRONG flight's
+reference. Fixed by keying `(session, flight_id)`; re-ran clean. Same class
+of bug this project's tooling has been bitten by and fixed before
+(session-qualification, referenced in decision 65's worklog).
+
+**Result**: all 20/20 flights exactly reproduced `01_`'s stored
+`cls`/`duration_ms` (RANSAC seed=42, deterministic) after the keying fix --
+Model-C's classification is fully reproducible, not a source of
+discrepancy here. Residual gate (3x population median): none flagged,
+though per-flight residuals (2.5-46.0mm, median 32.9mm) run somewhat above
+the task's own stated ~10-20mm expectation as a population-level shift, not
+a single outlier -- reported as-is, not silently adjusted to force a flag.
+
+**Pooled position (n=17, clean = symmetric + not residual-flagged)**: bias
+Y=+7.9mm, RMS Y=111.6mm; bias Z=-34.3mm, RMS Z=65.3mm; median total error
+105.7mm, p90=199.0mm. **Pooled velocity (n=17, Model-C minus label)**: depth
+mean diff -13.4mm/s (RMS 247.9, label SD ~154.7); width mean diff +47.7mm/s
+(RMS 301.9, label SD ~282.2, the largest relative gap of the three); up
+mean diff +30.5mm/s (RMS 93.5, label SD ~135.3); speed mean diff -51.0mm/s
+(RMS 220.4). Most component gaps sit within ~1 label-SD of zero --
+largely consistent with label-fit noise rather than a clear systematic
+Model-C bias. 3 asymmetric-bracket flights (flight_11 n=5, flight_119 n=5,
+flight_107 n=4) reported separately, excluded from pooled numbers as
+lower-confidence given the reduced point count. Per-elevation-bin split
+(FLAT n=7 median=119.9mm, MID n=5 median=77.1mm, LOB n=5 median=116.5mm)
+reported as INDICATIVE only in the per-flight CSV, not restated as
+confident numbers given n~5-7 per bin.
+
+**This is a genuinely positive result for the pipeline's real-world
+validity**: a ~106mm median position error and velocity gaps mostly inside
+1 label-SD directly supports treating decision 76's convergence-based
+accuracy numbers as a reasonable proxy for ground truth, at least for this
+20-flight sample -- not proof the two are interchangeable at scale, but a
+real, first check rather than an assumption. Should be revisited once more
+flights are manually labelled (n=20 here vs the 107-crosser population
+decision 76 swept).
+
+Outputs: `data/prediction/06_label_vs_fit/{label_vs_fit_per_flight.csv
+(20 rows, full numeric backing for every summary number above),
+position_scatter.png (Y-Z aperture-frame scatter, label vs Model-C paired
+per flight, coloured by elevation bin), velocity_comparison.png (3 panels,
+one per world axis, label-fit points with SD error bars vs Model-C points),
+summary.txt (plain-text headline numbers)}` -- all 4 files verified present
+on disk (sizes 8.5KB/85KB/121KB/0.8KB) before writing this entry.
+
 ---
 
 *Scope note: this log covers the whole session (detector tuning, the
