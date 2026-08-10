@@ -1448,6 +1448,242 @@ one per world axis, label-fit points with SD error bars vs Model-C points),
 summary.txt (plain-text headline numbers)}` -- all 4 files verified present
 on disk (sizes 8.5KB/85KB/121KB/0.8KB) before writing this entry.
 
+**78. Corrected decision 76's feasibility framing from latency(t)-alone to
+margin_p95(t) = deadline - t - latency_p95(t) -- the true usable cutoff per
+regime collapses sharply once the observation term is counted, and LOB's
+margin at its own boundary is razor-thin (1.2ms).** Context: decision 76
+plotted `latency(t)` alone against 490ms and concluded "latency never
+binds" -- true in isolation, but it silently dropped the observation term
+`t` itself, answering "does compute alone fit?" instead of the real
+question "does observation + compute fit before the ball crosses?". Also
+switched the feasibility criterion from median latency to **p95** (the
+real guarantee, median kept only as a lighter reference line) -- an
+average-case number is not a guarantee. Deadlines: FLAT=490ms (NOT
+decision 74's P5=502ms -- FLAT's n=35 is thin and P5 sits at the sample
+edge; anchored to the population min=491ms instead, rounded to 490, the
+more conservative choice), MID=710ms, LOB=1080ms (both P5, unchanged from
+decision 74). Read latency p95 per (bin,T) directly from the existing raw
+per-flight CSV (not re-run -- the summary CSV only had median+IQR, p95
+needed fresh aggregation of already-persisted data). **Result: max-usable-t
+(largest T with margin_p95>0) is FLAT=300ms (vs the nominal 490ms
+deadline), MID=450ms (vs 710ms), LOB=800ms (vs 1080ms)** -- all three
+regimes lose roughly 40% of their nominal deadline to real p95 pipeline
+overhead once `t` itself is correctly counted. LOB's margin at ITS OWN
+max-usable-t is only 1.2ms -- effectively at the boundary, not a
+comfortable margin; FLAT/MID have modest but real slack (~29-31ms).
+Position error at each regime's true feasible cutoff (80.5/77.8/76.7mm) is
+comfortably under the 100mm provisional threshold in all three cases --
+**time budget, not accuracy, is now the binding constraint everywhere**,
+the opposite emphasis from decision 76. Full per-(bin,T) margin table
+logged inline in the worklog (not just referenced) per explicit
+instruction. Outputs: `data/pi_benchmarking/02_pi_pipeline_sweep_
+parallel_detection/figures2/{margin_analysis.csv, figure1_margin.png,
+figure2_feasibility_panels.png, figure3_position_error_at_operating_
+point.png}` -- decision 76's original `figures/` directory and all its
+files left untouched (new figures written to a new `figures2/` subfolder,
+not overwriting).
+
+**79. Targeted, safety-gated re-run to recover PER-AXIS (not just scalar)
+velocity error -- confirms a real, consistent systematic bias by axis (X/Z
+negative, Y positive) while scatter sits at or below each axis's
+label-precision floor at every regime's feasible operating point.**
+Context: decision 76's `velocity_error_mm_s` was a scalar Euclidean norm --
+checked both the raw CSV and the underlying JSON directly and confirmed
+the per-axis vectors were computed in-memory during that run but never
+persisted, so per-axis analysis required a real Pi re-run, not just a
+different aggregation. Given the cost/risk of a second ~14-minute Pi run,
+ran under an explicit data-safety gate: copied the script (`prediction_
+pipeline_sweep_pi_vaxis.py`, original `prediction_pipeline_sweep_pi.py`
+untouched, verified via unchanged file size/timestamp throughout), wrote
+to a NEW output filename (`pipeline_sweep_full_vaxis_20260805.json`,
+original `..._20260804.json` untouched), and required a **regression check
+before trusting anything**: all 2481 "ok" rows across the full 107-flight
+re-run reproduced the ORIGINAL run's `position_error_mm`/
+`velocity_error_mm_s` to within 1e-6 -- 0 mismatches -- confirming the
+minimal edit (adding per-axis projection/output columns only) changed
+nothing about the existing computation. **Geometry check performed before
+running anything**: `Y_world` isn't exposed by `build_geometry()`'s
+returned dict (only X_world/up=Z_world are) -- rather than reconstruct it
+via an unverified cross-product handedness assumption, loaded it directly
+via the frozen `load_world_axes()`; verified numerically for all 3
+registrations that X/Y/Z are unit-length and mutually orthogonal, and that
+the cross-product guess would in fact have matched anyway (to ~1e-7) --
+confirmed rather than assumed either way.
+
+**Result, at each regime's max-usable-t (decision 78)**: bias (signed
+mean) is consistently NEGATIVE for X_depth and Z_up and consistently
+POSITIVE for Y_width across all three regimes (e.g. LOB@800ms:
+X=-18.5mm/s, Y=+16.2mm/s, Z=-60.5mm/s) -- a real structural pattern, not
+noise scattered around zero, though the root cause (finite-difference dt
+artifact vs partial-arc drag-fit convergence characteristic) is outside
+this task's scope to diagnose. Scatter (RMS, the real accuracy floor once
+bias is corrected) sits AT OR BELOW each axis's label-precision floor
+(X~155mm/s, Z~135mm/s, both validated per decision 77) at every regime's
+operating point -- broadly consistent with decision 77's "velocity gaps
+mostly within ~1 label-SD of zero" finding, a reassuring cross-check
+between two independently-run tasks. **Y_width's own floor (282mm/s) is
+itself UNRESOLVED** (decision 77 never validated Y_width to a known
+label precision) -- Figure 4 makes this explicit via annotation rather
+than implying all 3 axes carry equal evidentiary weight. Bias and scatter
+shrink substantially as T grows for every axis/regime, consistent with the
+position-error convergence already shown in decision 78's Figure 3.
+Outputs: `data/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/
+figures2/{velocity_by_axis_raw.csv (2481 rows), velocity_by_axis_summary.csv
+(72 rows), figure4_velocity_error_by_axis.png}` -- all new filenames,
+nothing existing (including decision 76's original `figures/`) touched or
+deleted anywhere.
+
+**80. Reused the existing wall-edge vertical-line labeller unmodified for
+the rebounder tape endpoints, per explicit instruction not to write a new
+labelling tool -- but the reuse's hardcoded shared output path silently
+overwrote the ORIGINAL wall-edge click data before the mistake was caught,
+fixed by adding a `--out` parameter rather than relying on manual
+file-move discipline.** Context: `crossing_plane_setup.md` assumed 2
+manually-labelled ground tape endpoints already existed per camera for
+each of 3 world-frame registrations (REG_15, REG_21_1, REG_21_2) -- they
+didn't; the `world_frame_validation` folders held only checkerboard-derived
+world-up transforms. `src/registration/label_vertical_line.py`, built
+earlier this session for a different purpose (V_top/V_bottom on a vertical
+wall edge, feeding the world-frame-precision run documented in
+`context.md` SS4.8: X=1.51mm/Y=2.40mm/Z=1.58mm), is mechanically identical
+to a 2-point tape-endpoint labeller -- reused as-is per the user's explicit
+request ("aren't there already existing point labelled scripts... so that
+you don't have to rewrite existing code").
+
+**Mistake made and caught**: ran the tool against REG_15/cam0 without
+first checking what was already at its hardcoded output path
+(`data/2026_07_12_session/validation/results/world_frame/vertical_cam0.csv`)
+-- violates `claude_rules.md` SS2's strict data-protection rule (never
+overwrite `data/` files without permission first). That path already held
+the ORIGINAL wall-edge clicks feeding the precision numbers above; the new
+tape clicks silently overwrote it. Caught only because the user asked "why's
+there existing labels on it already? make sure I'm not wiping any other
+data" after seeing pre-existing markers in the GUI on the next camera.
+**Damage check performed before any further action**: `vertical_cam0.csv`
+confirmed overwritten (mtime changed); `vertical_cam1.csv` confirmed
+untouched (GUI closed before that save); the DERIVED precision-analysis
+outputs (`world_frame_precision.csv`/`.txt`) confirmed untouched -- separate
+files, not recomputed live from the raw click CSV -- so the analytically
+load-bearing result was never at risk, only the raw pixel backing data for
+one camera, itself reconstructable by re-labelling the still-intact source
+image (`img_0036.png`).
+
+**Alternative considered**: keep the single hardcoded output path and rely
+on manually moving/backing up the file before each of the following 5
+runs (the ORIGINAL approved plan, written before the incident occurred).
+**Rejected** once the overwrite happened -- the user explicitly asked for a
+structural fix instead ("why cannot you just write the outputs straight
+into their destination folders... remember that one of the rules... is to
+not overwrite existing data files"). Added an optional `--out` argument to
+`label_vertical_line.py` (defaults to the original hardcoded path,
+preserving existing behaviour for any other caller); all 6 labelling runs
+(3 registrations x 2 cams) then wrote straight to their real destination,
+eliminating the shared-scratch-path risk entirely rather than trusting
+manual discipline a second time.
+
+**81. `01_crossing_plane_setup`: found the prompt's floor-referenced
+geometry doesn't map onto anything computable in this codebase (no
+absolute world origin exists, only a validated rotation), and replaced it
+with an entirely origin-free design built relative to the tape points
+themselves -- classified all 163 flights (HIT=87, MISS_HIGH_WIDE=20,
+MISS_SHORT=56).** Context: the task required triangulating the (now-
+labelled, decision 80) tape endpoints, defining a vertical crossing plane +
+2x2m aperture per registration, and classifying every flight's full-arc
+Model-C fit against it, including a MISS_SHORT category for flights whose
+arc "hits the floor before reaching the plane."
+
+**Gap found before writing any classification code**: traced
+`X_world`/`Y_world`/`Z_world` (already used by the frozen `g_fixed_for`/
+`world_axes_for`) back to `world_frame_validate_2026_07_15.py` -- they are
+pure DIRECTIONS (`Z_world = -R_wc[:,1]` normalized; `X_world` from the
+stereo-baseline direction), built with no translation. `T_wc` (the
+checkerboard's position) is saved in every `*_world_transform.npz` but
+consumed by nothing in the existing frozen pipeline -- deliberate upstream,
+since the existing predictor "predicts to the rebounder plane, not the
+distant floor" specifically to avoid ever needing an absolute floor
+reference. The prompt's literal "height above floor ~ 0" / "floor z=0"
+language therefore had no computable referent.
+
+**Alternative considered**: define floor Z=0 as the mean height of each
+registration's own 2 triangulated tape endpoints (presented to the user as
+the recommended option, since the tape physically sits on the floor) --
+would have preserved a floor-extrapolation MISS_SHORT design. **Rejected**
+once the user pointed out a simpler equivalent: "you don't need to
+predict... the final frame of the ball frames is the ball at the end of
+the arc - you can just see if that point is beyond the 5m mark." Adopted
+instead: compare each flight's own LAST OBSERVED (not extrapolated) point's
+depth to the plane depth; short -> MISS_SHORT immediately, no floor
+reference or extrapolation search needed at all. This generalized to the
+whole pipeline: aperture corners, plane depth, and crossing coordinates are
+all built relative to the tape points using world-aligned DIRECTIONS
+(X_world, Z_world=up, and the tape line's own unit direction) rather than
+absolute position, sidestepping the missing-origin problem everywhere, not
+just in MISS_SHORT.
+
+**Bug caught and worked around, not fixed in frozen code**: `simulate_drag`
+(frozen, `trajectory_fit.py`) integrates over `(0, max(t_array))` via
+`solve_ivp`; evaluating it at a single `t=0.0` makes that a zero-length
+interval, and `solve_ivp` returns `sol.y` as a list instead of an ndarray
+in that case, breaking the `.T` call downstream. Worked around entirely in
+the new script: use the fit's own `p0` directly for any query `t<=0`, and
+start the crossing-time bisection bracket at `t=1e-6` rather than exactly
+`0.0`.
+
+**Other deviations from the prompt, both explicit**: tape separation
+sanity bound moved from the prompt's assumed ~1.0m (the tape's true length)
+to ~700mm, after the user confirmed all 3 registrations were deliberately
+clicked at that shorter distance (direction/aperture math unaffected --
+built from a unit vector). The prompt's own checkpoint pause (stop after
+geometry setup for approval before mass-classifying) was skipped by
+explicit request ("you don't need to stop at phase A - just continue").
+
+Outputs: `data/prediction/01_crossing_plane_setup/{geometry_report.txt,
+crossing_classification.csv (163 rows), crossing_scatter_pooled.png + 3
+per-registration PNGs, ranked_candidates.csv (v1, superseded by decision
+82), miss_short_flights.csv, skipped_flights.csv (0 rows)}`.
+
+**82. `02_candidate_reselection`: rejected v1's edge-proximity candidate
+ranking once the user identified it silently excluded an entire flight
+regime, replaced it with elevation-stratified + aperture-position-spread
+selection.** Context: v1 (`crossing_plane_plots_and_ranking.py`) ranked the
+top 20 crossing-bracket-labelling candidates by ascending distance to the
+aperture edge, filtered to duration>1200ms, round-robin across 4 elevation
+bins. The user flagged this as wrong for the actual goal (validating
+Model-C's crossing-state prediction ACROSS trajectory regimes, since flat
+drives and lobs cross the plane in physically different ways -- fast/
+shallow/early-descent vs. steep/near-apex): edge-proximity ranking filled
+the list with near-edge lobs and excluded the ~41 low-elevation flat-drive
+crossers entirely, because flat drives typically cross mid-box (high
+edge_dist) even though they're the regime most in need of independent
+validation.
+
+**Redesign**: stratify the 107 crossers by launch elevation into
+FLAT(<15deg, n=35)/MID(15-45deg, n=12)/LOB(>=45deg, n=60); within each
+stratum, select for SPREAD across the 2x2m aperture box via greedy
+farthest-point sampling in (Y,Z) -- not edge proximity; reserve 4
+deliberate picks first (`flight_109` as a decision-boundary probe at
+edge_dist~11mm, plus the 3 flagged-FLAT drives nearest box-centre, doubling
+as flag-validity and flat-regime-coverage probes); fill remaining slots to
+~6-7 per bin; soft per-registration penalty in the sampling score so picks
+spread across all 3 registrations where possible, not a hard constraint.
+
+**Alternative considered**: keep edge_dist as the primary sort key and
+patch in flat-drive representation on top (e.g. reserve a few slots by
+elevation as an afterthought). **Rejected implicitly by the redesign's
+scope** -- the stated goal (validate the fit across regimes) requires
+stratification to be the PRIMARY selection axis, not a correction applied
+after the fact to a ranking built on a different criterion.
+
+**Result**: final selection FLAT=7/MID=7/LOB=6 (20 total); visually
+confirmed via `candidates_scatter.png` to span both elevation regimes and
+aperture position, unlike v1's near-edge-only, lob-heavy list. These 20
+flights were the ones manually labelled in `03_crossing_labels` (decision
+77's worklog) and validated against Model-C in decision 77 itself.
+
+Outputs: `data/prediction/02_candidate_reselection/
+{ranked_candidates_v2.csv (20), all_crossers_stratified.csv (107),
+candidates_scatter.png}`.
+
 ---
 
 *Scope note: this log covers the whole session (detector tuning, the

@@ -405,3 +405,171 @@ rather than letting the two figures coexist without reconciliation.
 
 **Figure 4 (velocity error by axis) NOT produced -- BLOCKED, see STOP
 section above.** All other success criteria met.
+
+---
+
+## 2026-08-05 12:45 -- Per-axis velocity error re-run (data safety: copy script, new filenames only)
+
+Task prompt: `claude/prompts/2026-08-05_1254_pi_sweep_rerun_velocity_error_components.md`
+
+New file `src/pi_benchmarking/prediction_pipeline_sweep_pi_vaxis.py` -- a
+COPY of `prediction_pipeline_sweep_pi.py`, original left untouched (verified
+via `ls -la` on the Pi: original's timestamp/size unchanged throughout).
+ONLY change: `process_flight()` additionally projects `vel_own` and the
+reference `crossing_vel_xyz` onto the world-semantic axes (X=depth,
+Y=width, Z=up) and persists `vx/vy/vz_own`, `vx/vy/vz_ref`,
+`err_vx/vy/vz` (SIGNED) per (flight,T), alongside the existing scalar
+`velocity_error_mm_s` (kept, computed identically, for the regression
+check). Fit/detection/RANSAC/T-grid/flight population byte-for-byte
+unchanged.
+
+**Geometry correctness check before running anything**: `Y_world` isn't
+propagated by `build_geometry()`'s `geo` dict (only `X_world` and
+`up`=`Z_world` are) -- rather than reconstruct it via cross product (an
+unverified handedness assumption), loaded it directly via the frozen
+`load_world_axes(session, registration)`. Verified numerically for all 3
+registrations before running anything: X/Y/Z are unit-length, mutually
+orthogonal (all pairwise dots ~1e-4 of zero), AND `Y_world` exactly equals
+`Z_world x X_world` anyway (confirmed to ~1e-7) -- so the cross-product
+reconstruction would in fact have been fine, but loading the authoritative
+source removed the need to trust that assumption at all.
+
+**Local validation** (2-flight pilot, laptop): internal consistency check
+passed (reconstructed `hypot(err_vx,err_vy,err_vz)` matches the persisted
+scalar `velocity_error_mm_s` exactly, all rows) -- confirms the per-axis
+decomposition is mathematically correct, not just plausible-looking.
+Flight_11/T=150's `velocity_error_mm_s=252.946` also matched the value
+already recorded in this session's earlier local-pilot output verbatim.
+
+**Pi pilot (3 flights) + REQUIRED regression check**: ran cleanly, 9.29s/
+flight (matches the original run's 9.31s/flight closely). Compared ALL 69
+"ok" rows across the 3 pilot flights against the ORIGINAL Pi run's stored
+`position_error_mm`/`velocity_error_mm_s` for the same (flight,T) --
+**0 mismatches** (exact match to 1e-6). Confirms the minimal edit changed
+nothing it shouldn't have; proceeded to the full re-run per the task's own
+gate.
+
+**Full 107-flight re-run launched** to `~/benchmark/results/
+pipeline_sweep_full_vaxis_20260805.json` (NEW filename) -- confirmed via
+`ls -la` that `pipeline_sweep_full_20260804.json` (the original) is
+untouched throughout (same size/timestamp before and during the re-run).
+Running at ~8.9s/flight, matching the original's pace, projects ~16min.
+
+### Regression check: PASSED, full population (not just the pilot)
+
+Compared ALL 2481 "ok" rows across ALL 107 flights between the new
+`pipeline_sweep_full_vaxis_20260805.json` and the ORIGINAL
+`pipeline_sweep_full_20260804.json`: **0 mismatches** on `position_error_mm`
+and `velocity_error_mm_s` (exact match to 1e-6) for every single row.
+Confirms the copy's minimal edits changed nothing about the existing
+computation -- the per-axis breakdown is additive, not a different
+pipeline. Original file's `ls -la` timestamp/size confirmed unchanged
+throughout (before, during, and after the re-run).
+
+### Per-axis velocity error: BIAS (signed mean) and SCATTER (RMS of signed
+### error) reported separately, at each regime's max-usable-t operating
+### point (FLAT=300ms, MID=450ms, LOB=800ms, from the margin analysis above)
+
+| bin (T) | axis | bias (mm/s) | scatter RMS (mm/s) | median\|err\| (mm/s) | label floor | within floor? |
+|---|---|---|---|---|---|---|
+| FLAT (300ms) | X_depth | -68.6 | 113.8 | 102.2 | 155 (validated) | scatter YES |
+| FLAT (300ms) | Y_width | +67.8 | 216.6 | 148.5 | 282 (UNRESOLVED) | scatter YES, but floor itself unvalidated |
+| FLAT (300ms) | Z_up | -67.5 | 86.1 | 74.9 | 135 (validated) | scatter YES |
+| MID (450ms) | X_depth | -20.5 | 53.2 | 30.2 | 155 (validated) | scatter YES |
+| MID (450ms) | Y_width | +48.7 | 107.4 | 74.5 | 282 (UNRESOLVED) | scatter YES, but floor itself unvalidated |
+| MID (450ms) | Z_up | -47.6 | 91.4 | 63.3 | 135 (validated) | scatter YES |
+| LOB (800ms) | X_depth | -18.5 | 40.9 | 30.2 | 155 (validated) | scatter YES |
+| LOB (800ms) | Y_width | +16.2 | 66.8 | 44.4 | 282 (UNRESOLVED) | scatter YES, but floor itself unvalidated |
+| LOB (800ms) | Z_up | -60.5 | 84.1 | 52.5 | 135 (validated) | scatter YES |
+
+**A real, systematic pattern worth flagging, not smoothed over**: bias sign
+is CONSISTENT across all three regimes for a given axis -- X_depth and
+Z_up are consistently NEGATIVE (early-cutoff underestimates), Y_width is
+consistently POSITIVE. This is not noise scattered around zero; it looks
+structural (possibly a finite-difference-`dt` or partial-arc-convergence
+characteristic of the drag-model fit under early cutoffs), though the root
+cause is outside this task's scope to diagnose further. Scatter (the RMS,
+the real accuracy floor once bias is corrected) sits AT OR BELOW each
+axis's label-precision floor at every regime's operating point -- broadly
+consistent with decision 77's "velocity gaps mostly within ~1 label-SD of
+zero" finding, a reassuring cross-check between the two independent tasks.
+
+**Y_width's floor (282mm/s) is itself UNRESOLVED** (decision 77: the
+reference/label method never validated Y_width to a known precision) --
+being under that floor is NOT the same as being validated; it only means
+"not distinguishable from the reference's own unknown noise," not "this
+is accurate to X mm/s." Figure 4's shaded band + panel annotation makes
+this explicit rather than letting a reader assume all 3 axes carry equal
+evidentiary weight.
+
+**Convergence trend**: bias magnitude shrinks substantially as T grows for
+all axes/regimes (e.g. FLAT X_depth: -193.9mm/s at T=150 -> -68.6 at T=300
+-> -5.0 at T>=850, where the curve plateaus because the observed track
+itself runs out of new points beyond that T -- not a modelling artifact,
+just the finite recorded flight length). Scatter shrinks similarly. The
+early-cutoff prediction genuinely converges toward the full-arc reference
+as more data arrives, consistent with the position-error convergence
+already shown in Figure 3.
+
+### Full per-(bin,T,axis) table
+
+**FLAT:**
+
+| T_ms | X_depth bias/rms | Y_width bias/rms | Z_up bias/rms |
+|---|---|---|---|
+| 150 | -193.9 / 276.3 | +178.8 / 453.6 | -156.6 / 200.4 |
+| 200 | -110.8 / 186.2 | +83.7 / 310.9 | -102.4 / 130.4 |
+| 250 | -101.5 / 139.8 | +104.3 / 239.9 | -87.3 / 108.4 |
+| **300** | **-68.6 / 113.8** | **+67.8 / 216.6** | **-67.5 / 86.1** |
+| 350 | -65.9 / 89.0 | +47.8 / 166.8 | -51.6 / 71.7 |
+| 400 | -48.6 / 78.9 | +33.7 / 143.9 | -38.5 / 57.4 |
+| 450 | -40.8 / 62.5 | +32.7 / 130.9 | -29.2 / 47.5 |
+| 490 | -33.8 / 57.4 | +38.1 / 119.0 | -24.7 / 43.9 |
+| 500-1250 | converges to -5.0 / 26.5 (plateaus from T=850, track ends) | converges to -28.5 / 61.6 | converges to +3.4 / 14.0 |
+
+**MID:**
+
+| T_ms | X_depth bias/rms | Y_width bias/rms | Z_up bias/rms |
+|---|---|---|---|
+| 150 | -37.6 / 88.4 | +44.5 / 258.3 | -15.6 / 124.0 |
+| 300 | +49.7 / 158.1 | -81.6 / 304.5 | +29.2 / 171.9 |
+| 400 | -19.2 / 58.4 | +62.6 / 129.8 | -43.0 / 99.7 |
+| **450** | **-20.5 / 53.2** | **+48.7 / 107.4** | **-47.6 / 91.4** |
+| 490 | -17.8 / 42.8 | +41.5 / 95.4 | -40.2 / 75.7 |
+| 700 | -13.2 / 42.7 | +51.0 / 104.3 | -25.4 / 63.6 |
+| 1000 | +0.7 / 24.2 | +3.2 / 58.6 | +0.5 / 22.1 |
+| 1250 | +2.5 / 16.1 | -31.2 / 53.1 | -4.2 / 25.9 |
+
+(MID is noisier/non-monotonic at small T, n=12 only -- consistent with
+decision 74's "indicative, small-n" caveat for this bin.)
+
+**LOB:**
+
+| T_ms | X_depth bias/rms | Y_width bias/rms | Z_up bias/rms |
+|---|---|---|---|
+| 150 | -119.9 / 259.8 | +30.3 / 390.6 | -318.4 / 585.3 |
+| 300 | -101.4 / 172.7 | +60.1 / 243.9 | -244.0 / 365.7 |
+| 490 | -55.1 / 92.4 | +52.6 / 152.2 | -137.0 / 189.0 |
+| 700 | -23.1 / 51.0 | +16.8 / 67.4 | -77.1 / 112.3 |
+| **800** | **-18.5 / 40.9** | **+16.2 / 66.8** | **-60.5 / 84.1** |
+| 1000 | -7.5 / 25.4 | +9.1 / 47.3 | -31.8 / 54.1 |
+| 1250 | -2.8 / 20.8 | -0.5 / 36.7 | -9.3 / 41.3 |
+
+### Outputs (all NEW paths, nothing existing overwritten)
+
+- `src/pi_benchmarking/prediction_pipeline_sweep_pi_vaxis.py` -- copy,
+  original `prediction_pipeline_sweep_pi.py` untouched.
+- `data/pi_benchmarking/pipeline_sweep_full_vaxis_20260805.json` -- new raw
+  output; original `pipeline_sweep_full_20260804.json` untouched (verified
+  byte-identical size/timestamp before and after).
+- `data/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/figures2/`:
+  `velocity_by_axis_raw.csv` (2481 rows), `velocity_by_axis_summary.csv`
+  (72 rows), `figure4_velocity_error_by_axis.png` -- all NEW filenames.
+  Nothing under `figures/` (the original set) touched.
+
+**Task complete.** All success criteria met: original script/outputs
+untouched, per-axis signed error persisted and regression-checked (0
+mismatches, full 107-flight population), bias and scatter reported
+separately (not collapsed), Figure 4 built with max-usable-t lines and
+per-axis label floors (Y explicitly annotated unresolved), worklog
+appended (not overwritten) with the full inline numeric summary above.
