@@ -1,0 +1,45 @@
+=== REG_15 (2026_07_15_gym / registration) ===
+  P_a = (2119.8, 2670.3, 4521.3) mm (cam0 frame)   P_b = (2099.2, 2458.4, 3881.4) mm
+  separation = 674.5 mm  (expect ~700 +-200, OK)
+  Z_world height agreement between endpoints = 3.1 mm (adapted floor sanity check)
+  tape-line angle to Y_world = 0.42 deg (tol 20.0, OK)
+  tape-line angle to X_world = 89.68 deg (diagnostic, expect close to 90)
+  P_near = (2099.2, 2458.4, 3881.4)   P_far = (2119.8, 2670.3, 4521.3)
+  u (P_far->P_near, camera frame) = (-0.0, -0.3, -0.9)
+  up (Z_world) = (0.0, -1.0, 0.3)
+  aperture corner_A (=P_far) = (2119.8, 2670.3, 4521.3)
+  aperture corner_B (+2m along u) = (2058.7, 2041.8, 2623.7)
+  aperture corner_C (+2m up from B) = (2076.9, 140.2, 3243.2)
+  aperture corner_D (+2m up from A) = (2138.0, 768.8, 5140.8)
+  plane depth (mean tape pos . X_world) = 1999.6 mm
+
+=== REG_21_1 (2026_07_21_gym / registration1) ===
+  P_a = (1737.5, 2796.3, 4612.9) mm (cam0 frame)   P_b = (1777.7, 2611.3, 4032.0) mm
+  separation = 611.0 mm  (expect ~700 +-200, OK)
+  Z_world height agreement between endpoints = 11.9 mm (adapted floor sanity check)
+  tape-line angle to Y_world = 5.66 deg (tol 20.0, OK)
+  tape-line angle to X_world = 84.45 deg (diagnostic, expect close to 90)
+  P_near = (1777.7, 2611.3, 4032.0)   P_far = (1737.5, 2796.3, 4612.9)
+  u (P_far->P_near, camera frame) = (0.1, -0.3, -1.0)
+  up (Z_world) = (0.0, -0.9, 0.3)
+  aperture corner_A (=P_far) = (1737.5, 2796.3, 4612.9)
+  aperture corner_B (+2m along u) = (1869.3, 2190.9, 2711.3)
+  aperture corner_C (+2m up from B) = (1895.9, 298.1, 3356.7)
+  aperture corner_D (+2m up from A) = (1764.1, 903.5, 5258.3)
+  plane depth (mean tape pos . X_world) = 1620.4 mm
+
+=== REG_21_2 (2026_07_21_gym / registration2) ===
+  P_a = (1904.0, 2804.8, 4594.5) mm (cam0 frame)   P_b = (1903.0, 2588.6, 3964.7) mm
+  separation = 665.9 mm  (expect ~700 +-200, OK)
+  Z_world height agreement between endpoints = 0.9 mm (adapted floor sanity check)
+  tape-line angle to Y_world = 1.67 deg (tol 20.0, OK)
+  tape-line angle to X_world = 88.34 deg (diagnostic, expect close to 90)
+  P_near = (1903.0, 2588.6, 3964.7)   P_far = (1904.0, 2804.8, 4594.5)
+  u (P_far->P_near, camera frame) = (-0.0, -0.3, -0.9)
+  up (Z_world) = (0.0, -0.9, 0.3)
+  aperture corner_A (=P_far) = (1904.0, 2804.8, 4594.5)
+  aperture corner_B (+2m along u) = (1901.0, 2155.5, 2702.9)
+  aperture corner_C (+2m up from B) = (1929.6, 264.8, 3354.5)
+  aperture corner_D (+2m up from A) = (1932.7, 914.1, 5246.1)
+  plane depth (mean tape pos . X_world) = 1768.6 mm
+

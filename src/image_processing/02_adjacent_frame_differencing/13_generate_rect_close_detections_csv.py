@@ -20,7 +20,7 @@
 # Does NOT modify detector_core.py -- monkey-patches dc.compute_mask via the
 # shared compute_mask_rect_close_variant module (see that file's docstring).
 #
-# Output: data/detector_tuning/detections/12_rect_close_kernel/<session>/
+# Output: results/detector_tuning/detections/12_rect_close_kernel/<session>/
 # <flight_id>_<cam>_detections.csv
 #
 # Run from anywhere:
@@ -43,7 +43,7 @@ dc.compute_mask = compute_mask_rect_close  # monkey-patch -- see compute_mask_re
 
 STAGE = "12_rect_close_kernel"  # matches 12_run_full_dataset_rect_close_kernel.py's contact-sheet STAGE naming
 
-DETECTOR_TUNING_DIR = REPO_ROOT / "data" / "detector_tuning"
+DETECTOR_TUNING_DIR = REPO_ROOT / "results" / "detector_tuning"
 CONFIG_PATH = DETECTOR_TUNING_DIR / "candidate_config.json"
 DETECTIONS_ROOT = DETECTOR_TUNING_DIR / "detections" / STAGE
 

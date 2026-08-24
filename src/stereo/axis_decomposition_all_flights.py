@@ -39,7 +39,7 @@ from src.stereo.trajectory_model_prediction_sweep_all_flights import (  # noqa: 
 )
 
 LOG_PATH = REPO_ROOT / "claude" / "claude_logs" / "2026-07-27_gravity_vs_drag_trajectory_fitting_worklog.md"
-ALL_FLIGHTS_DIR = REPO_ROOT / "data" / "trajectory_fit_comparison" / "all_flights"
+ALL_FLIGHTS_DIR = REPO_ROOT / "results" / "trajectory_fit_comparison" / "all_flights"
 PHASE2_CSV_ORIGINAL = ALL_FLIGHTS_DIR / "phase2" / "prediction_sweep_all_flights.csv"
 OUT_DIR = ALL_FLIGHTS_DIR / "axis_decomposition"
 DURATIONS_CSV = ALL_FLIGHTS_DIR / "duration_distribution" / "flight_durations.csv"

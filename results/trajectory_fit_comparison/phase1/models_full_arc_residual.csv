@@ -1,0 +1,7 @@
+flight,model,residual_rms_mm
+flight_01,A_free_gravity,30.0667
+flight_01,B_fixed_gravity,48.2864
+flight_01,C_fixed_gravity_drag_refined,17.7647
+flight_22,A_free_gravity,52.1921
+flight_22,B_fixed_gravity,110.0950
+flight_22,C_fixed_gravity_drag_refined,27.1351

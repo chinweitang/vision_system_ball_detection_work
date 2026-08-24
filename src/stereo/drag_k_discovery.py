@@ -48,7 +48,7 @@ G_FIXED_NPZ = (REPO_ROOT / "data" / "2026_07_15_gym" / "flight_binning" /
 
 LOG_PATH = REPO_ROOT / "claude" / "claude_logs" / "2026-07-27_gravity_vs_drag_trajectory_fitting_worklog.md"
 
-RESULTS_DIR = REPO_ROOT / "data" / "trajectory_fit_comparison"
+RESULTS_DIR = REPO_ROOT / "results" / "trajectory_fit_comparison"
 PHASE1_DIR = RESULTS_DIR / "phase1"
 
 # K sweep centered on a physically-derived volleyball estimate:

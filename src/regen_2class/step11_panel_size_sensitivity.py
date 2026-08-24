@@ -25,7 +25,7 @@ not generalise. APERTURE_SIZE_MM is not touched anywhere.
 Verdict machinery is imported from step10 rather than re-implemented, so the bands
 are identical by construction. Reads existing outputs only; nothing is re-run.
 
-Output: data/regenerate_figures/panel_size_sensitivity.csv. No figure.
+Output: results/regenerate_figures/panel_size_sensitivity.csv. No figure.
 """
 import csv
 

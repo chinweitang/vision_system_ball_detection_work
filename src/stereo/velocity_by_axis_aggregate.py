@@ -3,7 +3,7 @@
 # claude/prompts/2026-08-05_1254_pi_sweep_rerun_velocity_error_components.md
 #
 # Aggregates the per-axis velocity re-run
-# (data/pi_benchmarking/pipeline_sweep_full_vaxis_20260805.json, regression-
+# (results/pi_benchmarking/pipeline_sweep_full_vaxis_20260805.json, regression-
 # checked 0-mismatch against the original pipeline_sweep_full_20260804.json)
 # into per-(bin, axis, T) BIAS (signed mean error) and SCATTER (RMS of
 # signed error), reported SEPARATELY -- bias is correctable, scatter is a
@@ -21,9 +21,9 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[1]
-IN_JSON = REPO_ROOT / "data" / "pi_benchmarking" / "pipeline_sweep_full_vaxis_20260805.json"
-LAUNCH_TO_CROSSING_CSV = REPO_ROOT / "data" / "prediction" / "04_launch_to_crossing_budget" / "launch_to_crossing.csv"
-OUT_DIR = REPO_ROOT / "data" / "pi_benchmarking" / "02_pi_pipeline_sweep_parallel_detection" / "figures2"
+IN_JSON = REPO_ROOT / "results" / "pi_benchmarking" / "pipeline_sweep_full_vaxis_20260805.json"
+LAUNCH_TO_CROSSING_CSV = REPO_ROOT / "results" / "prediction" / "04_launch_to_crossing_budget" / "launch_to_crossing.csv"
+OUT_DIR = REPO_ROOT / "results" / "pi_benchmarking" / "02_pi_pipeline_sweep_parallel_detection" / "figures2"
 
 BIN_ORDER = ["FLAT", "MID", "LOB"]
 AXES = ["X_depth", "Y_width", "Z_up"]

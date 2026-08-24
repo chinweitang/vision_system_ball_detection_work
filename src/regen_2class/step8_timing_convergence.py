@@ -17,7 +17,7 @@ for almost the entire LONG class.
 Everything here reads existing outputs. Nothing re-runs the Pi sweep, detection,
 triangulation or any fitting job.
 
-Outputs (all new files under data/regenerate_figures/):
+Outputs (all new files under results/regenerate_figures/):
     figureE_timing_convergence.png
     timing_convergence_by_class_T.csv
     label_vs_modelc_timing.csv
@@ -30,12 +30,12 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-SWEEP_JSON = "data/pi_benchmarking/pipeline_sweep_full_20260804.json"
-SWEEP_CSV = "data/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/pipeline_sweep_raw.csv"
-LTC_CSV = "data/prediction/04_launch_to_crossing_budget/launch_to_crossing.csv"
-LABEL_CSV = "data/prediction/06_label_vs_fit/label_vs_fit_per_flight.csv"
-CROSSING_CSV = "data/prediction/01_crossing_plane_setup/crossing_classification.csv"
-OUT_DIR = "data/regenerate_figures/"
+SWEEP_JSON = "results/pi_benchmarking/pipeline_sweep_full_20260804.json"
+SWEEP_CSV = "results/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/pipeline_sweep_raw.csv"
+LTC_CSV = "results/prediction/04_launch_to_crossing_budget/launch_to_crossing.csv"
+LABEL_CSV = "results/prediction/06_label_vs_fit/label_vs_fit_per_flight.csv"
+CROSSING_CSV = "results/prediction/01_crossing_plane_setup/crossing_classification.csv"
+OUT_DIR = "results/regenerate_figures/"
 
 CLASS_OF_BIN = {"FLAT": "SHORT", "MID": "SHORT", "LOB": "LONG"}
 CLASSES = ["SHORT", "LONG"]

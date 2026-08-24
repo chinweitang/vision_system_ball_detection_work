@@ -11,7 +11,7 @@
 # reach the plane fastest, so FLAT's P5 is the throw-mix-independent design
 # target; MID/LOB are reported for contrast (they have slack).
 #
-# Purely reuses data/prediction/04_launch_to_crossing_budget/
+# Purely reuses results/prediction/04_launch_to_crossing_budget/
 # launch_to_crossing.csv (already-computed, already-validated
 # launch_to_crossing_ms per crosser) -- no t_cross recomputation, no
 # re-fit, no re-classification. Read-only.
@@ -27,8 +27,8 @@ import matplotlib.pyplot as plt
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[1]
 
-IN_CSV = REPO_ROOT / "data" / "prediction" / "04_launch_to_crossing_budget" / "launch_to_crossing.csv"
-OUT_DIR = REPO_ROOT / "data" / "prediction" / "05_budget_by_elevation_bin"
+IN_CSV = REPO_ROOT / "results" / "prediction" / "04_launch_to_crossing_budget" / "launch_to_crossing.csv"
+OUT_DIR = REPO_ROOT / "results" / "prediction" / "05_budget_by_elevation_bin"
 LOG_PATH = REPO_ROOT / "claude" / "claude_logs" / "2026-08-04_1738_launch_to_crossing_budget_worklog.md"
 
 # Same cuts as 02_candidate_reselection (FLAT<15, MID 15-45, LOB>=45)

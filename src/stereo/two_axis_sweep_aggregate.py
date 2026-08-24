@@ -1,6 +1,6 @@
 # two_axis_sweep_aggregate.py
 #
-# Aggregates the Pi two-axis fit-window sweep (data/pi_benchmarking/
+# Aggregates the Pi two-axis fit-window sweep (results/pi_benchmarking/
 # two_axis_full_20260803.json, 150 flights x 7 W values) into:
 #  - a flattened per-(flight,W) CSV (raw data, one row per run)
 #  - a per-W summary table (median/p95/IQR of the required metrics)
@@ -17,8 +17,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[1]
-IN_JSON = REPO_ROOT / "data" / "pi_benchmarking" / "two_axis_full_20260803.json"
-OUT_DIR = REPO_ROOT / "data" / "pi_benchmarking" / "two_axis_sweep"
+IN_JSON = REPO_ROOT / "results" / "pi_benchmarking" / "two_axis_full_20260803.json"
+OUT_DIR = REPO_ROOT / "results" / "pi_benchmarking" / "two_axis_sweep"
 RAW_CSV = OUT_DIR / "two_axis_sweep_raw.csv"
 SUMMARY_CSV = OUT_DIR / "two_axis_sweep_summary_by_W.csv"
 BUDGET_MS = 430.0

@@ -1,6 +1,6 @@
 """Step 9 - Figure A, rebuilt IN PLACE to carry both game modes on one axis.
 
-Overwrites data/regenerate_figures/figureA_margin_vs_cutoff.png. No second figure
+Overwrites results/regenerate_figures/figureA_margin_vs_cutoff.png. No second figure
 is produced.
 
 Base is unchanged from step 4: same classes recomputed from the bin column, same

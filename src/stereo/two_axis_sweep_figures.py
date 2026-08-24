@@ -21,7 +21,7 @@ import matplotlib.ticker as mticker
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[1]
-SWEEP_DIR = REPO_ROOT / "data" / "pi_benchmarking" / "two_axis_sweep"
+SWEEP_DIR = REPO_ROOT / "results" / "pi_benchmarking" / "two_axis_sweep"
 FIG_DIR = SWEEP_DIR / "figures"
 
 SUMMARY_CSV = SWEEP_DIR / "two_axis_sweep_summary_by_W.csv"

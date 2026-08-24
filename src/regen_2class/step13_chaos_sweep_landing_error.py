@@ -44,7 +44,7 @@ import matplotlib.pyplot as plt
 import common as C
 from step10_chaos_outcome_sweep import load_per_axis
 
-OUT_DIR = "data/regenerate_figures/02_chaos_landing_error/"
+OUT_DIR = "results/regenerate_figures/02_chaos_landing_error/"
 
 E_COR = 0.68              # published volleyball-on-rigid-surface COR
 T_RETURN_S = 1.0

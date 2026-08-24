@@ -10,7 +10,7 @@ exists in BOTH sessions, so a bare-id join silently compares two different fligh
 Asserts 2568 rows, 107 distinct flights, 24 windows, no duplicates, duration_ms
 present for every flight.
 
-Writes data/regenerate_figures/two_class_join.csv. Deterministic: re-running
+Writes results/regenerate_figures/two_class_join.csv. Deterministic: re-running
 reproduces the file byte for byte.
 """
 import csv

@@ -44,7 +44,7 @@ from src.stereo.trajectory_fit import (  # noqa: E402
 from src.stereo.all_flights_common import find_flight_dir  # noqa: E402
 
 LOG_PATH = REPO_ROOT / "claude" / "claude_logs" / "2026-07-27_gravity_vs_drag_trajectory_fitting_worklog.md"
-ALL_FLIGHTS_DIR = REPO_ROOT / "data" / "trajectory_fit_comparison" / "all_flights"
+ALL_FLIGHTS_DIR = REPO_ROOT / "results" / "trajectory_fit_comparison" / "all_flights"
 PHASE1_DIR = ALL_FLIGHTS_DIR / "phase1"
 PHASE2_DIR = ALL_FLIGHTS_DIR / "phase2"
 

@@ -180,8 +180,17 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
-# Data folder (images)
+# Raw captures stay local: ~62 GB of session images, calibration captures and
+# the 19.7 GB detector_tuning/contact_sheets tree. None of it is regenerable from
+# the repo, and none of it belongs on GitHub.
 data/
+
+# results/ IS tracked - the derived tables and figures, ~34 MB.
+# One exception: contact sheets are ~28 MB per file. Each is individually UNDER
+# GitHub's 100 MB block, so git would accept them one at a time and bloat the
+# repo permanently before any limit fired. The live copy lives in data/; this
+# rule is a backstop in case a script ever writes them here.
+results/**/contact_sheets/
 
 # Claude Code working files
 .claude/

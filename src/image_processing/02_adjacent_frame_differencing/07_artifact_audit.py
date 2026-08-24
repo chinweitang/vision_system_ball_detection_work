@@ -16,7 +16,7 @@
 # actually being a multi-flight recurring thing).
 #
 # Does NOT touch any real flight data or analysis_3 folders - reads only
-# from ball_in_frame/*.png, writes only to data/detector_tuning/.
+# from ball_in_frame/*.png, writes only to results/detector_tuning/.
 #
 # Run from anywhere:
 #   python path/to/code/07_artifact_audit.py
@@ -37,7 +37,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 import detector_core as dc  # noqa: E402
 
-DETECTOR_TUNING_DIR = REPO_ROOT / "data" / "detector_tuning"
+DETECTOR_TUNING_DIR = REPO_ROOT / "results" / "detector_tuning"
 CONFIG_PATH = DETECTOR_TUNING_DIR / "candidate_config.json"
 
 SESSIONS = [
@@ -49,7 +49,7 @@ CAMS = ["cam0", "cam1"]
 
 def load_config(path=CONFIG_PATH):
     """Single source of truth for the "current best" detector config - see
-    data/detector_tuning/candidate_config.json and the 2026-07-23 worklog."""
+    results/detector_tuning/candidate_config.json and the 2026-07-23 worklog."""
     with open(path) as f:
         return json.load(f)
 
@@ -63,7 +63,7 @@ MAX_SPEED_PX_PER_FRAME, MIN_RUN_LENGTH = CFG["max_speed_px_per_frame"], CFG["min
 # Stage subfolder auto-derived from the config in force at run time, so every
 # audit's hotspots CSV + crops land together under a name that identifies
 # exactly which config produced them (not a flat, ever-overwritten file) -
-# e.g. data/detector_tuning/inspection_crops/area30_circ0.3/.
+# e.g. results/detector_tuning/inspection_crops/area30_circ0.3/.
 STAGE = f"area{MIN_AREA}_circ{MIN_CIRC}"
 OUT_DIR = DETECTOR_TUNING_DIR / "inspection_crops" / STAGE
 CROPS_DIR = OUT_DIR

@@ -13,7 +13,7 @@ flights (spanning the sync audit's measured offset range):
     relative to one frame's motion stands out
 
 Reads only from data/2026_07_21_gym/ball_flights/<flight>/ (analysis_3 CSVs,
-timestamps.csv) - all read-only. Writes only to data/sync_correction_validation/
+timestamps.csv) - all read-only. Writes only to results/sync_correction_validation/
 (new folder, does not touch any existing analysis_3/contact-sheet output).
 """
 from pathlib import Path
@@ -31,7 +31,7 @@ from triangulate_flight import triangulate_flight, tuned_detections_paths  # noq
 from stereo_flight_sync_table import analyze_flight  # noqa: E402
 
 BALL_FLIGHTS = REPO_ROOT / "data" / "2026_07_21_gym" / "ball_flights"
-OUT_DIR = REPO_ROOT / "data" / "sync_correction_validation_tuned_detections"
+OUT_DIR = REPO_ROOT / "results" / "sync_correction_validation_tuned_detections"
 
 FLIGHTS = ["flight_92", "flight_5", "flight_20", "flight_100",
            "flight_60", "flight_110", "flight_120", "flight_50"]

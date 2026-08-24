@@ -72,10 +72,10 @@ from trajectory_fit import (  # noqa: E402
 )
 from scipy.integrate import solve_ivp  # noqa: E402
 
-CONFIG_PATH = REPO_ROOT / "data" / "detector_tuning" / "candidate_config.json"
-POOLED_K_PATH = REPO_ROOT / "data" / "trajectory_fit_comparison" / "all_flights" / "phase1" / "pooled_k.txt"
-DURATIONS_CSV = REPO_ROOT / "data" / "trajectory_fit_comparison" / "all_flights" / "duration_distribution" / "flight_durations.csv"
-FINAL_POINT_LABELS_CSV = REPO_ROOT / "data" / "final_point_labels" / "final_point_labels.csv"
+CONFIG_PATH = REPO_ROOT / "results" / "detector_tuning" / "candidate_config.json"
+POOLED_K_PATH = REPO_ROOT / "results" / "trajectory_fit_comparison" / "all_flights" / "phase1" / "pooled_k.txt"
+DURATIONS_CSV = REPO_ROOT / "results" / "trajectory_fit_comparison" / "all_flights" / "duration_distribution" / "flight_durations.csv"
+FINAL_POINT_LABELS_CSV = REPO_ROOT / "results" / "final_point_labels" / "final_point_labels.csv"
 TMP_DIR = REPO_ROOT / "results" / "tmp_two_axis_detections"
 
 N_ITERATIONS = 3            # decision 68 (adopted)

@@ -1,0 +1,16 @@
+LABEL vs MODEL-C CROSSING-STATE VALIDATION
+NOT an absolute-truth check -- shares calibration with Model-C; validates fit+extrapolation only.
+
+Flights: 20 total, 17 clean (symmetric, non-residual-flagged),
+3 asymmetric (low-confidence), 0 residual-flagged.
+
+POOLED POSITION (clean, n=17):
+  bias Y=7.9mm  rms Y=111.6mm
+  bias Z=-34.3mm  rms Z=65.3mm
+  median total=105.7mm  p90 total=199.0mm
+
+POOLED VELOCITY (clean, n=17), Model-C minus label, label-noise caveat applies:
+  X_world(depth): mean_diff=-13.4mm/s  rms_diff=247.9mm/s  mean_label_sd=154.7mm/s
+  Y_world(width): mean_diff=47.7mm/s  rms_diff=301.9mm/s  mean_label_sd=282.2mm/s
+  Z_world(up): mean_diff=30.5mm/s  rms_diff=93.5mm/s  mean_label_sd=135.3mm/s
+  speed: mean_diff=-51.0mm/s  rms_diff=220.4mm/s

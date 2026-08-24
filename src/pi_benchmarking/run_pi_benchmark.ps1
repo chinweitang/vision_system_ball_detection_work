@@ -68,8 +68,8 @@ Copy-Rel "calibration_outputs\2026_07_21\test2\stereo_extrinsic.npz"
 Copy-Rel "calibration_outputs\2026_07_15\stereo_extrinsic.npz"
 
 # -- shared config --
-Copy-Rel "data\detector_tuning\candidate_config.json"
-Copy-Rel "data\trajectory_fit_comparison\all_flights\phase1\pooled_k.txt"
+Copy-Rel "results\detector_tuning\candidate_config.json"
+Copy-Rel "results\trajectory_fit_comparison\all_flights\phase1\pooled_k.txt"
 
 # -- world-frame registration (g_fixed source) --
 Copy-Rel "data\2026_07_21_gym\flight_binning\world_frame_validation\registration1_world_transform.npz"
@@ -99,7 +99,7 @@ $remoteOut = "$REMOTE_BENCHMARK/results/stage1_results.json"
 ssh -i $SSH_KEY $PI "$REMOTE_VENV_PY $REMOTE_MIRROR/src/pi_benchmarking/benchmark_pipeline_pi.py --flights $REMOTE_MIRROR/src/pi_benchmarking/flights_manifest.json --out $remoteOut"
 
 Write-Host "=== 4. Pulling results back ===" -ForegroundColor Cyan
-$localOutDir = Join-Path $REPO_ROOT "data\pi_benchmarking"
+$localOutDir = Join-Path $REPO_ROOT "results\pi_benchmarking"
 New-Item -ItemType Directory -Force -Path $localOutDir | Out-Null
 $stamp = Get-Date -Format "yyyyMMdd_HHmm"
 $localOut = Join-Path $localOutDir "stage1_results_$stamp.json"

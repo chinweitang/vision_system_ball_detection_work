@@ -53,13 +53,13 @@ G_FIXED_NPZ = (REPO_ROOT / "data" / "2026_07_15_gym" / "flight_binning" /
 # worklog's "[phase 1 results]" section for the full derivation.
 K_FIXED = 6.053818e-05  # 1/mm
 
-TUNED_DETECTIONS_DIR = (REPO_ROOT / "data" / "detector_tuning" / "detections" /
+TUNED_DETECTIONS_DIR = (REPO_ROOT / "results" / "detector_tuning" / "detections" /
                          "03_stride1_thresh16_openk3_area30_circ0.3" / "2026_07_15_gym")
 
 FLIGHTS = ["flight_01", "flight_22"]
 
 LOG_PATH = REPO_ROOT / "claude" / "claude_logs" / "2026-07-27_gravity_vs_drag_trajectory_fitting_worklog.md"
-RESULTS_DIR = REPO_ROOT / "data" / "trajectory_fit_comparison"
+RESULTS_DIR = REPO_ROOT / "results" / "trajectory_fit_comparison"
 PHASE2_DIR = RESULTS_DIR / "phase2"
 
 

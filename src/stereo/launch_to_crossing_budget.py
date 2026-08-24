@@ -47,8 +47,8 @@ from src.stereo.crossing_plane_classification import (  # noqa: E402
     build_geometry, classify_flight, load_pooled_k, TAPE_REGISTRATIONS, REG_KEY_FOR,
 )
 
-IN_CSV = REPO_ROOT / "data" / "prediction" / "01_crossing_plane_setup" / "crossing_classification.csv"
-OUT_DIR = REPO_ROOT / "data" / "prediction" / "04_launch_to_crossing_budget"
+IN_CSV = REPO_ROOT / "results" / "prediction" / "01_crossing_plane_setup" / "crossing_classification.csv"
+OUT_DIR = REPO_ROOT / "results" / "prediction" / "04_launch_to_crossing_budget"
 LOG_PATH = REPO_ROOT / "claude" / "claude_logs" / "2026-08-04_1738_launch_to_crossing_budget_worklog.md"
 OLD_BUDGET_MS = 430.0
 

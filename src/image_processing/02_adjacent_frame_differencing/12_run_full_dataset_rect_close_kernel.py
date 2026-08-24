@@ -3,14 +3,14 @@
 # Detection-ACCURACY validation of the rect-close-kernel fix found during the
 # Pi real-time benchmark (see claude/decision_log.md #63,
 # claude/claude_logs/2026-08-03_pi_realtime_benchmark_worklog.md,
-# data/pi_benchmarking/mask_breakdown_results_20260803.json): swapping
+# results/pi_benchmarking/mask_breakdown_results_20260803.json): swapping
 # compute_mask's morph-close structuring element from cv2.MORPH_ELLIPSE to
 # cv2.MORPH_RECT (same 30x30 size) cut that step's Pi timing 17.6x (84.05ms
 # -> 4.77ms), which would bring the whole detection budget inside the
 # 16.6ms/frame real-time target. This script checks whether that speed win
 # costs any detection ACCURACY, using the exact same methodology, flight set,
 # and metrics as the original full-163-flight baseline
-# (10_run_full_dataset.py -> data/detector_tuning/candidate_config_validated_results.csv,
+# (10_run_full_dataset.py -> results/detector_tuning/candidate_config_validated_results.csv,
 # avg_combined_rate=0.9667, labeled_recall=0.9250).
 #
 # Runs on the LAPTOP, not the Pi -- this is a pure algorithm/accuracy
@@ -60,9 +60,9 @@ STAGE = "12_rect_close_kernel_validation"
 
 SESSION_15 = REPO_ROOT / "data" / "2026_07_15_gym" / "ball_flights"
 SESSION_21 = REPO_ROOT / "data" / "2026_07_21_gym" / "ball_flights"
-DETECTOR_TUNING_DIR = REPO_ROOT / "data" / "detector_tuning"
+DETECTOR_TUNING_DIR = REPO_ROOT / "results" / "detector_tuning"
 CONFIG_PATH = DETECTOR_TUNING_DIR / "candidate_config.json"
-CONTACT_SHEETS_DIR = DETECTOR_TUNING_DIR / "contact_sheets" / STAGE
+CONTACT_SHEETS_DIR = REPO_ROOT / "data" / "detector_tuning" / "contact_sheets" / STAGE
 VALIDATED_RESULTS_CSV = DETECTOR_TUNING_DIR / "candidate_config_rect_close_results.csv"  # NEW file, does not touch the ellipse baseline
 
 CAMS = ["cam0", "cam1"]

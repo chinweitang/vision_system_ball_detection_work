@@ -1,0 +1,98 @@
+==============================================================================
+DETECTION RATES, RECONCILED - FINAL PRODUCTION CONFIG
+==============================================================================
+Source (per-flight rates) : results\detector_tuning\candidate_config_validated_results.csv
+Source (provenance)       : results\detector_tuning\history\results_history.csv
+Source (recall points)    : per-flight *_labels.csv on disk
+No sweep-grid CSV was read.
+
+GATES: flight rows >= 163 PASS | recall points == 240 PASS | values within +/-0.001 PASS
+
+------------------------------------------------------------------------------
+(a) avg_combined_rate across all 163 flights
+------------------------------------------------------------------------------
+  stored in CSV        : 0.9667
+  recomputed from rows : 0.966747   (difference 4.66e-05)
+  flights contributing : 163
+  per session          : 2026_07_15_gym 37, 2026_07_21_gym 126
+  definition           : per-flight co-detected / co-processable frames,
+                         then an UNWEIGHTED mean across flights (each flight
+                         counts equally regardless of frame count).
+
+------------------------------------------------------------------------------
+(b) labelled recall and its point count
+------------------------------------------------------------------------------
+  stored in CSV        : 0.9250
+  point count          : 240  (counted from the label CSVs on disk)
+  definition           : a labelled point counts as a hit if the kept detection
+                         for that (cam, frame) lies within the label's own
+                         tolerance (diameter_px / 2, else 20 px fallback).
+
+------------------------------------------------------------------------------
+(c) which flights the recall is computed on
+------------------------------------------------------------------------------
+  Resolved by replicating 10_run_full_dataset.py's matching rule: each entry
+  of LABELED_FLIGHT_SUBPATHS is matched against BOTH sessions.
+
+    2026_07_15_gym/2 ball contacts ground before plane/flight_01
+        points=54    (cam0=27, cam1=27)
+    2026_07_15_gym/flight_22
+        points=186   (cam0=93, cam1=93)
+    2026_07_21_gym/flight_22
+        points=0     (cam0=MISSING, cam1=MISSING)   <- matches the pattern but has NO label files
+
+  contributing flights : 2
+      2026_07_15_gym/2 ball contacts ground before plane/flight_01  (54 points)
+      2026_07_15_gym/flight_22  (186 points)
+
+  NOTE: the CSV row is labelled "LABELED_RECALL (flight_01 + flight_22)",
+  which is NOT session-qualified. flight_22 exists under BOTH sessions and the
+  matching rule tries both, so the label alone does not identify the population.
+  Both contributing flights are in 2026_07_15_gym.
+
+------------------------------------------------------------------------------
+(d) the exact config these numbers correspond to
+------------------------------------------------------------------------------
+  parsed config dict:
+      stride       = 1
+      thresh       = 16
+      open_k       = 3
+      close_k      = 30
+      min_area     = 30
+      max_area     = 50000
+      min_circ     = 0.3
+      max_speed    = 80
+      min_run      = 2
+  annotations:
+      exclusion_mask_v4(12 zones total)
+      trajectory_filter(max_speed=80,min_run=2)
+
+  verbatim CONFIG cell:
+      stride=1 thresh=16 open_k=3 close_k=30 min_area=30 max_area=50000 min_circ=0.3 + exclusion_mask_v4(12 zones total) + trajectory_filter(max_speed=80,min_run=2) - FULL 163-FLIGHT DATASET
+
+==============================================================================
+DISCREPANCY - REPORTED, NOT RECONCILED
+==============================================================================
+  A LATER full-dataset run exists: 2026-08-03
+      rect close kernel validation (MORPH_ELLIPSE->MORPH_RECT, close_k=30 only, driven by Pi real-time finding - decision log 63) - FULL 163-FLIGHT DATASET
+      avg_combined_rate 0.9452   labelled recall 0.8875   n_flights 163
+      artifact: results/detector_tuning/candidate_config_rect_close_results.csv
+
+  It differs ONLY in the close-kernel SHAPE (MORPH_ELLIPSE -> MORPH_RECT).
+  candidate_config.json records close_k=30 but carries no shape field, so the
+  two configs are indistinguishable from that file alone.
+
+  This matters because every Pi real-time script (prediction_pipeline_sweep_pi.py,
+  two_axis_fit_window_sweep_pi.py, parallel_detect_checkpoint_pi.py,
+  benchmark_detection_rect_total_pi.py) calls a local compute_mask_rect_close
+  using MORPH_RECT - i.e. the RECT variant, whose validated rates are
+  0.9452 / 0.8875, not 0.9667 / 0.925.
+
+  Which of the two is 'the final production config' is not resolvable from
+  these files: the 2026-07-25 ellipse row is annotated "(current)" but the
+  2026-08-03 rect row is later. Reported for a human decision.
+
+  Second, smaller: 2026_07_21_gym/flight_22 matches the recall subpath but has
+  no label CSVs, so it silently contributes 0 points. If labels were ever added
+  there, the recall population would change without the CSV label text changing.
+==============================================================================

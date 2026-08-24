@@ -1,0 +1,286 @@
+{
+  "laptop_cv2_version": "4.13.0",
+  "pi_cv2_version": "4.10.0",
+  "flights": [
+    {
+      "session": "2026_07_21_gym",
+      "flight": "flight_17",
+      "cam0": {
+        "n_pi": 19,
+        "n_laptop": 19,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 19,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "cam1": {
+        "n_pi": 19,
+        "n_laptop": 19,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 19,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "triangulated_3d": {
+        "n_pi_pairs": 19,
+        "n_laptop_pairs": 19,
+        "n_common": 19,
+        "delta_mm": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      }
+    },
+    {
+      "session": "2026_07_21_gym",
+      "flight": "flight_63",
+      "cam0": {
+        "n_pi": 44,
+        "n_laptop": 44,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 44,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "cam1": {
+        "n_pi": 44,
+        "n_laptop": 44,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 44,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "triangulated_3d": {
+        "n_pi_pairs": 44,
+        "n_laptop_pairs": 44,
+        "n_common": 44,
+        "delta_mm": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      }
+    },
+    {
+      "session": "2026_07_21_gym",
+      "flight": "flight_40",
+      "cam0": {
+        "n_pi": 73,
+        "n_laptop": 73,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 73,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "cam1": {
+        "n_pi": 75,
+        "n_laptop": 75,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 75,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "triangulated_3d": {
+        "n_pi_pairs": 72,
+        "n_laptop_pairs": 72,
+        "n_common": 72,
+        "delta_mm": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      }
+    },
+    {
+      "session": "2026_07_21_gym",
+      "flight": "flight_59",
+      "cam0": {
+        "n_pi": 95,
+        "n_laptop": 95,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 95,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "cam1": {
+        "n_pi": 88,
+        "n_laptop": 88,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 88,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "triangulated_3d": {
+        "n_pi_pairs": 89,
+        "n_laptop_pairs": 89,
+        "n_common": 89,
+        "delta_mm": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      }
+    },
+    {
+      "session": "2026_07_15_gym",
+      "flight": "flight_59",
+      "cam0": {
+        "n_pi": 15,
+        "n_laptop": 15,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 15,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "cam1": {
+        "n_pi": 15,
+        "n_laptop": 15,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 15,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "triangulated_3d": {
+        "n_pi_pairs": 15,
+        "n_laptop_pairs": 15,
+        "n_common": 15,
+        "delta_mm": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      }
+    },
+    {
+      "session": "2026_07_15_gym",
+      "flight": "flight_52",
+      "cam0": {
+        "n_pi": 56,
+        "n_laptop": 56,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 56,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "cam1": {
+        "n_pi": 56,
+        "n_laptop": 56,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 56,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "triangulated_3d": {
+        "n_pi_pairs": 54,
+        "n_laptop_pairs": 54,
+        "n_common": 54,
+        "delta_mm": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      }
+    },
+    {
+      "session": "2026_07_15_gym",
+      "flight": "flight_45",
+      "cam0": {
+        "n_pi": 83,
+        "n_laptop": 83,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 83,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "cam1": {
+        "n_pi": 82,
+        "n_laptop": 82,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 82,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "triangulated_3d": {
+        "n_pi_pairs": 81,
+        "n_laptop_pairs": 81,
+        "n_common": 81,
+        "delta_mm": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      }
+    },
+    {
+      "session": "2026_07_15_gym",
+      "flight": "flight_15",
+      "cam0": {
+        "n_pi": 94,
+        "n_laptop": 94,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 94,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "cam1": {
+        "n_pi": 91,
+        "n_laptop": 91,
+        "only_pi": [],
+        "only_laptop": [],
+        "n_common": 91,
+        "centroid_delta_px": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      },
+      "triangulated_3d": {
+        "n_pi_pairs": 87,
+        "n_laptop_pairs": 87,
+        "n_common": 87,
+        "delta_mm": {
+          "max": 0.0,
+          "mean": 0.0
+        }
+      }
+    }
+  ]
+}

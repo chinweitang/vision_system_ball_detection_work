@@ -37,7 +37,7 @@
 #
 # Does NOT touch any real flight data or analysis_3 folders - reads only
 # from ball_in_frame/*.png, writes only to
-# data/detector_tuning/sweep_results_min_area_circ.csv.
+# results/detector_tuning/sweep_results_min_area_circ.csv.
 #
 # Run from anywhere:
 #   python path/to/code/09_param_sweep_area_circ.py
@@ -59,7 +59,7 @@ import detector_core as dc  # noqa: E402
 SESSION_15 = REPO_ROOT / "data" / "2026_07_15_gym" / "ball_flights"
 SESSION_21 = REPO_ROOT / "data" / "2026_07_21_gym" / "ball_flights"
 
-OUT_DIR = REPO_ROOT / "data" / "detector_tuning"
+OUT_DIR = REPO_ROOT / "results" / "detector_tuning"
 CONFIG_PATH = OUT_DIR / "candidate_config.json"
 
 CAMS = ["cam0", "cam1"]

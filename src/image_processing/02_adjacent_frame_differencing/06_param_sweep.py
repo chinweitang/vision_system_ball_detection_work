@@ -22,7 +22,7 @@
 # filters after) - CLOSE_KERNEL also held fixed.
 #
 # Does NOT touch any real flight data or analysis_3 folders - reads only
-# from ball_in_frame/*.png, writes only to data/detector_tuning/.
+# from ball_in_frame/*.png, writes only to results/detector_tuning/.
 #
 # Run from anywhere:
 #   python path/to/code/06_param_sweep.py
@@ -43,7 +43,7 @@ import detector_core as dc  # noqa: E402
 SESSION_15 = REPO_ROOT / "data" / "2026_07_15_gym" / "ball_flights"
 SESSION_21 = REPO_ROOT / "data" / "2026_07_21_gym" / "ball_flights"
 
-OUT_DIR = REPO_ROOT / "data" / "detector_tuning"
+OUT_DIR = REPO_ROOT / "results" / "detector_tuning"
 
 CAMS = ["cam0", "cam1"]
 

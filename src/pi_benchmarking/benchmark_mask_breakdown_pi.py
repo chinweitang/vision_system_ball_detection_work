@@ -51,7 +51,7 @@ for _p in (str(DETECTOR_DIR), str(IMAGE_PROC_DIR), str(REPO_ROOT)):
 import detector_core as dc  # noqa: E402  (only used for FRAME_STEM_RE-style glob; kept for parity)
 from exclusion_mask import apply_exclusion  # noqa: E402
 
-CONFIG_PATH = REPO_ROOT / "data" / "detector_tuning" / "candidate_config.json"
+CONFIG_PATH = REPO_ROOT / "results" / "detector_tuning" / "candidate_config.json"
 N_WARMUP_PAIRS = 5   # untimed warm-up pairs per flight, matches Stage 1 -- lets
                       # cv2/TBB thread pools and exclusion_mask's fillPoly cache
                       # spin up before any number counts

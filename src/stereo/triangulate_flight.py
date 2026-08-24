@@ -50,7 +50,7 @@ INTRINSICS_CAM1 = REPO_ROOT / "calibration_outputs" / "cam1_intrinsics_fisheye.n
 # claude/claude_logs/2026-07-23_ball_detection_rate_tuning_worklog.md) - NOT
 # each flight's own analysis_3/*_detections3.csv, which is stale pre-tuning
 # detector output (confirmed: flight_5_cam0 has 19 rows there vs 37 here).
-TUNED_DETECTIONS_DIR = (REPO_ROOT / "data" / "detector_tuning" / "detections" /
+TUNED_DETECTIONS_DIR = (REPO_ROOT / "results" / "detector_tuning" / "detections" /
                          "03_stride1_thresh16_openk3_area30_circ0.3" / "2026_07_21_gym")
 
 

@@ -43,7 +43,7 @@ EXCLUSION_TRIANGLES = {
     # cams, binned spatially, and found bins hit by dozens to 100+ DISTINCT
     # flights - too many to be coincidental real ball positions. Visually
     # confirmed each via cropped frames (see
-    # data/detector_tuning/inspection_crops/hotspot_*.png). IMPORTANT: the
+    # results/detector_tuning/inspection_crops/hotspot_*.png). IMPORTANT: the
     # raw rejected-point bounding box for each was NOT used directly - it
     # was contaminated by cases where the trajectory filter itself wrongly
     # rejected real ball frames near these fixtures (see flight_1 cam0

@@ -36,7 +36,7 @@ from pixel_velocity_correction import build_corrected_pairs  # noqa: E402
 from label_vs_detection import triangulate as lvd_triangulate  # noqa: E402
 from all_flights_common import load_session_calib  # noqa: E402
 
-CONFIG_PATH = REPO_ROOT / "data" / "detector_tuning" / "candidate_config.json"
+CONFIG_PATH = REPO_ROOT / "results" / "detector_tuning" / "candidate_config.json"
 TMP_DIR = REPO_ROOT / "results" / "tmp_stage2_detections"
 
 

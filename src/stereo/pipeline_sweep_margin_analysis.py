@@ -15,7 +15,7 @@
 # latency is a companion reference only, never the feasibility boundary.
 #
 # Read-only against pipeline_sweep_raw.csv / pipeline_sweep_summary_by_bin_T.csv
-# (data/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/) -- latency
+# (results/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/) -- latency
 # p95 per (bin,T) is NOT in the summary CSV (only median+IQR), so it's
 # recomputed here directly from the raw per-(flight,T) rows -- still pure
 # re-aggregation of already-persisted data, not a new Pi run.
@@ -31,7 +31,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[1]
-SWEEP_DIR = REPO_ROOT / "data" / "pi_benchmarking" / "02_pi_pipeline_sweep_parallel_detection"
+SWEEP_DIR = REPO_ROOT / "results" / "pi_benchmarking" / "02_pi_pipeline_sweep_parallel_detection"
 RAW_CSV = SWEEP_DIR / "pipeline_sweep_raw.csv"
 OUT_CSV = SWEEP_DIR / "figures2" / "margin_analysis.csv"
 

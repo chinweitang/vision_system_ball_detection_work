@@ -1,0 +1,391 @@
+{
+  "config": {
+    "stride": 1,
+    "diff_threshold": 16,
+    "open_kernel": 3,
+    "close_kernel": 30,
+    "min_area": 30,
+    "max_area": 50000,
+    "min_circ": 0.3,
+    "max_speed_px_per_frame": 80,
+    "min_run_length": 2
+  },
+  "pooled_k": 5.26847432e-05,
+  "n_iterations": 3,
+  "inlier_threshold_mm": 75.0,
+  "W_values_ms": [
+    150.0,
+    200.0,
+    250.0,
+    300.0,
+    350.0,
+    400.0,
+    430.0
+  ],
+  "duration_min_buffer_ms": 50.0,
+  "flights": [
+    {
+      "session": "2026_07_15_gym",
+      "flight": "flight_11",
+      "w_rows": [
+        {
+          "W_ms": 150.0,
+          "status": "ok",
+          "n_points": 10,
+          "detect_sum_ms": 191.1463489830494,
+          "triangulate_ms": 0.09460099786520004,
+          "ransac_ms": 87.51019000262022,
+          "total_compute_ms": 278.7511399835348,
+          "w_plus_compute_ms": 428.7511399835348,
+          "position_error_mm": 450.385768408148,
+          "velocity_error_a_mm_s": 511.6550892285252,
+          "velocity_error_b_mm_s": 12101.51521575455,
+          "lead_time_ms": 1365.469
+        },
+        {
+          "W_ms": 200.0,
+          "status": "ok",
+          "n_points": 13,
+          "detect_sum_ms": 248.79841797053814,
+          "triangulate_ms": 0.10395299643278122,
+          "ransac_ms": 99.66091001033783,
+          "total_compute_ms": 348.56328097730875,
+          "w_plus_compute_ms": 548.5632809773088,
+          "position_error_mm": 724.9280854468714,
+          "velocity_error_a_mm_s": 423.98452607626274,
+          "velocity_error_b_mm_s": 11979.82348944836,
+          "lead_time_ms": 1315.512
+        },
+        {
+          "W_ms": 250.0,
+          "status": "ok",
+          "n_points": 16,
+          "detect_sum_ms": 305.506235986948,
+          "triangulate_ms": 0.11556500196456909,
+          "ransac_ms": 108.45372699946165,
+          "total_compute_ms": 414.07552798837423,
+          "w_plus_compute_ms": 664.0755279883742,
+          "position_error_mm": 870.9800914125913,
+          "velocity_error_a_mm_s": 390.0508510683468,
+          "velocity_error_b_mm_s": 11930.416854290124,
+          "lead_time_ms": 1265.5569999999998
+        },
+        {
+          "W_ms": 300.0,
+          "status": "ok",
+          "n_points": 19,
+          "detect_sum_ms": 363.05081298202276,
+          "triangulate_ms": 0.12721499055624008,
+          "ransac_ms": 120.48717600107193,
+          "total_compute_ms": 483.66520397365093,
+          "w_plus_compute_ms": 783.6652039736509,
+          "position_error_mm": 554.9239664784457,
+          "velocity_error_a_mm_s": 417.6009594163984,
+          "velocity_error_b_mm_s": 12034.922871477911,
+          "lead_time_ms": 1215.5995
+        },
+        {
+          "W_ms": 350.0,
+          "status": "ok",
+          "n_points": 22,
+          "detect_sum_ms": 421.2836509793997,
+          "triangulate_ms": 0.13401199877262115,
+          "ransac_ms": 133.54077000170946,
+          "total_compute_ms": 554.9584329798818,
+          "w_plus_compute_ms": 904.9584329798818,
+          "position_error_mm": 596.6649687795666,
+          "velocity_error_a_mm_s": 411.31639504027413,
+          "velocity_error_b_mm_s": 12050.828385973002,
+          "lead_time_ms": 1165.6425
+        },
+        {
+          "W_ms": 400.0,
+          "status": "ok",
+          "n_points": 24,
+          "detect_sum_ms": 460.1209769770503,
+          "triangulate_ms": 0.14260400086641312,
+          "ransac_ms": 133.24613299965858,
+          "total_compute_ms": 593.5097139775753,
+          "w_plus_compute_ms": 993.5097139775753,
+          "position_error_mm": 688.2308005505685,
+          "velocity_error_a_mm_s": 396.02538570206946,
+          "velocity_error_b_mm_s": 12030.952083844382,
+          "lead_time_ms": 1115.686
+        },
+        {
+          "W_ms": 430.0,
+          "status": "ok",
+          "n_points": 24,
+          "detect_sum_ms": 460.1209769770503,
+          "triangulate_ms": 0.14071600139141083,
+          "ransac_ms": 133.9385629966855,
+          "total_compute_ms": 594.2002559751272,
+          "w_plus_compute_ms": 1024.2002559751272,
+          "position_error_mm": 688.2308005505685,
+          "velocity_error_a_mm_s": 396.02538570206946,
+          "velocity_error_b_mm_s": 12030.952083844382,
+          "lead_time_ms": 1115.686
+        }
+      ],
+      "status": "ok",
+      "n_full_points": 68,
+      "vel_method_a": [
+        2498.4445544614814,
+        7054.419683735274,
+        -3505.910248000642
+      ],
+      "vel_method_b": [
+        -5466.560709524858,
+        3335.1844254421153,
+        -11274.86548455752
+      ],
+      "fd_frames_used": [
+        131,
+        133
+      ],
+      "fd_dt_ms": 33.30550000000021
+    },
+    {
+      "session": "2026_07_15_gym",
+      "flight": "flight_12",
+      "w_rows": [
+        {
+          "W_ms": 150.0,
+          "status": "ok",
+          "n_points": 10,
+          "detect_sum_ms": 191.58044496178627,
+          "triangulate_ms": 0.09634099900722504,
+          "ransac_ms": 90.44831500202417,
+          "total_compute_ms": 282.12510096281767,
+          "w_plus_compute_ms": 432.12510096281767,
+          "position_error_mm": 931.0498079675484,
+          "velocity_error_a_mm_s": 183.89270149542588,
+          "velocity_error_b_mm_s": 2543.322375688116,
+          "lead_time_ms": 1365.467
+        },
+        {
+          "W_ms": 200.0,
+          "status": "ok",
+          "n_points": 13,
+          "detect_sum_ms": 249.03334794938564,
+          "triangulate_ms": 0.1056939959526062,
+          "ransac_ms": 105.63299999386072,
+          "total_compute_ms": 354.77204193919897,
+          "w_plus_compute_ms": 554.772041939199,
+          "position_error_mm": 523.1214060404282,
+          "velocity_error_a_mm_s": 181.70429646660955,
+          "velocity_error_b_mm_s": 2354.1683852721244,
+          "lead_time_ms": 1315.5105
+        },
+        {
+          "W_ms": 250.0,
+          "status": "ok",
+          "n_points": 15,
+          "detect_sum_ms": 286.71275994181633,
+          "triangulate_ms": 0.11293599754571915,
+          "ransac_ms": 102.90637599676847,
+          "total_compute_ms": 389.7320719361305,
+          "w_plus_compute_ms": 639.7320719361305,
+          "position_error_mm": 1041.0422486096015,
+          "velocity_error_a_mm_s": 246.02497527148648,
+          "velocity_error_b_mm_s": 2590.6890930528557,
+          "lead_time_ms": 1282.2085000000002
+        },
+        {
+          "W_ms": 300.0,
+          "status": "ok",
+          "n_points": 18,
+          "detect_sum_ms": 343.9839789122343,
+          "triangulate_ms": 0.12506700307130814,
+          "ransac_ms": 120.62572500109673,
+          "total_compute_ms": 464.73477091640234,
+          "w_plus_compute_ms": 764.7347709164023,
+          "position_error_mm": 212.3087081969651,
+          "velocity_error_a_mm_s": 305.2417707248155,
+          "velocity_error_b_mm_s": 2168.5019509362214,
+          "lead_time_ms": 1215.5975
+        },
+        {
+          "W_ms": 350.0,
+          "status": "ok",
+          "n_points": 21,
+          "detect_sum_ms": 401.5312969312072,
+          "triangulate_ms": 0.13764100521802902,
+          "ransac_ms": 135.1974129974842,
+          "total_compute_ms": 536.8663509339094,
+          "w_plus_compute_ms": 886.8663509339094,
+          "position_error_mm": 180.49808376105017,
+          "velocity_error_a_mm_s": 336.21623800008115,
+          "velocity_error_b_mm_s": 2134.66571215493,
+          "lead_time_ms": 1165.6440000000002
+        },
+        {
+          "W_ms": 400.0,
+          "status": "ok",
+          "n_points": 23,
+          "detect_sum_ms": 439.714363925159,
+          "triangulate_ms": 0.14273400604724884,
+          "ransac_ms": 137.77759900689125,
+          "total_compute_ms": 577.6346969380975,
+          "w_plus_compute_ms": 977.6346969380975,
+          "position_error_mm": 278.0000282672577,
+          "velocity_error_a_mm_s": 271.21106078042624,
+          "velocity_error_b_mm_s": 2200.5004741711914,
+          "lead_time_ms": 1132.3400000000001
+        },
+        {
+          "W_ms": 430.0,
+          "status": "ok",
+          "n_points": 24,
+          "detect_sum_ms": 458.4157619327307,
+          "triangulate_ms": 0.1479569971561432,
+          "ransac_ms": 138.01234199106693,
+          "total_compute_ms": 596.5760609209538,
+          "w_plus_compute_ms": 1026.5760609209538,
+          "position_error_mm": 254.32319488939473,
+          "velocity_error_a_mm_s": 403.86129858428944,
+          "velocity_error_b_mm_s": 2088.7174524885463,
+          "lead_time_ms": 1099.036
+        }
+      ],
+      "status": "ok",
+      "n_full_points": 83,
+      "vel_method_a": [
+        2447.1452694024133,
+        7376.219242224837,
+        -2866.1975140933814
+      ],
+      "vel_method_b": [
+        3311.743115720404,
+        7734.229123526495,
+        -600.5245207884553
+      ],
+      "fd_frames_used": [
+        120,
+        122
+      ],
+      "fd_dt_ms": 33.304
+    },
+    {
+      "session": "2026_07_15_gym",
+      "flight": "flight_14",
+      "w_rows": [
+        {
+          "W_ms": 150.0,
+          "status": "ok",
+          "n_points": 10,
+          "detect_sum_ms": 190.15724698454142,
+          "triangulate_ms": 0.09761899709701538,
+          "ransac_ms": 93.94528499990702,
+          "total_compute_ms": 284.20015098154545,
+          "w_plus_compute_ms": 434.20015098154545,
+          "position_error_mm": 1126.4008078961167,
+          "velocity_error_a_mm_s": 463.6117595342857,
+          "velocity_error_b_mm_s": 231847.1441842821,
+          "lead_time_ms": 1332.1654999999998
+        },
+        {
+          "W_ms": 200.0,
+          "status": "ok",
+          "n_points": 13,
+          "detect_sum_ms": 247.4411139935255,
+          "triangulate_ms": 0.10923200100660324,
+          "ransac_ms": 103.66047800332308,
+          "total_compute_ms": 351.2108239978552,
+          "w_plus_compute_ms": 551.2108239978552,
+          "position_error_mm": 827.9211564439294,
+          "velocity_error_a_mm_s": 390.8327397466652,
+          "velocity_error_b_mm_s": 231733.90651927362,
+          "lead_time_ms": 1282.211
+        },
+        {
+          "W_ms": 250.0,
+          "status": "ok",
+          "n_points": 15,
+          "detect_sum_ms": 284.85452099889517,
+          "triangulate_ms": 0.11552900075912476,
+          "ransac_ms": 110.11303699761629,
+          "total_compute_ms": 395.0830869972706,
+          "w_plus_compute_ms": 645.0830869972706,
+          "position_error_mm": 827.9211564439294,
+          "velocity_error_a_mm_s": 390.8327397466652,
+          "velocity_error_b_mm_s": 231733.90651927362,
+          "lead_time_ms": 1248.907
+        },
+        {
+          "W_ms": 300.0,
+          "status": "ok",
+          "n_points": 18,
+          "detect_sum_ms": 342.0624749958515,
+          "triangulate_ms": 0.12793699651956558,
+          "ransac_ms": 124.22407400608063,
+          "total_compute_ms": 466.4144859984517,
+          "w_plus_compute_ms": 766.4144859984517,
+          "position_error_mm": 395.38145271531636,
+          "velocity_error_a_mm_s": 410.2505134269872,
+          "velocity_error_b_mm_s": 231539.9017024885,
+          "lead_time_ms": 1182.2984999999999
+        },
+        {
+          "W_ms": 350.0,
+          "status": "ok",
+          "n_points": 21,
+          "detect_sum_ms": 400.18654698878527,
+          "triangulate_ms": 0.13973499834537506,
+          "ransac_ms": 129.76644300669432,
+          "total_compute_ms": 530.092724993825,
+          "w_plus_compute_ms": 880.092724993825,
+          "position_error_mm": 326.8519120091059,
+          "velocity_error_a_mm_s": 467.6785527430054,
+          "velocity_error_b_mm_s": 231461.14376155724,
+          "lead_time_ms": 1132.341
+        },
+        {
+          "W_ms": 400.0,
+          "status": "ok",
+          "n_points": 24,
+          "detect_sum_ms": 457.73769799619913,
+          "triangulate_ms": 0.1478089988231659,
+          "ransac_ms": 129.88889800012112,
+          "total_compute_ms": 587.7744049951434,
+          "w_plus_compute_ms": 987.7744049951434,
+          "position_error_mm": 334.54990298704195,
+          "velocity_error_a_mm_s": 434.921208119575,
+          "velocity_error_b_mm_s": 231499.61192046598,
+          "lead_time_ms": 1082.3864999999998
+        },
+        {
+          "W_ms": 430.0,
+          "status": "ok",
+          "n_points": 25,
+          "detect_sum_ms": 476.30156499892473,
+          "triangulate_ms": 0.15638399869203568,
+          "ransac_ms": 137.44414500147104,
+          "total_compute_ms": 613.9020939990878,
+          "w_plus_compute_ms": 1043.9020939990878,
+          "position_error_mm": 336.7870912711922,
+          "velocity_error_a_mm_s": 433.3824710217239,
+          "velocity_error_b_mm_s": 231501.73424159485,
+          "lead_time_ms": 1065.7329999999997
+        }
+      ],
+      "status": "ok",
+      "n_full_points": 82,
+      "vel_method_a": [
+        2506.077759470108,
+        6830.609978995057,
+        -3398.6033259217384
+      ],
+      "vel_method_b": [
+        138598.04886561466,
+        87161.81726753643,
+        166327.53768617526
+      ],
+      "fd_frames_used": [
+        130,
+        131
+      ],
+      "fd_dt_ms": 16.65099999999997
+    }
+  ]
+}

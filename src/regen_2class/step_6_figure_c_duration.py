@@ -1,6 +1,6 @@
 """Figure C - launch-to-crossing duration distribution, crossers only.
 
-Reads data/regenerate_figures/two_class_join.csv and writes
+Reads results/regenerate_figures/two_class_join.csv and writes
 figureC_duration_distribution.png at 150 dpi.
 
 Overlaid (not stacked) histogram, one colour per class, with vertical markers at
@@ -19,8 +19,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-JOIN = "data/regenerate_figures/two_class_join.csv"
-OUT = "data/regenerate_figures/figureC_duration_distribution.png"
+JOIN = "results/regenerate_figures/two_class_join.csv"
+OUT = "results/regenerate_figures/figureC_duration_distribution.png"
 
 SURF, INK, INK2 = "#fcfcfb", "#0b0b0b", "#52514e"
 COL = {"SHORT": "#2a78d6", "LONG": "#e34948"}

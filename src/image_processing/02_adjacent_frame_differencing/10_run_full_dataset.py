@@ -1,18 +1,18 @@
 # 10_run_full_dataset.py
 #
 # Full-dataset production run (all 163 flights, both sessions) at the
-# current best config (data/detector_tuning/candidate_config.json) - the
+# current best config (results/detector_tuning/candidate_config.json) - the
 # conclusion of the 2026-07-23/24 tuning session (see the worklog and
-# data/detector_tuning/history/results_history.csv).
+# results/detector_tuning/history/results_history.csv).
 #
-# Two outputs, both centralized under data/detector_tuning/ rather than
+# Two outputs, both centralized under results/detector_tuning/ rather than
 # scattered per-flight (the 04_stereo_three_frame_diff.py convention writes
 # an analysis_N folder inside EACH flight - hard to browse across 163
 # flights in 2 session directories):
 #   1. Contact sheets (same 4-row layout as 08_generate_contact_sheets.py)
 #      for every flight/cam -> data/detector_tuning/contact_sheets/<STAGE>/
 #   2. Full per-flight combined_rate breakdown, overwriting
-#      data/detector_tuning/candidate_config_validated_results.csv (this
+#      results/detector_tuning/candidate_config_validated_results.csv (this
 #      file is established as "current state, OK to overwrite" - see
 #      results_history.csv for the permanent record of every prior stage).
 #
@@ -45,9 +45,9 @@ STAGE = "03_stride1_thresh16_openk3_area30_circ0.3"  # bump by hand each round
 
 SESSION_15 = REPO_ROOT / "data" / "2026_07_15_gym" / "ball_flights"
 SESSION_21 = REPO_ROOT / "data" / "2026_07_21_gym" / "ball_flights"
-DETECTOR_TUNING_DIR = REPO_ROOT / "data" / "detector_tuning"
+DETECTOR_TUNING_DIR = REPO_ROOT / "results" / "detector_tuning"
 CONFIG_PATH = DETECTOR_TUNING_DIR / "candidate_config.json"
-CONTACT_SHEETS_DIR = DETECTOR_TUNING_DIR / "contact_sheets" / STAGE
+CONTACT_SHEETS_DIR = REPO_ROOT / "data" / "detector_tuning" / "contact_sheets" / STAGE
 VALIDATED_RESULTS_CSV = DETECTOR_TUNING_DIR / "candidate_config_validated_results.csv"
 
 CAMS = ["cam0", "cam1"]

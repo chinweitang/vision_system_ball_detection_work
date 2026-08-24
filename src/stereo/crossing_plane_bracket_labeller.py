@@ -2,7 +2,7 @@
 #
 # claude/prompts (see worklog for the driving prompt text). Manual
 # crossing-bracket labelling for the 20 v2 candidate flights
-# (data/prediction/02_candidate_reselection/ranked_candidates_v2.csv):
+# (results/prediction/02_candidate_reselection/ranked_candidates_v2.csv):
 # for each flight, per camera, serve N_BRACKET=6 frames at STRIDE=2,
 # symmetric about the plane-crossing frame (3 before, crossing, 2 after),
 # for manual 2-click centroid labelling. These labels are INDEPENDENT
@@ -55,8 +55,8 @@ from src.stereo.crossing_plane_classification import (  # noqa: E402
     build_geometry, load_pooled_k, classify_flight, TAPE_REGISTRATIONS,
 )
 
-CANDIDATES_CSV = REPO_ROOT / "data" / "prediction" / "02_candidate_reselection" / "ranked_candidates_v2.csv"
-OUT_DIR = REPO_ROOT / "data" / "prediction" / "03_crossing_labels"
+CANDIDATES_CSV = REPO_ROOT / "results" / "prediction" / "02_candidate_reselection" / "ranked_candidates_v2.csv"
+OUT_DIR = REPO_ROOT / "results" / "prediction" / "03_crossing_labels"
 OUT_CSV = OUT_DIR / "crossing_labels.csv"
 MANIFEST_CSV = OUT_DIR / "labelling_manifest.csv"
 LOG_PATH = REPO_ROOT / "claude" / "claude_logs" / "2026-08-04_1347_crossing_plane_setup_worklog.md"

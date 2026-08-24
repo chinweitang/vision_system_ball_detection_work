@@ -14,14 +14,14 @@ Per flight per observation window, precedence first-match-wins:
 with t_obs = min(observation window, duration_ms).
 
 PER-AXIS VELOCITY IS AVAILABLE, so the conservative scalar fallback is NOT used.
-Source: data/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/figures2/
+Source: results/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/figures2/
 velocity_by_axis_raw.csv (2481 rows, exactly the status=="ok" rows), carrying
 SIGNED err_vx / err_vy / err_vz plus the scalar velocity_error_mm_s. Produced by
 prediction_pipeline_sweep_pi_vaxis.py, a copy of the original sweep script whose
 only change was persisting the per-axis components; its regression check against
 the original run matched on all 2481 rows.
 
-Outputs (all new, under data/regenerate_figures/):
+Outputs (all new, under results/regenerate_figures/):
     figureF_chaos_outcome_sweep.png
     figureG_velocity_by_axis_twoclass.png
     chaos_outcome_by_class_A.csv
@@ -42,7 +42,7 @@ import matplotlib.pyplot as plt
 
 import common as C
 
-VAXIS_CSV = ("data/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/"
+VAXIS_CSV = ("results/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/"
              "figures2/velocity_by_axis_raw.csv")
 
 A_VALUES = [72.0, 135.0, 220.0]          # panel tilt moves of 2, 10, 30 degrees

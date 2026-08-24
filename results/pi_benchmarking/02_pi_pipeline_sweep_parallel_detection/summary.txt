@@ -1,0 +1,124 @@
+Pi prediction-pipeline sweep -- per-elevation-bin summary
+==============================================================================
+
+*** ACCURACY IS A CONVERGENCE RESULT (early-cutoff Model-C fit vs the
+full-arc fit already frozen in 01_crossing_plane_setup/
+crossing_classification.csv) -- NOT ground-truth accuracy. Manual
+crossing-bracket labels are not ready yet. Re-run against real labels
+once available. ***
+
+--- Step 1 checkpoint (for reference) ---
+Threaded per-pair detect: median=13.578ms, p95=14.973ms -- BELOW 16.667ms
+cadence (speedup 1.27x vs serial, well under the 1.7x clean-parallelism bar
+-- TBB thread-pool contention, not clean 2x). Capture-bound regime assumed
+throughout this sweep's latency model.
+
+--- Full-sweep detect diagnostics (n=2481 pairs sampled via t_rows) ---
+median=13.707ms p95=15.108ms p99=15.404ms max=19.224ms min=12.781ms
+Pairs exceeding 16.667ms cadence (whole run, all frames not just sampled): 6
+  over-cadence: 2026_07_15_gym/flight_15 frame 76
+  over-cadence: 2026_07_15_gym/flight_25 frame 50
+  over-cadence: 2026_07_15_gym/flight_29 frame 26
+  over-cadence: 2026_07_21_gym/flight_100 frame 83
+  over-cadence: 2026_07_21_gym/flight_11 frame 72
+  over-cadence: 2026_07_21_gym/flight_118 frame 130
+Thermal drift check: first-quartile flights (n=26) median detect=14.936ms, last-quartile (n=26) median=13.483ms, delta=-1.452ms (NOTABLE -- possible thermal drift)
+
+--- V1 HEADLINE at T=490ms (per bin) ---
+bin     n_airborne  n_fit_ok  hit_miss_acc     pos_err_med(IQR)     vel_err_med(IQR)     latency_med(IQR)  lat_feas_frac
+FLAT            35        35        100.0%       38.8 (  40.4)      104.0 (  79.4)      176.3 (   8.8)         100.0%
+MID             12        12        100.0%       85.5 (  89.5)      126.6 (  72.7)      194.7 (  14.9)         100.0%
+LOB             60        59         94.9%      156.3 ( 136.1)      167.4 ( 195.6)      202.3 (  12.5)         100.0%
+
+--- Binding constraint at T=490ms (provisional thresholds: position error<100mm, accuracy>=90%) ---
+FLAT: NEITHER BINDS (both within provisional thresholds -- has slack on both axes)
+MID: NEITHER BINDS (both within provisional thresholds -- has slack on both axes)
+LOB: ERROR-BOUND (latency has slack, position error is the limiter)
+
+--- Per-bin t_min (smallest T with median position error<100mm AND HIT/MISS accuracy>=90%, both provisional) ---
+FLAT: t_min=300ms
+MID: t_min=350ms
+LOB: t_min=700ms
+
+--- Full T sweep, per bin (median values) ---
+
+FLAT:
+  T_ms  n_air  n_ok   pos_err   vel_err    acc   latency  lat_feas
+   150     35    30     183.4     406.1  96.7%     117.1    100.0%
+   200     35    35     135.1     316.2 100.0%     129.5    100.0%
+   250     35    35     107.3     250.0  97.1%     138.3    100.0%
+   300     35    35      80.5     208.8 100.0%     144.8    100.0%
+   350     35    35      63.9     170.1 100.0%     155.2    100.0%
+   400     35    35      48.7     125.7 100.0%     163.6    100.0%
+   450     35    35      41.1     119.1 100.0%     173.5    100.0%
+   490     35    35      38.8     104.0 100.0%     176.3    100.0%
+   500     33    35      38.0      95.9 100.0%     183.6    100.0%
+   550     26    35      24.3      65.0  97.1%     187.7    100.0%
+   600     17    35      21.9      51.5 100.0%     192.3    100.0%
+   650      6    35      24.3      49.6 100.0%     195.6    100.0%
+   700      1    35      20.3      55.8 100.0%     201.5    100.0%
+   750      0    35      20.3      55.8 100.0%     201.7    100.0%
+   800      0    35      20.4      55.6 100.0%     201.9    100.0%
+   850      0    35      20.3      54.7 100.0%     201.8    100.0%
+   900      0    35      20.3      54.7 100.0%     201.8    100.0%
+   950      0    35      20.3      54.7 100.0%     201.8    100.0%
+  1000      0    35      20.3      54.7 100.0%     201.8    100.0%
+  1050      0    35      20.3      54.7 100.0%     201.9    100.0%
+  1100      0    35      20.3      54.7 100.0%     201.8    100.0%
+  1150      0    35      20.3      54.7 100.0%     201.7    100.0%
+  1200      0    35      20.3      54.7 100.0%     201.9    100.0%
+  1250      0    35      20.3      54.7 100.0%     201.6    100.0%
+
+MID:
+  T_ms  n_air  n_ok   pos_err   vel_err    acc   latency  lat_feas
+   150     12     7     170.9     205.9 100.0%     128.1    100.0%
+   200     12    10     122.2     195.6  90.0%     137.5    100.0%
+   250     12    10     177.8     219.3  90.0%     147.3    100.0%
+   300     12    12     128.9     172.6  83.3%     158.3    100.0%
+   350     12    12      95.1     139.6  91.7%     168.8    100.0%
+   400     12    12     109.8     146.1 100.0%     179.8    100.0%
+   450     12    12      77.8     110.1 100.0%     190.3    100.0%
+   490     12    12      85.5     126.6 100.0%     194.7    100.0%
+   500     12    12      65.5     102.5 100.0%     205.7    100.0%
+   550     12    12      67.1     102.3 100.0%     208.0    100.0%
+   600     12    12      54.9      84.7 100.0%     214.8    100.0%
+   650     12    12      37.6      57.0 100.0%     229.3    100.0%
+   700     11    12      43.4      63.7 100.0%     233.5    100.0%
+   750     10    12      54.5      57.6 100.0%     245.1    100.0%
+   800      9    12      30.8      49.0 100.0%     244.1    100.0%
+   850      9    12      32.3      65.6 100.0%     255.9    100.0%
+   900      7    12      36.0      38.9 100.0%     261.7    100.0%
+   950      7    12      41.6      59.2 100.0%     264.9    100.0%
+  1000      5    12      35.9      43.4 100.0%     271.3    100.0%
+  1050      5    12      39.9      50.4 100.0%     283.2    100.0%
+  1100      2    12      26.3      44.9 100.0%     280.3    100.0%
+  1150      0    12      27.3      48.2 100.0%     283.7    100.0%
+  1200      0    11      26.6      48.1 100.0%     274.2    100.0%
+  1250      0    12      26.3      39.2 100.0%     285.6    100.0%
+
+LOB:
+  T_ms  n_air  n_ok   pos_err   vel_err    acc   latency  lat_feas
+   150     60    25     549.5     507.4  60.0%     139.6    100.0%
+   200     60    45     391.5     406.8  73.3%     147.5    100.0%
+   250     60    51     373.9     415.6  80.4%     156.4    100.0%
+   300     60    59     340.8     337.4  83.1%     169.6    100.0%
+   350     60    60     248.5     236.8  81.7%     178.8    100.0%
+   400     60    60     224.4     217.8  90.0%     185.7    100.0%
+   450     60    59     178.5     193.8  96.6%     195.4    100.0%
+   490     60    59     156.3     167.4  94.9%     202.3    100.0%
+   500     60    59     171.8     163.0  94.9%     202.3    100.0%
+   550     60    59     145.7     159.1  94.9%     215.6    100.0%
+   600     60    60     115.0     144.1  98.3%     227.6    100.0%
+   650     60    60     110.1     113.8  98.3%     228.8    100.0%
+   700     60    60      90.7     106.1  98.3%     244.1    100.0%
+   750     60    60      91.1      90.3 100.0%     248.1    100.0%
+   800     60    59      76.7      89.8 100.0%     255.5    100.0%
+   850     60    60      64.7      71.0 100.0%     263.4    100.0%
+   900     60    59      63.6      70.2 100.0%     273.1    100.0%
+   950     60    60      54.6      64.1  98.3%     282.8    100.0%
+  1000     60    60      51.2      58.8 100.0%     288.8    100.0%
+  1050     59    60      44.5      55.2 100.0%     295.0    100.0%
+  1100     55    56      39.3      42.1  98.2%     303.5    100.0%
+  1150     48    60      34.9      42.6 100.0%     311.2    100.0%
+  1200     37    59      34.4      41.2 100.0%     310.2    100.0%
+  1250     29    59      34.2      42.3 100.0%     317.6    100.0%

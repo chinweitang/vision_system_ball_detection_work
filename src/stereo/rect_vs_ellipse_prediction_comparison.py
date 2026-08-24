@@ -51,11 +51,11 @@ from src.stereo.trajectory_fit import (  # noqa: E402
 )
 
 LOG_PATH = REPO_ROOT / "claude" / "claude_logs" / "2026-08-03_pi_realtime_benchmark_worklog.md"
-OUT_DIR = REPO_ROOT / "data" / "trajectory_fit_comparison" / "rect_vs_ellipse_kernel"
+OUT_DIR = REPO_ROOT / "results" / "trajectory_fit_comparison" / "rect_vs_ellipse_kernel"
 
-ELLIPSE_DETECTIONS_ROOT = REPO_ROOT / "data" / "detector_tuning" / "detections" / "03_stride1_thresh16_openk3_area30_circ0.3"
-RECT_DETECTIONS_ROOT = REPO_ROOT / "data" / "detector_tuning" / "detections" / "12_rect_close_kernel"
-POOLED_K_TXT = REPO_ROOT / "data" / "trajectory_fit_comparison" / "all_flights" / "phase1" / "pooled_k.txt"
+ELLIPSE_DETECTIONS_ROOT = REPO_ROOT / "results" / "detector_tuning" / "detections" / "03_stride1_thresh16_openk3_area30_circ0.3"
+RECT_DETECTIONS_ROOT = REPO_ROOT / "results" / "detector_tuning" / "detections" / "12_rect_close_kernel"
+POOLED_K_TXT = REPO_ROOT / "results" / "trajectory_fit_comparison" / "all_flights" / "phase1" / "pooled_k.txt"
 
 FIT_WINDOW_S = 0.430  # fixed 430ms fit window (== the full-population P5 flight
                        # duration found earlier this session -- not a coincidence,

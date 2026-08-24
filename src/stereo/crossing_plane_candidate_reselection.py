@@ -29,8 +29,8 @@ REPO_ROOT = HERE.parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-IN_DIR = REPO_ROOT / "data" / "prediction" / "01_crossing_plane_setup"
-OUT_DIR = REPO_ROOT / "data" / "prediction" / "02_candidate_reselection"
+IN_DIR = REPO_ROOT / "results" / "prediction" / "01_crossing_plane_setup"
+OUT_DIR = REPO_ROOT / "results" / "prediction" / "02_candidate_reselection"
 LOG_PATH = REPO_ROOT / "claude" / "claude_logs" / "2026-08-04_1347_crossing_plane_setup_worklog.md"
 
 APERTURE_SIZE_MM = 2000.0

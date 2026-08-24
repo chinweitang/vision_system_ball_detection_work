@@ -1,0 +1,9 @@
+class,threshold_ms,max_feasible_window_ms,margin_p95_at_window_ms,median_position_error_mm
+SHORT,+220,INFEASIBLE,,
+SHORT,+135,200,151.0,127.4
+SHORT,+72,250,83.7,121.3
+SHORT,-84,350,-38.5,67.8
+LONG,+220,550,257.1,145.7
+LONG,+135,650,140.8,110.1
+LONG,+72,650,140.8,110.1
+LONG,-84,800,-38.8,76.7

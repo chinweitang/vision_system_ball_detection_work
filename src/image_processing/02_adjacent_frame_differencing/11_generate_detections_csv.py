@@ -1,7 +1,7 @@
 # 11_generate_detections_csv.py
 #
 # Generate raw (pre-trajectory-filter) per-flight, per-camera detection CSVs
-# at the CURRENT tuned config (data/detector_tuning/candidate_config.json,
+# at the CURRENT tuned config (results/detector_tuning/candidate_config.json,
 # stride=1 thresh=16 open_k=3 min_area=30 min_circ=0.3 + exclusion_mask.py
 # v4), for data/<SESSION>/ball_flights (--session 2026_07_21_gym or
 # 2026_07_15_gym -- flight_velocity_angle_binner.py consumes both).
@@ -22,7 +22,7 @@
 # filter_trajectory_outliers() itself as an independent step.
 #
 # Output location: centralized under
-# data/detector_tuning/detections/<STAGE>/<SESSION>/, NOT scattered as
+# results/detector_tuning/detections/<STAGE>/<SESSION>/, NOT scattered as
 # per-flight analysis_4 folders - matching the same centralization decision
 # already made (and reasoned through) for 10_run_full_dataset.py's contact
 # sheets / validated-results CSV, using the SAME stage folder name so sibling
@@ -56,7 +56,7 @@ import detector_core as dc  # noqa: E402
 
 STAGE = "03_stride1_thresh16_openk3_area30_circ0.3"  # matches 10_run_full_dataset.py's STAGE
 
-DETECTOR_TUNING_DIR = REPO_ROOT / "data" / "detector_tuning"
+DETECTOR_TUNING_DIR = REPO_ROOT / "results" / "detector_tuning"
 CONFIG_PATH = DETECTOR_TUNING_DIR / "candidate_config.json"
 DETECTIONS_ROOT = DETECTOR_TUNING_DIR / "detections" / STAGE
 

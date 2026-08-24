@@ -1,6 +1,6 @@
 # crossing_plane_plots_and_ranking.py
 #
-# Reads data/prediction/01_crossing_plane_setup/crossing_classification.csv
+# Reads results/prediction/01_crossing_plane_setup/crossing_classification.csv
 # (produced by crossing_plane_classification.py) and produces:
 #   - pooled + per-registration Y-Z scatter plots (aperture box drawn,
 #     points colored by class) -- dataviz-skill conventions, static PNG,
@@ -24,7 +24,7 @@ REPO_ROOT = HERE.parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-OUT_DIR = REPO_ROOT / "data" / "prediction" / "01_crossing_plane_setup"
+OUT_DIR = REPO_ROOT / "results" / "prediction" / "01_crossing_plane_setup"
 CSV_PATH = OUT_DIR / "crossing_classification.csv"
 
 APERTURE_SIZE_MM = 2000.0

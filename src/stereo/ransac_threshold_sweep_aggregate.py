@@ -25,7 +25,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[1]
-SWEEP_DIR = REPO_ROOT / "data" / "trajectory_fit_comparison" / "ransac_distance_threshold_sweep"
+SWEEP_DIR = REPO_ROOT / "results" / "trajectory_fit_comparison" / "ransac_distance_threshold_sweep"
 RAW_CSV = SWEEP_DIR / "ransac_threshold_sweep_raw.csv"
 
 THRESHOLD_VALUES_MM = [50.0, 75.0, 100.0, 125.0, 150.0]

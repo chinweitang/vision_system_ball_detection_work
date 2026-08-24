@@ -48,8 +48,8 @@ from trajectory_fit import (  # noqa: E402
     RANSAC_INLIER_THRESHOLD_MM, RANSAC_MIN_SAMPLES, RANSAC_N_ITERATIONS, RANSAC_SEED,
 )
 
-CONFIG_PATH = REPO_ROOT / "data" / "detector_tuning" / "candidate_config.json"
-POOLED_K_PATH = REPO_ROOT / "data" / "trajectory_fit_comparison" / "all_flights" / "phase1" / "pooled_k.txt"
+CONFIG_PATH = REPO_ROOT / "results" / "detector_tuning" / "candidate_config.json"
+POOLED_K_PATH = REPO_ROOT / "results" / "trajectory_fit_comparison" / "all_flights" / "phase1" / "pooled_k.txt"
 TMP_DETECTIONS_DIR = REPO_ROOT / "results" / "tmp_detections"
 
 N_WARMUP_PAIRS = 5          # untimed warm-up pairs per camera, before timing starts

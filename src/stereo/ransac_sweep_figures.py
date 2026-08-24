@@ -1,7 +1,7 @@
 # ransac_sweep_figures.py
 #
 # Two report figures from the RANSAC n_iterations sweep
-# (data/trajectory_fit_comparison/ransac_iterations_sweep/), for direct
+# (results/trajectory_fit_comparison/ransac_iterations_sweep/), for direct
 # thesis inclusion. Read-only against the existing sweep outputs -- does not
 # regenerate or modify ransac_sweep_raw.csv or either summary table.
 #
@@ -36,7 +36,7 @@ import matplotlib.ticker as mticker
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[1]
-SWEEP_DIR = REPO_ROOT / "data" / "trajectory_fit_comparison" / "ransac_iterations_sweep"
+SWEEP_DIR = REPO_ROOT / "results" / "trajectory_fit_comparison" / "ransac_iterations_sweep"
 FIG_DIR = SWEEP_DIR / "figures"
 
 RAW_CSV = SWEEP_DIR / "ransac_sweep_raw.csv"

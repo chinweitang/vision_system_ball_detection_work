@@ -33,7 +33,7 @@ import detector_core as dc  # noqa: E402
 
 SESSION_15 = REPO_ROOT / "data" / "2026_07_15_gym" / "ball_flights"
 SESSION_21 = REPO_ROOT / "data" / "2026_07_21_gym" / "ball_flights"
-DETECTOR_TUNING_DIR = REPO_ROOT / "data" / "detector_tuning"
+DETECTOR_TUNING_DIR = REPO_ROOT / "results" / "detector_tuning"
 CONFIG_PATH = DETECTOR_TUNING_DIR / "candidate_config.json"
 
 FLIGHT_SAMPLE = [
@@ -53,7 +53,7 @@ CAMS = ["cam0", "cam1"]
 
 def load_config(path=CONFIG_PATH):
     """Single source of truth for the "current best" detector config - see
-    data/detector_tuning/candidate_config.json and the 2026-07-23 worklog."""
+    results/detector_tuning/candidate_config.json and the 2026-07-23 worklog."""
     with open(path) as f:
         return json.load(f)
 
@@ -68,7 +68,7 @@ MAX_SPEED_PX_PER_FRAME, MIN_RUN_LENGTH = CFG["max_speed_px_per_frame"], CFG["min
 # convention as 07_artifact_audit.py, so contact sheets and inspection crops
 # for the same config land under matching names.
 STAGE = f"area{MIN_AREA}_circ{MIN_CIRC}"
-OUT_DIR = DETECTOR_TUNING_DIR / "contact_sheets" / STAGE
+OUT_DIR = REPO_ROOT / "data" / "detector_tuning" / "contact_sheets" / STAGE
 
 COLS_PER_ROW = 5
 PANEL_W = 600

@@ -30,7 +30,7 @@ import matplotlib.ticker as mticker
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[1]
-SWEEP_DIR = REPO_ROOT / "data" / "trajectory_fit_comparison" / "ransac_distance_threshold_sweep"
+SWEEP_DIR = REPO_ROOT / "results" / "trajectory_fit_comparison" / "ransac_distance_threshold_sweep"
 FIG_DIR = SWEEP_DIR / "figures"
 
 RAW_CSV = SWEEP_DIR / "ransac_threshold_sweep_raw.csv"

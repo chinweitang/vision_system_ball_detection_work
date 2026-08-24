@@ -12,7 +12,7 @@
 # Target queue: reuses (does not re-derive) two already-verified pieces of
 # logic -- flight_velocity_angle_binner.py's SESSIONS/find_flight_ids
 # (flight eligibility = has a tuned-detections CSV under
-# data/detector_tuning/detections/<stage>/<session>/) and
+# results/detector_tuning/detections/<stage>/<session>/) and
 # 11_generate_detections_csv.py's find_flight_dirs (raw ball_in_frame
 # folder resolution -- handles 2026_07_15_gym's nested subfolders, e.g.
 # "2 ball contacts ground before plane/flight_01", and the cross-session
@@ -29,7 +29,7 @@
 # a folder) is adapted from 02_label_frames_human_error.py's repeat-queue
 # pattern. Neither existing script is modified.
 #
-# Output: data/final_point_labels/final_point_labels.csv (session, flight,
+# Output: results/final_point_labels/final_point_labels.csv (session, flight,
 # cam, frame_number, click1_x, click1_y, click2_x, click2_y, centroid_x,
 # centroid_y, diameter_px). Full-rewrite-per-save, same "crash-safe by
 # always being a complete file" technique as 01_label_frames.py -- resumes
@@ -83,14 +83,14 @@ _gen = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_gen)
 find_flight_dirs = _gen.find_flight_dirs
 
-CONFIG_PATH = ROOT / "data/detector_tuning/candidate_config.json"
+CONFIG_PATH = ROOT / "results/detector_tuning/candidate_config.json"
 RAW_SESSION_DIRS = {
     "2026_07_21_gym": ROOT / "data/2026_07_21_gym/ball_flights",
     "2026_07_15_gym": ROOT / "data/2026_07_15_gym/ball_flights",
 }
 CAMS = ["cam0", "cam1"]
 
-OUT_DIR = ROOT / "data/final_point_labels"
+OUT_DIR = ROOT / "results/final_point_labels"
 OUT_CSV = OUT_DIR / "final_point_labels.csv"
 
 MAX_DISPLAY_H = 900

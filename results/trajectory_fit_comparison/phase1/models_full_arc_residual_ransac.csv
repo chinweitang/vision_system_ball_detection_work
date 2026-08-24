@@ -1,0 +1,13 @@
+flight,model,variant,residual_rms_mm,n_inliers,n_total
+flight_01,A_free_gravity,plain,30.0667,27,27
+flight_01,B_fixed_gravity,plain,48.2864,27,27
+flight_01,C_fixed_gravity_drag_refined,plain,17.7647,27,27
+flight_01,A_free_gravity,ransac,30.0667,27,27
+flight_01,B_fixed_gravity,ransac,46.9557,26,27
+flight_01,C_fixed_gravity_drag_refined,ransac,30.7694,27,27
+flight_22,A_free_gravity,plain,52.1921,93,93
+flight_22,B_fixed_gravity,plain,110.0950,93,93
+flight_22,C_fixed_gravity_drag_refined,plain,27.1351,93,93
+flight_22,A_free_gravity,ransac,40.4264,80,93
+flight_22,B_fixed_gravity,ransac,46.2874,51,93
+flight_22,C_fixed_gravity_drag_refined,ransac,41.0727,88,93

@@ -42,7 +42,7 @@ import matplotlib.pyplot as plt
 import common as C
 from step10_chaos_outcome_sweep import AXIS_TITLE, load_per_axis
 
-OUT_DIR = "data/regenerate_figures/01_chaos_4criterion/"
+OUT_DIR = "results/regenerate_figures/01_chaos_4criterion/"
 
 # ---- budget -> thresholds (derived, not hardcoded) ----
 E_COR = 0.68                     # published volleyball-on-rigid-surface COR

@@ -28,8 +28,8 @@ chaos rally needs the answer A ms BEFORE arrival, opposite to target mode's +84 
 Writes NEW files only. Figures A, D, E, F and G are not touched, and
 APERTURE_SIZE_MM is not read or changed anywhere in this module.
 
-    data/regenerate_figures/figure_h_chaos_3criterion.png
-    data/regenerate_figures/figure_h_chaos_3criterion.csv
+    results/regenerate_figures/figure_h_chaos_3criterion.png
+    results/regenerate_figures/figure_h_chaos_3criterion.csv
 """
 import csv
 import math

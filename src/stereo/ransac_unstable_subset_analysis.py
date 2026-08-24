@@ -11,7 +11,7 @@
 # i.e. is n_iterations=3 actually safe for these flights specifically, not
 # just on average.
 #
-# Read-only against data/trajectory_fit_comparison/ransac_iterations_sweep/
+# Read-only against results/trajectory_fit_comparison/ransac_iterations_sweep/
 # ransac_sweep_raw.csv and seed_spread_outlier_flights.csv -- no RANSAC
 # execution, no modification of either file.
 #
@@ -30,7 +30,7 @@ import matplotlib.ticker as mticker
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[1]
-SWEEP_DIR = REPO_ROOT / "data" / "trajectory_fit_comparison" / "ransac_iterations_sweep"
+SWEEP_DIR = REPO_ROOT / "results" / "trajectory_fit_comparison" / "ransac_iterations_sweep"
 RAW_CSV = SWEEP_DIR / "ransac_sweep_raw.csv"
 OUT_TABLE = SWEEP_DIR / "table3_unstable_subset_error_by_niterations.csv"
 OUT_FIG = SWEEP_DIR / "figures" / "figure3_unstable_subset_error_vs_niterations.png"

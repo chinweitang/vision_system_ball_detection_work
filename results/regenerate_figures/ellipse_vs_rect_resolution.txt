@@ -1,0 +1,166 @@
+==============================================================================
+ELLIPSE vs RECT CLOSE KERNEL - PER-FLIGHT RESOLUTION
+==============================================================================
+ELLIPSE source : results/detector_tuning/candidate_config_validated_results.csv
+RECT source    : results/detector_tuning/candidate_config_rect_close_results.csv
+Deltas computed from these two files directly (rect minus ellipse).
+
+STOP GATE: both CSVs cover the same 163 session-qualified flights -- PASS
+  ellipse rows 163, rect rows 163, symmetric difference 0
+  stored AVERAGE: ellipse 0.9667, rect 0.9452
+  stored RECALL : ellipse 0.9250, rect 0.8875
+
+------------------------------------------------------------------------------
+1. DISTRIBUTION OF THE PER-FLIGHT DELTA (percentage points)
+------------------------------------------------------------------------------
+  n            : 163
+  mean         : -2.151 pp
+  min          : -10.23 pp
+  P5           : -8.32 pp
+  Q1           : -3.98 pp
+  median       : -2.08 pp
+  Q3           : +0.00 pp
+  P95          : +2.41 pp
+  max          : +4.88 pp
+
+  histogram:
+        [ -100, -10)    1  #
+        [  -10,  -8)    9  #########
+        [   -8,  -6)    9  #########
+        [   -6,  -4)   20  ####################
+        [   -4,  -2)   44  ############################################
+        [   -2,  +0)   20  ####################
+           exactly 0   35  ###################################
+        (   +0,  +2]   13  #############
+        (   +2,  +4]    9  #########
+        (   +4,  +6]    3  ###
+       (   +6, +100]    0  
+
+------------------------------------------------------------------------------
+2. COUNTS
+------------------------------------------------------------------------------
+  regressing by MORE than 2 pp (delta < -2.00) :  83  (50.9%)
+  improving by MORE than 2 pp (delta > +2.00) :  12  (7.4%)
+  improving at all       (delta > 0)          :  25
+  unchanged              (delta == 0)         :  35
+  worse at all           (delta < 0)          : 103
+
+  NOTE ON THE '13 IMPROVED' FIGURE IN results_history.csv:
+  strictly > +2 pp gives 12; >= +2 pp gives 13. The history row counts >=.
+
+------------------------------------------------------------------------------
+3. BOUNDARY FLIGHTS AT EXACTLY +/-2.00 pp
+------------------------------------------------------------------------------
+  exactly -2.00 pp : 0
+  exactly +2.00 pp : 1
+      2026_07_21_gym/flight_69               ellipse 0.9600 -> rect 0.9800
+
+  These sit ON the threshold, so whether they count depends on whether the
+  test is strict (>) or inclusive (>=). Reported explicitly because that
+  choice is the entire difference between 12 and 13 improved flights.
+
+  for context, flights within 1.5-2.5 pp of zero either way (30):
+       -2.44 pp  2026_07_21_gym/flight_48
+       -2.44 pp  2026_07_21_gym/flight_83
+       -2.41 pp  2026_07_21_gym/flight_109
+       -2.38 pp  2026_07_21_gym/flight_12
+       -2.38 pp  2026_07_21_gym/flight_120
+       -2.38 pp  2026_07_21_gym/flight_6
+       -2.35 pp  2026_07_15_gym/flight_45
+       -2.33 pp  2026_07_21_gym/flight_78
+       -2.32 pp  2026_07_21_gym/flight_72
+       -2.32 pp  2026_07_21_gym/flight_95
+       -2.30 pp  2026_07_15_gym/flight_26
+       -2.28 pp  2026_07_21_gym/flight_46
+       -2.25 pp  2026_07_15_gym/flight_20
+       -2.20 pp  2026_07_21_gym/flight_52
+       -2.18 pp  2026_07_15_gym/flight_12
+       -2.13 pp  2026_07_21_gym/flight_13
+       -2.13 pp  2026_07_21_gym/flight_75
+       -2.08 pp  2026_07_21_gym/flight_59
+       -2.04 pp  2026_07_21_gym/flight_74
+       -1.96 pp  2026_07_21_gym/flight_68
+       -1.79 pp  2026_07_21_gym/flight_73
+       -1.78 pp  2026_07_15_gym/flight_52
+       +1.56 pp  2026_07_21_gym/flight_119
+       +1.78 pp  2026_07_21_gym/flight_11
+       +2.00 pp  2026_07_21_gym/flight_69
+       +2.04 pp  2026_07_21_gym/flight_64
+       +2.10 pp  2026_07_21_gym/flight_122
+       +2.17 pp  2026_07_21_gym/flight_77
+       +2.44 pp  2026_07_15_gym/flight_60
+       +2.44 pp  2026_07_21_gym/flight_3
+
+------------------------------------------------------------------------------
+4. WORST AND BEST FLIGHTS
+------------------------------------------------------------------------------
+    -10.23 pp  2026_07_15_gym/flight_17               0.8409 -> 0.7386
+     -9.89 pp  2026_07_15_gym/flight_22               0.9560 -> 0.8571
+     -9.67 pp  2026_07_21_gym/flight_2                0.9677 -> 0.8710
+     -9.30 pp  2026_07_21_gym/flight_50               0.9070 -> 0.8140
+     -9.09 pp  2026_07_21_gym/flight_63               1.0000 -> 0.9091
+     -8.79 pp  2026_07_21_gym/flight_47               0.9890 -> 0.9011
+     -8.70 pp  2026_07_15_gym/flight_11               0.8370 -> 0.7500
+     -8.43 pp  2026_07_15_gym/flight_36               0.9759 -> 0.8916
+     -8.33 pp  2026_07_21_gym/flight_79               0.9722 -> 0.8889
+     -8.24 pp  2026_07_21_gym/flight_100              0.9765 -> 0.8941
+      ...
+     +2.71 pp  2026_07_21_gym/flight_97               0.9459 -> 0.9730
+     +3.58 pp  2026_07_15_gym/flight_50               0.8452 -> 0.8810
+     +4.17 pp  2026_07_21_gym/flight_89               0.9583 -> 1.0000
+     +4.76 pp  2026_07_21_gym/flight_61               0.9524 -> 1.0000
+     +4.88 pp  2026_07_21_gym/flight_70               0.9512 -> 1.0000
+
+------------------------------------------------------------------------------
+5. WHICH MASK EACH Pi SCRIPT ACTUALLY CALLS
+------------------------------------------------------------------------------
+  detector_core.compute_mask (src/image_processing/02_adjacent_frame_differencing/detector_core.py):
+      open kernel  = cv2.MORPH_ELLIPSE
+      close kernel = cv2.MORPH_ELLIPSE
+
+  script                                     calls                                        
+    benchmark_detection_rect_total_pi.py     compute_mask_rect_close     (LOCAL,  RECT close)
+    benchmark_mask_breakdown_pi.py           neither - no mask call
+    benchmark_pipeline_pi.py                 detector_core.compute_mask  (SHARED, ELLIPSE close)
+    compare_pi_vs_laptop_output.py           neither - no mask call
+    parallel_detect_checkpoint_pi.py         compute_mask_rect_close     (LOCAL,  RECT close)
+    prediction_pipeline_sweep_pi.py          compute_mask_rect_close     (LOCAL,  RECT close)
+    prediction_pipeline_sweep_pi_vaxis.py    compute_mask_rect_close     (LOCAL,  RECT close)
+    two_axis_fit_window_sweep_pi.py          compute_mask_rect_close     (LOCAL,  RECT close)
+
+  Scripts calling the SHARED ellipse detector_core.compute_mask: 1
+      benchmark_pipeline_pi.py
+
+  Scripts calling the LOCAL rect compute_mask_rect_close: 5
+      benchmark_detection_rect_total_pi.py
+      parallel_detect_checkpoint_pi.py
+      prediction_pipeline_sweep_pi.py
+      prediction_pipeline_sweep_pi_vaxis.py
+      two_axis_fit_window_sweep_pi.py
+
+  Each local compute_mask_rect_close keeps the OPEN kernel as MORPH_ELLIPSE
+  and changes ONLY the CLOSE kernel to MORPH_RECT - the same single-variable
+  change the rect CSV's CONFIG cell records.
+
+------------------------------------------------------------------------------
+6. CROSS-CHECK AGAINST rect_vs_ellipse_comparison.csv
+------------------------------------------------------------------------------
+  rows in cross-check file : 163
+  flights missing from it  : 0
+  delta disagreements >0.005 pp : 0
+  flagged_regression==YES in file : 83  (computed regressing >2pp: 83)
+  -> independently computed deltas reproduce the file exactly.
+
+==============================================================================
+SUMMARY
+==============================================================================
+  RECT is worse on the whole dataset: mean delta -2.15 pp, 83 of 163 flights
+  regressing by more than 2 pp against 12 improving by more than 2 pp.
+  103 flights are worse to some degree, 25 better, 35 unchanged.
+
+  DEPLOYED PATH: 5 of the 8 Pi scripts call the
+  RECT variant. Only 1 calls the shared ELLIPSE detector.
+  So every Pi sweep that fed a downstream figure ran RECT, whose validated
+  rates are 0.9452 combined / 0.8875 recall -
+  NOT the 0.9667 / 0.9250 usually quoted alongside them.
+==============================================================================

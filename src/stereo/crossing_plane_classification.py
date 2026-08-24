@@ -52,10 +52,10 @@ from src.stereo.trajectory_fit import (  # noqa: E402
     RANSAC_INLIER_THRESHOLD_MM, RANSAC_MIN_SAMPLES, RANSAC_N_ITERATIONS, RANSAC_SEED,
 )
 
-OUT_DIR = REPO_ROOT / "data" / "prediction" / "01_crossing_plane_setup"
+OUT_DIR = REPO_ROOT / "results" / "prediction" / "01_crossing_plane_setup"
 LOG_PATH = REPO_ROOT / "claude" / "logs" / "2026-08-04_1347_crossing_plane_setup_worklog.md"
-POOLED_K_TXT = REPO_ROOT / "data" / "trajectory_fit_comparison" / "all_flights" / "phase1" / "pooled_k.txt"
-BINNING_CSV = REPO_ROOT / "data" / "flight_binning" / "flight_velocity_angle.csv"
+POOLED_K_TXT = REPO_ROOT / "results" / "trajectory_fit_comparison" / "all_flights" / "phase1" / "pooled_k.txt"
+BINNING_CSV = REPO_ROOT / "results" / "flight_binning" / "flight_velocity_angle.csv"
 
 WFV_15 = REPO_ROOT / "data/2026_07_15_gym/flight_binning/world_frame_validation"
 WFV_21 = REPO_ROOT / "data/2026_07_21_gym/flight_binning/world_frame_validation"

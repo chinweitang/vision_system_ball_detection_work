@@ -1,0 +1,24 @@
+Launch-to-crossing-plane duration budget (crossers only, n=107)
+======================================================================
+
+mean   = 998.5 ms
+median = 1120.6 ms
+min    = 491.5 ms
+max    = 1559.3 ms
+P5     = 535.8 ms
+P10    = 560.7 ms
+P15    = 581.8 ms
+(percentiles: linear interpolation between order statistics, numpy default)
+
+OLD budget (430ms, full-flight P5) vs NEW budget (P5 launch-to-crossing = 535.8ms): delta = +105.8ms
+
+8 shortest flights:
+flight                                   reg         elev_deg  speed_m_s   launch_to_cross_ms
+2026_07_21_gym/flight_79                 REG_21_2      -3.163     9.6485                491.5
+2026_07_21_gym/flight_2                  REG_21_1      -6.041     8.8544                492.8
+2026_07_21_gym/flight_86                 REG_21_2     -2.7924     9.8675                505.4
+2026_07_15_gym/flight_56                 REG_15        0.8924      8.274                512.4
+2026_07_21_gym/flight_3                  REG_21_1      5.2681     9.9503                516.6
+2026_07_21_gym/flight_85                 REG_21_2      7.2403     9.5095                535.5
+2026_07_21_gym/flight_82                 REG_21_2     -0.6467     9.6892                536.6
+2026_07_21_gym/flight_16                 REG_21_1     -1.3703     9.0201                544.7

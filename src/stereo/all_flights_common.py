@@ -23,9 +23,9 @@ from src.stereo.pixel_velocity_correction import build_corrected_pairs  # noqa: 
 from src.stereo.trajectory_fit import G_MAGNITUDE_MM_S2  # noqa: E402
 
 CALIB_DIR = REPO_ROOT / "calibration_outputs"
-DETECTIONS_ROOT = (REPO_ROOT / "data" / "detector_tuning" / "detections" /
+DETECTIONS_ROOT = (REPO_ROOT / "results" / "detector_tuning" / "detections" /
                     "03_stride1_thresh16_openk3_area30_circ0.3")
-FINAL_POINT_LABELS_CSV = REPO_ROOT / "data" / "final_point_labels" / "final_point_labels.csv"
+FINAL_POINT_LABELS_CSV = REPO_ROOT / "results" / "final_point_labels" / "final_point_labels.csv"
 
 SESSIONS = {
     "2026_07_21_gym": dict(

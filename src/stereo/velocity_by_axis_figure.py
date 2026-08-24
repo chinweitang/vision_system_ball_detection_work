@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[1]
-FIG_DIR = REPO_ROOT / "data" / "pi_benchmarking" / "02_pi_pipeline_sweep_parallel_detection" / "figures2"
+FIG_DIR = REPO_ROOT / "results" / "pi_benchmarking" / "02_pi_pipeline_sweep_parallel_detection" / "figures2"
 SUMMARY_CSV = FIG_DIR / "velocity_by_axis_summary.csv"
 
 SURFACE = "#fcfcfb"

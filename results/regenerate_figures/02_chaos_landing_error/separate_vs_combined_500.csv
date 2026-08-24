@@ -1,0 +1,6 @@
+metric,n_rows,pct_of_fitted
+n_fitted_rows,2481,100.0000
+pass_separate,2380,95.9291
+pass_combined_500,2217,89.3591
+pass_separate_fail_combined,163,6.5699
+pass_combined_fail_separate,0,0.0000

@@ -1,7 +1,7 @@
 # pipeline_sweep_aggregate.py
 #
 # Aggregates the Pi prediction-pipeline sweep
-# (data/pi_benchmarking/pipeline_sweep_full_20260804.json, 107 crossers x
+# (results/pi_benchmarking/pipeline_sweep_full_20260804.json, 107 crossers x
 # 24 cutoff-time T values) into per-elevation-bin summaries: error(T),
 # HIT/MISS accuracy(T), eligible_n(T), latency(T) -- split FLAT/MID/LOB,
 # NEVER pooled raw across regimes. Produces the t=490ms V1 headline table,
@@ -26,9 +26,9 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[1]
-IN_JSON = REPO_ROOT / "data" / "pi_benchmarking" / "pipeline_sweep_full_20260804.json"
-LAUNCH_TO_CROSSING_CSV = REPO_ROOT / "data" / "prediction" / "04_launch_to_crossing_budget" / "launch_to_crossing.csv"
-OUT_DIR = REPO_ROOT / "data" / "pi_benchmarking" / "02_pi_pipeline_sweep_parallel_detection"
+IN_JSON = REPO_ROOT / "results" / "pi_benchmarking" / "pipeline_sweep_full_20260804.json"
+LAUNCH_TO_CROSSING_CSV = REPO_ROOT / "results" / "prediction" / "04_launch_to_crossing_budget" / "launch_to_crossing.csv"
+OUT_DIR = REPO_ROOT / "results" / "pi_benchmarking" / "02_pi_pipeline_sweep_parallel_detection"
 
 HEADLINE_T_MS = 490.0
 POSITION_ERROR_THRESHOLD_MM = 100.0  # provisional

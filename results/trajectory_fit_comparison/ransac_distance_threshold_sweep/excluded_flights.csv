@@ -1,0 +1,9 @@
+session,flight,total_duration_ms,reason
+2026_07_15_gym,flight_01,399.65,duration < 430ms
+2026_07_15_gym,flight_57,399.65,duration < 430ms
+2026_07_15_gym,flight_58,283.08,duration < 430ms
+2026_07_15_gym,flight_59,233.13,duration < 430ms
+2026_07_21_gym,flight_17,299.74,duration < 430ms
+2026_07_21_gym,flight_71,416.30,duration < 430ms
+2026_07_21_gym,flight_84,416.29,duration < 430ms
+2026_07_21_gym,flight_89,382.99,duration < 430ms

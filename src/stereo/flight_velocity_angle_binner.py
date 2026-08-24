@@ -34,7 +34,7 @@
 #     src/registration/world_frame_validate_2026_07_15.py.
 #
 # Flight-list source: the tuned-detector detection CSVs themselves
-# (data/detector_tuning/detections/<STAGE>/<session>/, from
+# (results/detector_tuning/detections/<STAGE>/<session>/, from
 # src/image_processing/02_adjacent_frame_differencing/
 # 11_generate_detections_csv.py) -- a flight only appears here if it already
 # had completed ball_in_frame curation, so flights that haven't been curated
@@ -73,10 +73,10 @@ import detector_core as dc  # noqa: E402
 
 # ---- paths ------------------------------------------------------------
 CALIB_DIR = ROOT / "calibration_outputs"
-OUT_DIR = ROOT / "data/flight_binning"  # cross-session output, NOT under either session's own folder
+OUT_DIR = ROOT / "results/flight_binning"  # cross-session output, NOT under either session's own folder
 LOG_PATH = ROOT / "claude/claude_logs/2026-07-25_flight_velocity_angle_binner_worklog.md"
 
-DETECTIONS_ROOT = ROOT / "data/detector_tuning/detections/03_stride1_thresh16_openk3_area30_circ0.3"
+DETECTIONS_ROOT = ROOT / "results/detector_tuning/detections/03_stride1_thresh16_openk3_area30_circ0.3"
 
 SESSIONS = {
     "2026_07_21_gym": dict(

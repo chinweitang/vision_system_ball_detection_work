@@ -1,0 +1,57 @@
+registration,session,flight_id,duration_ms,elevation_deg,flag_reason
+REG_21_1,2026_07_21_gym,flight_4,566.1695,-4.9432,"|a|=8.86 outside nominal band [9.8,11.0]"
+REG_21_1,2026_07_21_gym,flight_5,582.8245,-1.1072,"|a|=9.43 outside nominal band [9.8,11.0]"
+REG_21_1,2026_07_21_gym,flight_7,449.60450000000003,-9.9091,"|a|=9.60 outside nominal band [9.8,11.0]; adjusted from 30 -> 28, flight has fewer usable frames"
+REG_21_1,2026_07_21_gym,flight_8,582.822,-2.8309,"|a|=9.24 outside nominal band [9.8,11.0]"
+REG_21_1,2026_07_21_gym,flight_10,516.2139999999999,-3.7017,"|a|=8.91 outside nominal band [9.8,11.0]"
+REG_21_1,2026_07_21_gym,flight_17,299.7375,-17.4577,"|a|=11.76 outside nominal band [9.8,11.0]; adjusted from 30 -> 19, flight has fewer usable frames"
+REG_21_1,2026_07_21_gym,flight_22,1232.251,49.5604,"|a|=11.47 outside nominal band [9.8,11.0]"
+REG_21_1,2026_07_21_gym,flight_26,1382.118,56.9189,"|a|=9.28 outside nominal band [9.8,11.0]"
+REG_21_1,2026_07_21_gym,flight_27,1248.901,48.9975,
+REG_21_1,2026_07_21_gym,flight_28,1232.2485000000001,48.3577,"|a|=8.93 outside nominal band [9.8,11.0]"
+REG_21_1,2026_07_21_gym,flight_30,1365.4679999999998,61.0207,
+REG_21_1,2026_07_21_gym,flight_31,1265.5555000000002,53.7486,
+REG_21_1,2026_07_21_gym,flight_32,1432.0755000000001,59.6279,
+REG_21_1,2026_07_21_gym,flight_33,1298.86,45.4892,"|a|=13.73 outside nominal band [9.8,11.0]"
+REG_21_1,2026_07_21_gym,flight_34,1332.164,55.3075,"|a|=9.65 outside nominal band [9.8,11.0]"
+REG_21_1,2026_07_21_gym,flight_37,1365.4679999999998,57.2012,"|a|=11.42 outside nominal band [9.8,11.0]"
+REG_21_1,2026_07_21_gym,flight_38,1531.989,68.1585,"|a|=12.09 outside nominal band [9.8,11.0]"
+REG_21_1,2026_07_21_gym,flight_41,1465.3799999999999,54.7444,
+REG_21_1,2026_07_21_gym,flight_42,1448.728,57.4988,
+REG_21_1,2026_07_21_gym,flight_44,1315.5114999999998,51.8674,"|a|=11.05 outside nominal band [9.8,11.0]"
+REG_21_1,2026_07_21_gym,flight_46,1448.729,61.4593,"|a|=11.03 outside nominal band [9.8,11.0]"
+REG_21_1,2026_07_21_gym,flight_50,1348.8155,44.7385,
+REG_21_1,2026_07_21_gym,flight_60,1498.684,59.2303,
+REG_21_2,2026_07_21_gym,flight_67,432.955,-8.8409,"adjusted from 30 -> 27, flight has fewer usable frames"
+REG_21_2,2026_07_21_gym,flight_71,416.30400000000003,-9.792,"|a|=9.45 outside nominal band [9.8,11.0]; adjusted from 30 -> 27, flight has fewer usable frames"
+REG_21_2,2026_07_21_gym,flight_80,449.58500000000004,-6.6693,"|a|=8.37 outside nominal band [9.8,11.0]; adjusted from 30 -> 28, flight has fewer usable frames"
+REG_21_2,2026_07_21_gym,flight_81,499.541,-5.0899,"|a|=9.44 outside nominal band [9.8,11.0]"
+REG_21_2,2026_07_21_gym,flight_84,416.288,-9.3465,"adjusted from 30 -> 26, flight has fewer usable frames"
+REG_21_2,2026_07_21_gym,flight_89,366.33549999999997,-10.282,"|a|=11.18 outside nominal band [9.8,11.0]; adjusted from 30 -> 23, flight has fewer usable frames"
+REG_21_2,2026_07_21_gym,flight_91,1298.8315,55.0034,
+REG_21_2,2026_07_21_gym,flight_97,1215.583,50.1424,
+REG_21_2,2026_07_21_gym,flight_99,1315.4975,55.2087,
+REG_21_2,2026_07_21_gym,flight_101,1182.2839999999999,52.0832,"|a|=11.29 outside nominal band [9.8,11.0]"
+REG_21_2,2026_07_21_gym,flight_102,1298.847,51.3891,
+REG_21_2,2026_07_21_gym,flight_105,1332.156,55.4503,
+REG_21_2,2026_07_21_gym,flight_110,1215.5955000000001,46.2868,"|a|=11.35 outside nominal band [9.8,11.0]"
+REG_21_2,2026_07_21_gym,flight_111,1232.2495,53.289,"|a|=11.76 outside nominal band [9.8,11.0]"
+REG_21_2,2026_07_21_gym,flight_112,1215.5975,52.5673,"|a|=11.47 outside nominal band [9.8,11.0]"
+REG_21_2,2026_07_21_gym,flight_113,1298.8575,41.7953,"|a|=11.12 outside nominal band [9.8,11.0]"
+REG_21_2,2026_07_21_gym,flight_116,1415.423,56.5825,
+REG_21_2,2026_07_21_gym,flight_120,1382.1195,53.7497,
+REG_15,2026_07_15_gym,flight_01,399.65,-12.5469,"adjusted from 30 -> 25, flight has fewer usable frames"
+REG_15,2026_07_15_gym,flight_13,1215.5995,52.4017,
+REG_15,2026_07_15_gym,flight_27,1232.252,39.2689,
+REG_15,2026_07_15_gym,flight_31,1432.0774999999999,52.4871,
+REG_15,2026_07_15_gym,flight_38,1265.5585,57.2193,
+REG_15,2026_07_15_gym,flight_43,1448.7265,60.5586,
+REG_15,2026_07_15_gym,flight_45,1398.7734999999998,59.7147,
+REG_15,2026_07_15_gym,flight_47,1565.2935,64.5927,
+REG_15,2026_07_15_gym,flight_49,1432.077,65.7254,
+REG_15,2026_07_15_gym,flight_50,1382.1205,64.2952,"|a|=9.41 outside nominal band [9.8,11.0]"
+REG_15,2026_07_15_gym,flight_54,566.1725,-2.8782,"|a|=8.88 outside nominal band [9.8,11.0]"
+REG_15,2026_07_15_gym,flight_55,449.606,-11.3815,"|a|=8.25 outside nominal band [9.8,11.0]; adjusted from 30 -> 28, flight has fewer usable frames"
+REG_15,2026_07_15_gym,flight_57,399.65,-13.6105,"|a|=7.84 outside nominal band [9.8,11.0]; adjusted from 30 -> 25, flight has fewer usable frames"
+REG_15,2026_07_15_gym,flight_58,283.085,-24.4287,"|a|=8.29 outside nominal band [9.8,11.0]; adjusted from 30 -> 18, flight has fewer usable frames"
+REG_15,2026_07_15_gym,flight_59,233.129,-29.0475,"|a|=8.88 outside nominal band [9.8,11.0]; adjusted from 30 -> 15, flight has fewer usable frames"

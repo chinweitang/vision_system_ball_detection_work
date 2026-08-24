@@ -1,0 +1,4 @@
+variant,n,median_error_mm,iqr_error_mm
+ellipse,157,179.34,155.72
+rect,157,190.54,158.08
+delta(rect-ellipse),157,0.44,

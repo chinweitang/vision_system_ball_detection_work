@@ -41,7 +41,7 @@ from src.stereo.trajectory_fit import (  # noqa: E402
     RANSAC_INLIER_THRESHOLD_MM, RANSAC_MIN_SAMPLES, RANSAC_N_ITERATIONS, RANSAC_SEED,
 )
 
-OUT_DIR = REPO_ROOT / "data" / "trajectory_fit_comparison" / "rect_vs_ellipse_kernel"
+OUT_DIR = REPO_ROOT / "results" / "trajectory_fit_comparison" / "rect_vs_ellipse_kernel"
 FLIGHTS = [("2026_07_21_gym", "flight_51"), ("2026_07_21_gym", "flight_125")]
 
 

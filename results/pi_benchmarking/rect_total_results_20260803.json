@@ -1,0 +1,59 @@
+{
+  "config": {
+    "stride": 1,
+    "diff_threshold": 16,
+    "open_kernel": 3,
+    "close_kernel": 30,
+    "min_area": 30,
+    "max_area": 50000,
+    "min_circ": 0.3,
+    "max_speed_px_per_frame": 80,
+    "min_run_length": 2
+  },
+  "n_warmup_pairs": 5,
+  "cam": "cam0",
+  "flights": [
+    [
+      "2026_07_21_gym",
+      "flight_17"
+    ],
+    [
+      "2026_07_21_gym",
+      "flight_63"
+    ],
+    [
+      "2026_07_21_gym",
+      "flight_40"
+    ],
+    [
+      "2026_07_21_gym",
+      "flight_59"
+    ],
+    [
+      "2026_07_15_gym",
+      "flight_59"
+    ],
+    [
+      "2026_07_15_gym",
+      "flight_52"
+    ],
+    [
+      "2026_07_15_gym",
+      "flight_45"
+    ],
+    [
+      "2026_07_15_gym",
+      "flight_15"
+    ]
+  ],
+  "stats": {
+    "n": 448,
+    "median": 9.794403992593288,
+    "p95": 9.985975995659828,
+    "mean": 9.814344915428332,
+    "max": 21.327124997973442,
+    "min": 9.012613996863365
+  },
+  "previous_estimate_ms": 9.78,
+  "delta_ms": 0.014403992593289061
+}

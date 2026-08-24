@@ -11,10 +11,10 @@ import csv
 import math
 
 # ---- paths (all read-only inputs, except OUT_DIR) ----
-SWEEP_CSV = "data/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/pipeline_sweep_raw.csv"
-LTC_CSV = "data/prediction/04_launch_to_crossing_budget/launch_to_crossing.csv"
-CROSSING_CSV = "data/prediction/01_crossing_plane_setup/crossing_classification.csv"
-OUT_DIR = "data/regenerate_figures/"
+SWEEP_CSV = "results/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/pipeline_sweep_raw.csv"
+LTC_CSV = "results/prediction/04_launch_to_crossing_budget/launch_to_crossing.csv"
+CROSSING_CSV = "results/prediction/01_crossing_plane_setup/crossing_classification.csv"
+OUT_DIR = "results/regenerate_figures/"
 JOIN_CSV = OUT_DIR + "two_class_join.csv"
 
 # ---- class scheme ----

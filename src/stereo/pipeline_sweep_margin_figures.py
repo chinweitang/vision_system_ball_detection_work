@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[1]
-SWEEP_DIR = REPO_ROOT / "data" / "pi_benchmarking" / "02_pi_pipeline_sweep_parallel_detection"
+SWEEP_DIR = REPO_ROOT / "results" / "pi_benchmarking" / "02_pi_pipeline_sweep_parallel_detection"
 FIG_DIR = SWEEP_DIR / "figures2"
 MARGIN_CSV = FIG_DIR / "margin_analysis.csv"
 

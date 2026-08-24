@@ -54,10 +54,10 @@ from src.stereo.trajectory_fit import (  # noqa: E402
 )
 
 LOG_PATH = REPO_ROOT / "claude" / "claude_logs" / "2026-08-03_pi_realtime_benchmark_worklog.md"
-OUT_DIR = REPO_ROOT / "data" / "trajectory_fit_comparison" / "ransac_iterations_sweep"
-ELLIPSE_DETECTIONS_ROOT = REPO_ROOT / "data" / "detector_tuning" / "detections" / "03_stride1_thresh16_openk3_area30_circ0.3"
-POOLED_K_TXT = REPO_ROOT / "data" / "trajectory_fit_comparison" / "all_flights" / "phase1" / "pooled_k.txt"
-DURATIONS_CSV = REPO_ROOT / "data" / "trajectory_fit_comparison" / "all_flights" / "duration_distribution" / "flight_durations.csv"
+OUT_DIR = REPO_ROOT / "results" / "trajectory_fit_comparison" / "ransac_iterations_sweep"
+ELLIPSE_DETECTIONS_ROOT = REPO_ROOT / "results" / "detector_tuning" / "detections" / "03_stride1_thresh16_openk3_area30_circ0.3"
+POOLED_K_TXT = REPO_ROOT / "results" / "trajectory_fit_comparison" / "all_flights" / "phase1" / "pooled_k.txt"
+DURATIONS_CSV = REPO_ROOT / "results" / "trajectory_fit_comparison" / "all_flights" / "duration_distribution" / "flight_durations.csv"
 
 FIT_WINDOW_S = 0.430
 DURATION_THRESHOLD_MS = 430.0

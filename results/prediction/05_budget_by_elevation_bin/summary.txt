@@ -1,0 +1,33 @@
+Launch-to-crossing-plane timing budget, by elevation bin
+======================================================================
+
+bin         n        min     median         P5        P10        P15
+FLAT       35      491.5      591.6      501.6      514.1      535.6
+MID        12      663.1      972.0      709.8      752.0      774.3
+LOB        60     1047.8     1240.7     1080.0     1110.0     1133.9
+POOLED    107      491.5     1120.6      535.8      560.7      581.8
+
+(percentiles: linear interpolation between order statistics, numpy default)
+
+FLAT P5 = 501.6 ms  <-- DESIGN TARGET (throw-mix-independent)
+POOLED P5 = 535.8 ms  <-- throw-mix-dependent, NOT the target
+LOB P5 = 1080.0 ms  <-- shown for contrast, +578.3ms slack vs FLAT
+
+FLAT bin, 3 shortest flights:
+flight                                   reg         elev_deg  speed_m_s   launch_to_cross_ms
+2026_07_21_gym/flight_79                 REG_21_2       -3.16       9.65                491.5
+2026_07_21_gym/flight_2                  REG_21_1       -6.04       8.85                492.8
+2026_07_21_gym/flight_86                 REG_21_2       -2.79       9.87                505.4
+
+MID bin, 3 shortest flights:
+flight                                   reg         elev_deg  speed_m_s   launch_to_cross_ms
+2026_07_21_gym/flight_15                 REG_21_1       15.99       8.64                663.1
+2026_07_21_gym/flight_73                 REG_21_2       19.18       7.73                747.9
+2026_07_15_gym/flight_52                 REG_15         20.44       7.51                788.4
+
+LOB bin, 3 shortest flights:
+flight                                   reg         elev_deg  speed_m_s   launch_to_cross_ms
+2026_07_21_gym/flight_48                 REG_21_1       45.90       8.11               1047.8
+2026_07_21_gym/flight_25                 REG_21_1       46.62       9.10               1050.2
+2026_07_21_gym/flight_23                 REG_21_1       49.15       7.16               1062.8
+

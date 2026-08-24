@@ -32,8 +32,8 @@ if str(REPO_ROOT) not in sys.path:
 from src.stereo.all_flights_common import load_session_calib, build_corrected_track  # noqa: E402
 
 LOG_PATH = REPO_ROOT / "claude" / "claude_logs" / "2026-07-27_gravity_vs_drag_trajectory_fitting_worklog.md"
-PHASE2_CSV = REPO_ROOT / "data" / "trajectory_fit_comparison" / "all_flights" / "phase2" / "prediction_sweep_all_flights.csv"
-OUT_DIR = REPO_ROOT / "data" / "trajectory_fit_comparison" / "all_flights" / "duration_distribution"
+PHASE2_CSV = REPO_ROOT / "results" / "trajectory_fit_comparison" / "all_flights" / "phase2" / "prediction_sweep_all_flights.csv"
+OUT_DIR = REPO_ROOT / "results" / "trajectory_fit_comparison" / "all_flights" / "duration_distribution"
 
 TOLERANCE_MS = 1.0  # float round-trip through the CSV's 2-decimal lead_time_ms
                      # formatting can introduce up to ~5ms of rounding noise per

@@ -60,10 +60,10 @@ from crossing_plane_classification import (  # noqa: E402
     build_geometry, TAPE_REGISTRATIONS, REG_KEY_FOR, APERTURE_SIZE_MM, load_world_axes,
 )
 
-CONFIG_PATH = REPO_ROOT / "data" / "detector_tuning" / "candidate_config.json"
-POOLED_K_PATH = REPO_ROOT / "data" / "trajectory_fit_comparison" / "all_flights" / "phase1" / "pooled_k.txt"
-CROSSING_CSV = REPO_ROOT / "data" / "prediction" / "01_crossing_plane_setup" / "crossing_classification.csv"
-LAUNCH_TO_CROSSING_CSV = REPO_ROOT / "data" / "prediction" / "04_launch_to_crossing_budget" / "launch_to_crossing.csv"
+CONFIG_PATH = REPO_ROOT / "results" / "detector_tuning" / "candidate_config.json"
+POOLED_K_PATH = REPO_ROOT / "results" / "trajectory_fit_comparison" / "all_flights" / "phase1" / "pooled_k.txt"
+CROSSING_CSV = REPO_ROOT / "results" / "prediction" / "01_crossing_plane_setup" / "crossing_classification.csv"
+LAUNCH_TO_CROSSING_CSV = REPO_ROOT / "results" / "prediction" / "04_launch_to_crossing_budget" / "launch_to_crossing.csv"
 
 N_ITERATIONS = 3            # decisions 68/70 (adopted) -- realistic production-relevant cost
 MIN_SAMPLES_C = RANSAC_MIN_SAMPLES["C"]  # 8

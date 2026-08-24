@@ -1,0 +1,13 @@
+row,date,short_label,n_flights,avg_combined_rate,labeled_recall,recall_points,labeled_recall_flights,kernel_marker,stage
+1,2026-07-23,baseline (defaults),10,0.2772,0.9074,54,flight_01 only (54 points),,baseline (defaults)
+2,2026-07-23,round 1 sweep stride/thresh/open_k,10,,,54,flight_01 only (54 points),,round 1 sweep (48 stride/thresh/open_k combos)
+3,2026-07-23,candidate (no fixes),10,0.8740,0.9259,54,flight_01 only (54 points),,candidate config (no fixes)
+4,2026-07-23,audit pre-mask-v3,163,,,,N/A (audit does not use labels),,full-dataset artifact audit (pre-mask-v3 - 163 flights)
+5,2026-07-23,+ mask v2 + traj filter,10,0.7549,0.9259,54,flight_01 only (54 points),,candidate + mask v2 + trajectory filter (first working version)
+6,2026-07-23,+ mask v3 (4 zones),10,0.8552,0.9259,54,flight_01 only (54 points),,candidate + mask v3 (4 zones) + trajectory filter
+7,2026-07-24,round 3 sweep min_area/min_circ,10,,,240,flight_01 + flight_22 (240 points),,round 3 sweep (24 min_area/min_circ combos)
+8,2026-07-24,audit pre-mask-v4,163,,,,N/A (audit does not use labels),,full-dataset artifact audit at min_area=30/min_circ=0.30 (pre-mask-v4 - 163 flights)
+9,2026-07-24,audit post-mask-v4,163,,,,N/A (audit does not use labels),,post-mask-v4 re-audit at min_area=30/min_circ=0.30 (163 flights)
+10,2026-07-24,+ mask v4 + area30 (sample),10,0.9784,0.9250,240,flight_01 + flight_22 (240 points),,candidate + mask v4 (12 zones total) + trajectory filter + min_area=30/min_circ=0.30 - 10-FLIGHT SAMPLE
+11,2026-07-25,same config full dataset,163,0.9667,0.9250,240,flight_01 + flight_22 (240 points),ELLIPSE close kernel,candidate + mask v4 (12 zones total) + trajectory filter + min_area=30/min_circ=0.30 - FULL 163-FLIGHT DATASET (current)
+12,2026-08-03,rect close kernel (ELLIPSE->RECT),163,0.9452,0.8875,240,flight_01 + flight_22 (240 points),RECT close kernel,"rect close kernel validation (MORPH_ELLIPSE->MORPH_RECT, close_k=30 only, driven by Pi real-time finding - decision log 63) - FULL 163-FLIGHT DATASET"

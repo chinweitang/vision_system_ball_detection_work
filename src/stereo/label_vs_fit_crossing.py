@@ -3,7 +3,7 @@
 # claude/prompts/2026-08-04_1925_label_vs_fit_crossing.md. Validates
 # Model-C's full-arc-fit crossing-plane state (position + velocity) against
 # an INDEPENDENT local 3D quadratic fit through the manual crossing-bracket
-# labels (data/prediction/03_crossing_labels/crossing_labels.csv), for the
+# labels (results/prediction/03_crossing_labels/crossing_labels.csv), for the
 # 20 labelled flights.
 #
 # NOT an absolute-truth check: labels are triangulated with the same frozen
@@ -42,10 +42,10 @@ from src.stereo.crossing_plane_classification import (  # noqa: E402
     build_geometry, load_pooled_k, classify_flight, TAPE_REGISTRATIONS, load_world_axes,
 )
 
-LABELS_CSV = REPO_ROOT / "data" / "prediction" / "03_crossing_labels" / "crossing_labels.csv"
-CANDIDATES_CSV = REPO_ROOT / "data" / "prediction" / "02_candidate_reselection" / "ranked_candidates_v2.csv"
-CLASSIFICATION_CSV = REPO_ROOT / "data" / "prediction" / "01_crossing_plane_setup" / "crossing_classification.csv"
-OUT_DIR = REPO_ROOT / "data" / "prediction" / "06_label_vs_fit"
+LABELS_CSV = REPO_ROOT / "results" / "prediction" / "03_crossing_labels" / "crossing_labels.csv"
+CANDIDATES_CSV = REPO_ROOT / "results" / "prediction" / "02_candidate_reselection" / "ranked_candidates_v2.csv"
+CLASSIFICATION_CSV = REPO_ROOT / "results" / "prediction" / "01_crossing_plane_setup" / "crossing_classification.csv"
+OUT_DIR = REPO_ROOT / "results" / "prediction" / "06_label_vs_fit"
 LOG_PATH = REPO_ROOT / "claude" / "claude_logs" / "2026-08-04_1925_label_vs_fit_crossing.md"
 
 ASYMMETRIC_FLIGHTS = {"flight_11", "flight_119", "flight_107"}
