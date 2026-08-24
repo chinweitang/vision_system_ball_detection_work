@@ -1,0 +1,3 @@
+CONVERGENCE against the full-arc Model-C fit, NOT accuracy against ground truth. Shaded grey band is that axis's label-precision floor (decision 77).
+X_world and Z_world are validated to label precision; Y_world's floor is UNRESOLVED - the reference method was never validated on the width axis, so sitting inside that band means
+'not distinguishable from the reference's own unknown noise', NOT 'accurate to that figure'. Dotted verticals mark each class's chaos operating window at A = 135 ms.

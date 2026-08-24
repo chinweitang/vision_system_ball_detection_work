@@ -12,13 +12,23 @@ Writes figureB_position_error_convergence.png (150 dpi) and
 figureB_excluded_counts.csv.
 """
 import csv
+import pathlib
 import statistics as st
+import sys
+
+# This script imports "regen_2class.common" (needs src/ on the path); the shared
+# clean_figures helper sits beside it and is imported bare, like the step8+ scripts.
+_HERE = pathlib.Path(__file__).resolve().parent
+for _p in (str(_HERE), str(_HERE.parent)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 import regen_2class.common as C
+import clean_figures as CF
 
 FIG = C.OUT_DIR + "figureB_position_error_convergence.png"
 COUNTS_CSV = C.OUT_DIR + "figureB_excluded_counts.csv"
@@ -70,11 +80,14 @@ def main():
         "fit_failed rows excluded from the median. Excluded count per window (ascending) - SHORT: " + ",".join(str(x) for x in excluded["SHORT"]),
         "LONG: " + ",".join(str(x) for x in excluded["LONG"]) + f".  Denominators: SHORT n={n_of['SHORT']}, LONG n={n_of['LONG']}.",
     ]
-    for i, line in enumerate(caption):
-        fig.text(0.012, 0.042 - i * 0.018, line, color=C.INK2, fontsize=7.8)
+    if CF.clean():
+        CF.write_clean(fig, caption, FIG)
+    else:
+        for i, line in enumerate(caption):
+            fig.text(0.012, 0.042 - i * 0.018, line, color=C.INK2, fontsize=7.8)
 
-    fig.tight_layout(rect=[0, 0.075, 1, 1])
-    fig.savefig(FIG, dpi=150, facecolor=C.SURF)
+        fig.tight_layout(rect=[0, 0.075, 1, 1])
+        fig.savefig(FIG, dpi=150, facecolor=C.SURF)
     plt.close(fig)
 
     with open(COUNTS_CSV, "w", newline="", encoding="utf-8") as f:

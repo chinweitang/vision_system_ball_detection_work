@@ -41,6 +41,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 import common as C
+import clean_figures as CF
 
 VAXIS_CSV = ("results/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/"
              "figures2/velocity_by_axis_raw.csv")
@@ -246,13 +247,16 @@ def render_figure_f(windows, results, max_ltc, n_of):
         "position_error_mm and the velocity errors are CONVERGENCE against the full-arc Model-C fit, NOT accuracy against ground truth. fit_failed rows are retained as no_response; the denominator is always the class n.",
         "Each class is truncated at its own maximum launch-to-crossing time. A = 72 / 135 / 220 ms correspond to panel tilt moves of 2, 10 and 30 degrees.",
     ]
-    for i, line in enumerate(caption):
-        fig.text(0.006, 0.058 - i * 0.0078, line, color=C.INK2, fontsize=6.8)
-    fig.tight_layout(rect=[0, 0.072, 1, 0.955])
     path = C.OUT_DIR + "figureF_chaos_outcome_sweep.png"
-    fig.savefig(path, dpi=150, facecolor=C.SURF)
+    if CF.clean():
+        CF.write_clean(fig, caption, path)
+    else:
+        for i, line in enumerate(caption):
+            fig.text(0.006, 0.058 - i * 0.0078, line, color=C.INK2, fontsize=6.8)
+        fig.tight_layout(rect=[0, 0.072, 1, 0.955])
+        fig.savefig(path, dpi=150, facecolor=C.SURF)
+        print(f"wrote {path}")
     plt.close(fig)
-    print(f"wrote {path}")
 
 
 def render_velocity_figure(rows, per_axis, windows, max_ltc, op_window):
@@ -306,13 +310,16 @@ def render_velocity_figure(rows, per_axis, windows, max_ltc, op_window):
         "X_world and Z_world are validated to label precision; Y_world's floor is UNRESOLVED - the reference method was never validated on the width axis, so sitting inside that band means",
         "'not distinguishable from the reference's own unknown noise', NOT 'accurate to that figure'. Dotted verticals mark each class's chaos operating window at A = 135 ms.",
     ]
-    for i, line in enumerate(caption):
-        fig.text(0.006, 0.062 - i * 0.016, line, color=C.INK2, fontsize=7.2)
-    fig.tight_layout(rect=[0, 0.115, 1, 0.95])
     path = C.OUT_DIR + "figureG_velocity_by_axis_twoclass.png"
-    fig.savefig(path, dpi=150, facecolor=C.SURF)
+    if CF.clean():
+        CF.write_clean(fig, caption, path)
+    else:
+        for i, line in enumerate(caption):
+            fig.text(0.006, 0.062 - i * 0.016, line, color=C.INK2, fontsize=7.2)
+        fig.tight_layout(rect=[0, 0.115, 1, 0.95])
+        fig.savefig(path, dpi=150, facecolor=C.SURF)
+        print(f"wrote {path}")
     plt.close(fig)
-    print(f"wrote {path}")
 
 
 def main():

@@ -1,0 +1,7 @@
+table3_row,date,flights_in_combined_rate,average_combined_detection_rate,true_detection_rate,true_detection_rate_points,stage
+4,2026-07-23,10,0.2772,0.9074,54,baseline (defaults)
+5,2026-07-23,10,0.8740,0.9259,54,candidate config (no fixes)
+6,2026-07-23,10,0.7549,0.9259,54,candidate + mask v2 + trajectory filter (first working version)
+7,2026-07-23,10,0.8552,0.9259,54,candidate + mask v3 (4 zones) + trajectory filter
+8,2026-07-24,10,0.9784,0.9250,240,candidate + mask v4 (12 zones total) + trajectory filter + min_area=30/min_circ=0.30 - 10-FLIGHT SAMPLE
+9,2026-07-25,163,0.9667,0.9250,240,candidate + mask v4 (12 zones total) + trajectory filter + min_area=30/min_circ=0.30 - FULL 163-FLIGHT DATASET (current)

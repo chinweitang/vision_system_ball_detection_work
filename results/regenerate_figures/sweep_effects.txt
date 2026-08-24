@@ -1,0 +1,82 @@
+SWEEP EFFECTS - detector parameter sweeps
+==============================================================================
+
+Sources (read-only):
+  (a) results/detector_tuning/sweep_results.csv
+  (b) results/detector_tuning/sweep_results_min_area_circ.csv
+Row locators are 1-based file line numbers; line 1 is the header.
+
+Labelled-recall column present in both CSVs (`labeled_recall`) - NOT_FOUND condition does not apply.
+
+------------------------------------------------------------------------------
+(a) STRIDE x DIFF_THRESHOLD x OPEN_KERNEL SWEEP
+    results/detector_tuning/sweep_results.csv
+------------------------------------------------------------------------------
+
+Total configs evaluated: 48  (data rows, lines 2-49)
+
+Baseline (is_baseline=True) [results/detector_tuning/sweep_results.csv:7]
+  config             : stride=1 diff_threshold=20 open_kernel=7
+  avg_combined_rate  : 0.2772
+  labeled_recall     : 0.9074   <- the recall gate threshold
+
+  Gate integrity check: stored meets_recall_gate matches the recomputed gate on all 48 rows.
+
+TOP CONFIG BY RAW avg_combined_rate (gate ignored) [results/detector_tuning/sweep_results.csv:8]
+  config             : stride=2 diff_threshold=8 open_kernel=3
+  avg_combined_rate  : 1.0000
+  labeled_recall     : 0.5556
+  passes recall gate : NO
+  -> recall is 0.3519 BELOW the 0.9074 baseline gate. Ranking on combined rate
+     alone is gameable: a config that fires on nearly every frame scores a
+     high combined rate while its recall against labelled ground truth collapses.
+
+CONFIGS PASSING THE RECALL GATE (labeled_recall >= 0.9074)
+  6 of 48 configs pass.
+  Passing rows: 2 (stride=1 diff_threshold=16 open_kernel=3), 3 (stride=1 diff_threshold=20 open_kernel=3), 4 (stride=1 diff_threshold=16 open_kernel=5), 5 (stride=1 diff_threshold=20 open_kernel=5), 6 (stride=1 diff_threshold=16 open_kernel=7), 7 (stride=1 diff_threshold=20 open_kernel=7)
+
+GATE-PASSING WINNER (highest avg_combined_rate among passing) [results/detector_tuning/sweep_results.csv:2]
+  config             : stride=1 diff_threshold=16 open_kernel=3
+  avg_combined_rate  : 0.8740
+  labeled_recall     : 0.9259
+  vs baseline        : combined rate 0.2772 -> 0.8740 (3.15x); recall 0.9074 -> 0.9259
+
+------------------------------------------------------------------------------
+(b) MIN_AREA x MIN_CIRC SWEEP
+    results/detector_tuning/sweep_results_min_area_circ.csv
+------------------------------------------------------------------------------
+
+Total grid combinations: 24  (data rows, lines 2-25)
+
+  Gate integrity check: stored meets_recall_gate matches the recomputed gate on all 24 rows.
+
+BASELINE (is_baseline=True) [results/detector_tuning/sweep_results_min_area_circ.csv:22]
+  config             : min_area=200 min_circ=0.3
+  avg_combined_rate  : 0.8552
+  labeled_recall     : 0.8125   <- the recall gate threshold
+
+WINNING / ADOPTED CONFIG [results/detector_tuning/sweep_results_min_area_circ.csv:6]
+  config             : min_area=30 min_circ=0.3
+  avg_combined_rate  : 0.9751
+  labeled_recall     : 0.9208
+  vs baseline        : combined rate 0.8552 -> 0.9751 (+0.1199); recall 0.8125 -> 0.9208 (+0.1083)
+
+MIN_CIRC HELD CONSTANT ACROSS THE COMPARED PAIR
+  baseline min_circ  : 0.3  [results/detector_tuning/sweep_results_min_area_circ.csv:22]
+  winner   min_circ  : 0.3  [results/detector_tuning/sweep_results_min_area_circ.csv:6]
+  CONFIRMED: min_circ = 0.30 in both rows; the pair differs only in min_area (200 -> 30).
+
+GRID COMBINATIONS FAILING THE RECALL GATE (labeled_recall < 0.8125)
+  2 of 24 combinations fail.
+    [results/detector_tuning/sweep_results_min_area_circ.csv:24]  min_area=200 min_circ=0.25  avg_combined_rate=0.8563  labeled_recall=0.8000
+    [results/detector_tuning/sweep_results_min_area_circ.csv:25]  min_area=200 min_circ=0.2  avg_combined_rate=0.8563  labeled_recall=0.7958
+
+NOTE - highest labelled recall anywhere in the grid: 0.9250
+    [results/detector_tuning/sweep_results_min_area_circ.csv:10]  min_area=30 min_circ=0.35  avg_combined_rate=0.9580
+    [results/detector_tuning/sweep_results_min_area_circ.csv:12]  min_area=50 min_circ=0.35  avg_combined_rate=0.9547
+  The adopted config's recall (0.9208) is NOT the grid maximum (0.9250); the
+  higher-recall rows sit at min_circ=0.35. The adopted row is the recall
+  maximum only among min_circ<=0.30 rows.
+
+==============================================================================
+END

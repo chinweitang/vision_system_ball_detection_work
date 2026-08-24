@@ -1,0 +1,4 @@
+POOLED is the performance of a system with no regime classifier. SHORT and LONG are the achievable performance if the class were known at prediction time.
+Verdict precedence, first match wins: not answered -> no_response; not in_time -> late; not accurate -> wrong; otherwise success.  in_time = t_obs + latency <= launch_to_crossing + 84 ms,
+t_obs = min(observation window, duration).  accurate = position error < 200 mm, which is CONVERGENCE against the full-arc Model-C fit, NOT ground truth.  fit_failed rows are retained as
+no_response; the denominator is always the panel n.

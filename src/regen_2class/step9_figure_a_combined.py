@@ -27,6 +27,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 import common as C
+import clean_figures as CF
 
 FIG = C.OUT_DIR + "figureA_margin_vs_cutoff.png"
 TABLE_CSV = C.OUT_DIR + "figureA_thresholds.csv"
@@ -171,11 +172,14 @@ def main():
         "margin_p95 = deadline - observation window - p95 latency; deadline is the class minimum launch-to-crossing time rounded down to 10 ms. Verticals mark the LAST grid point at or above each",
         "threshold, so with a 50 ms grid the true boundary lies between that point and the next. Each class line stops at its own maximum launch-to-crossing time. Pi render and compositor latency is neglected.",
     ]
-    for i, line in enumerate(caption):
-        fig.text(0.008, 0.072 - i * 0.0145, line, color=C.INK2, fontsize=6.9)
+    if CF.clean():
+        CF.write_clean(fig, caption, FIG)
+    else:
+        for i, line in enumerate(caption):
+            fig.text(0.008, 0.072 - i * 0.0145, line, color=C.INK2, fontsize=6.9)
 
-    fig.tight_layout(rect=[0, 0.135, 1, 1])
-    fig.savefig(FIG, dpi=150, facecolor=C.SURF)
+        fig.tight_layout(rect=[0, 0.135, 1, 1])
+        fig.savefig(FIG, dpi=150, facecolor=C.SURF)
     plt.close(fig)
     print(f"\nwrote {FIG} (overwritten in place, no second figure)")
 

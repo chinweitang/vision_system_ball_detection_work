@@ -1,0 +1,2 @@
+Model C (fixed gravity + quadratic drag), 158 flights, 9923 matched (flight, window) cells. Median line, shaded IQR, 100 ms bins.
+Both series share an identical key set; the only difference is the robustifier. Bins outside 0-1500 ms fall below 100 cells and are not plotted.

@@ -53,6 +53,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 import common as C
+import clean_figures as CF
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 HIST = "results/detector_tuning/history/results_history.csv"
@@ -342,10 +343,13 @@ def main():
         "denominator is absent from the other's panel. An empty slot means not measured here, not measured as zero.",
         "Source: results/detector_tuning/history/results_history.csv, read-only, plotted in the file's own row order. Values in the companion CSV.",
     ]
-    rect_bottom = caption_block(fig, caption)
-    fig.tight_layout(rect=[0, rect_bottom, 1, 0.952])
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(OUT_PNG, dpi=DPI, facecolor=C.SURF)
+    if CF.clean():
+        CF.write_clean(fig, caption, OUT_PNG)
+    else:
+        rect_bottom = caption_block(fig, caption)
+        fig.tight_layout(rect=[0, rect_bottom, 1, 0.952])
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
+        fig.savefig(OUT_PNG, dpi=DPI, facecolor=C.SURF)
     plt.close(fig)
     print(f"\nwrote {OUT_PNG.relative_to(ROOT)}")
     write_csv(recs)

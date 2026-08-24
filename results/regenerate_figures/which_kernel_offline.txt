@@ -1,0 +1,229 @@
+WHICH MORPHOLOGICAL CLOSE KERNEL PRODUCED THE OFFLINE DETECTIONS?
+=================================================================
+Method: read the call sites in the generating scripts, with docstrings
+stripped first so prose mentions of "ellipse"/"rect" cannot register as
+calls. File dates are NOT used as evidence.
+
+Status: IN PROGRESS
+
+Path note: the prompt referred to data/prediction/... and
+data/trajectory_fit_comparison/...; these live under results/ in the
+current tree (moved by commit 67ee6e9 "moved results into results folder").
+Targets resolved as:
+  results/prediction/06_label_vs_fit/label_vs_fit_per_flight.csv
+  results/prediction/01_crossing_plane_setup/crossing_classification.csv
+  results/trajectory_fit_comparison/all_flights/
+
+-----------------------------------------------------------------
+REFERENCE: the two kernel paths
+-----------------------------------------------------------------
+src/image_processing/02_adjacent_frame_differencing/detector_core.py
+  compute_mask() (line 28):
+    line 34: open_k  = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, ...)
+    line 37: close_k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, ...)
+  -> detector_core.compute_mask is unambiguously the ELLIPSE close path.
+  Called by detector_core._detect_in_pair (l.66) <- run_detection (l.174).
+
+-----------------------------------------------------------------
+TARGET 1: results/prediction/06_label_vs_fit/label_vs_fit_per_flight.csv
+-----------------------------------------------------------------
+Producer: src/stereo/label_vs_fit_crossing.py
+  (line 489: write_per_flight_csv(rows, OUT_DIR/"label_vs_fit_per_flight.csv"))
+
+Scanned with docstrings+comments stripped. Result:
+  NO occurrence of MORPH_*, getStructuringElement, compute_mask,
+  detector_core, or run_detection anywhere in the file.
+
+This script performs NO detection. It is a pure consumer of upstream CSVs:
+  l.45 LABELS_CSV        = results/prediction/03_crossing_labels/crossing_labels.csv
+  l.46 CANDIDATES_CSV    = results/prediction/02_candidate_reselection/ranked_candidates_v2.csv
+  l.47 CLASSIFICATION_CSV= results/prediction/01_crossing_plane_setup/crossing_classification.csv
+  l.41 also imports from src.stereo.crossing_plane_classification
+
+=> The kernel is INHERITED, not chosen here. Tracing upstream next.
+
+-----------------------------------------------------------------
+THE FORK: which detections dir corresponds to which kernel
+-----------------------------------------------------------------
+Two offline detection-CSV generators exist, distinguished ONLY by an
+explicit module-level monkeypatch (this is the trap - both then call the
+identical dc.run_detection, so the kernel is decided before the call):
+
+  11_generate_detections_csv.py
+    l.55  import detector_core as dc
+    l.57  STAGE = "03_stride1_thresh16_openk3_area30_circ0.3"
+    l.61  DETECTIONS_ROOT = DETECTOR_TUNING_DIR / "detections" / STAGE
+    l.106 raw = dc.run_detection(...)
+    NO rebinding of dc.compute_mask anywhere in the file (verified on the
+    stripped source; zero hits for "compute_mask"/"rect"/"RECT").
+    => uses stock detector_core.compute_mask => CLOSE KERNEL = ELLIPSE
+
+  13_generate_rect_close_detections_csv.py
+    l.38  import detector_core as dc
+    l.39  from compute_mask_rect_close_variant import compute_mask_rect_close
+    l.42  dc.compute_mask = compute_mask_rect_close      <-- MONKEYPATCH
+    l.44  STAGE = "12_rect_close_kernel"
+    l.48  DETECTIONS_ROOT = DETECTOR_TUNING_DIR / "detections" / STAGE
+    l.90  raw = dc.run_detection(...)
+    => CLOSE KERNEL = RECT
+
+  compute_mask_rect_close_variant.py::compute_mask_rect_close
+    l.39 open_k  = getStructuringElement(cv2.MORPH_ELLIPSE, ...)   (open unchanged)
+    l.42 close_k = getStructuringElement(cv2.MORPH_RECT, ...)      <-- RECT close
+
+  Why the patch takes effect: detector_core._detect_in_pair (l.66) calls
+  the bare global name compute_mask, resolved in detector_core's module
+  namespace at call time, so rebinding dc.compute_mask does redirect it.
+
+On-disk, results/detector_tuning/detections/ contains exactly these two
+stages: "03_stride1_thresh16_openk3_area30_circ0.3" (ELLIPSE, from 11)
+and "12_rect_close_kernel" (RECT, from 13).
+NOTE: the "03_..." stage name encodes openk3 but NOT the close kernel -
+the name alone is not evidence; the generator's source is.
+
+-----------------------------------------------------------------
+TARGET 1 (cont.) + TARGET 2 - resolved via the shared loader
+-----------------------------------------------------------------
+src/stereo/all_flights_common.py
+  l.26-27 DETECTIONS_ROOT = REPO_ROOT/"results"/"detector_tuning"/"detections"/
+                            "03_stride1_thresh16_openk3_area30_circ0.3"
+  l.33/40 SESSIONS[*]["detections_dir"] = DETECTIONS_ROOT / <session>
+  l.135 def build_corrected_track(session, flight_id, K0,D0,K1,D1,P0,P1, min_pairs=8)
+    l.144-146 cfg = SESSIONS[session]; cam0_csv/cam1_csv = cfg["detections_dir"]/...
+    -> hard-wired: build_corrected_track takes NO detections_dir argument,
+       so callers cannot redirect it to the rect stage.
+
+TARGET 2: results/prediction/01_crossing_plane_setup/crossing_classification.csv
+Producer: src/stereo/crossing_plane_classification.py (l.378 writes the CSV)
+  Stripped scan: NO MORPH_*, NO getStructuringElement, NO compute_mask,
+  NO detector_core reference. It runs no detection itself.
+  l.45-48 imports build_corrected_track, SESSIONS from all_flights_common
+  l.225   track = build_corrected_track(session, flight_id, K0,D0,K1,D1,P0,P1)
+  => consumes the "03_..." detections => ELLIPSE (detector_core.compute_mask)
+
+  ANSWER TARGET 2: ELLIPSE. Detection path is detector_core.compute_mask,
+  reached indirectly via all_flights_common.build_corrected_track reading
+  pre-computed CSVs from stage 03 (written by script 11, unpatched).
+
+TARGET 1: results/prediction/06_label_vs_fit/label_vs_fit_per_flight.csv
+Producer: src/stereo/label_vs_fit_crossing.py
+  Reads crossing_classification.csv (l.47) + ranked_candidates_v2.csv (l.46),
+  and ranked_candidates_v2.csv is written by
+  src/stereo/crossing_plane_candidate_reselection.py, which at l.60 reads
+  crossing_classification.csv - i.e. the same stage-03 lineage.
+  => ANSWER TARGET 1: ELLIPSE (detector_core.compute_mask), inherited
+     through crossing_classification.csv. No rect variant on this path.
+
+-----------------------------------------------------------------
+TARGET 3: results/trajectory_fit_comparison/all_flights/
+-----------------------------------------------------------------
+all_flights/ has five subdirectories, each with its own producer.
+Every producer was stripped of docstrings+comments and scanned for
+MORPH_*, getStructuringElement, compute_mask, detector_core, run_detection.
+ALL FIVE returned ZERO hits - none of them performs detection.
+
+  phase1/               <- src/stereo/drag_k_discovery_all_flights.py
+                           l.48 PHASE1_DIR; l.71 build_corrected_track(...)
+  phase2/               <- src/stereo/trajectory_model_prediction_sweep_all_flights.py
+                           l.49 PHASE2_DIR; l.111 build_corrected_track(...)
+  axis_decomposition/   <- src/stereo/axis_decomposition_all_flights.py
+                           l.69 build_corrected_track(...)
+  duration_distribution/<- src/stereo/flight_duration_distribution.py
+                           l.75 build_corrected_track(...)
+  stratified_by_duration/<- src/stereo/stratified_duration_reanalysis.py
+                           NO detection load at all; pure re-analysis of
+                           phase2/prediction_sweep_all_flights.csv (l.30),
+                           phase2/ransac_health_flags.csv (l.31),
+                           duration_distribution/flight_durations.csv (l.32)
+
+The first four all reach detections through the single hard-wired loader
+all_flights_common.build_corrected_track -> SESSIONS[*]["detections_dir"]
+-> DETECTIONS_ROOT = ".../detections/03_stride1_thresh16_openk3_area30_circ0.3",
+which is the output of script 11 (unpatched detector_core.compute_mask).
+
+  ANSWER TARGET 3: ELLIPSE for all of all_flights/, i.e.
+  detector_core.compute_mask. No local rect variant on any of these paths.
+
+-----------------------------------------------------------------
+NEGATIVE CHECK - could anything redirect these to the rect stage?
+-----------------------------------------------------------------
+Repo-wide grep for rebinding of the loader or its constants:
+  all_flights_common.SESSIONS / .DETECTIONS_ROOT / .build_corrected_track = ...
+  SESSIONS[...]["detections_dir"] = ...
+  -> NO hits anywhere in src/. The stage-03 wiring cannot be overridden by
+     a caller, and build_corrected_track exposes no detections_dir param.
+
+Repo-wide grep for consumers of the RECT stage "12_rect_close_kernel":
+  ONLY src/stereo/rect_vs_ellipse_prediction_comparison.py (l.57
+  RECT_DETECTIONS_ROOT), which writes to
+  results/trajectory_fit_comparison/rect_vs_ellipse_kernel/ (l.54) - a
+  SIBLING of all_flights/, not inside it. It only READS all_flights/
+  phase1/pooled_k.txt (l.58). Same for
+  ellipse_rect_pipeline_divergence_diagnostic.py (l.44, same OUT_DIR).
+  => the rect kernel does not reach any of the three targets.
+
+=================================================================
+SUMMARY
+=================================================================
+  label_vs_fit_per_flight.csv       -> ELLIPSE (detector_core.compute_mask)
+  crossing_classification.csv       -> ELLIPSE (detector_core.compute_mask)
+  trajectory_fit_comparison/all_flights/ -> ELLIPSE (detector_core.compute_mask)
+
+All three are ELLIPSE. None calls a local rect variant. In every case the
+call is INDIRECT (via pre-computed stage-03 detection CSVs, loaded by
+all_flights_common.build_corrected_track), but the kernel is still fully
+determined from source, because:
+  (a) DETECTIONS_ROOT is a hard-coded constant with no override path, and
+  (b) the generator of stage 03 (script 11) provably does not monkeypatch
+      dc.compute_mask, whereas the rect generator (script 13) does and
+      writes to a different stage directory that none of these consume.
+No target had to be reported as undeterminable.
+
+Status: COMPLETE
+
+=================================================================
+ADDENDUM - repo-wide cross-check (does not change any answer)
+=================================================================
+A repo-wide grep (all *.py, not just src/) for "label_vs_fit_per_flight"
+and "crossing_classification" returned 12 files, ALL under src/. Nothing
+outside src/ touches these CSVs. Each of the 12 was stripped and scanned.
+
+Sole writers confirmed:
+  crossing_classification.csv   <- crossing_plane_classification.py
+                                   l.378 csv_path = OUT_DIR/"crossing_classification.csv"
+                                   l.382 open(csv_path, "w") (csv.DictWriter)
+                                   No other script opens it for writing.
+  label_vs_fit_per_flight.csv   <- label_vs_fit_crossing.py l.489. Sole writer.
+The other 10 files only READ these CSVs.
+
+Of the 12, ten have ZERO kernel hits. TWO do perform detection:
+
+  src/pi_benchmarking/prediction_pipeline_sweep_pi.py
+  src/pi_benchmarking/prediction_pipeline_sweep_pi_vaxis.py
+    Each defines its OWN INLINE local rect variant - note this is a
+    third copy, NOT an import of compute_mask_rect_close_variant.py:
+      _pi.py       l.113 def compute_mask_rect_close(...)
+                   l.118 open_k  = getStructuringElement(MORPH_ELLIPSE, ...)
+                   l.121 close_k = getStructuringElement(MORPH_RECT, ...)
+                   l.127 mask = compute_mask_rect_close(...)   <- direct call
+      _pi_vaxis.py l.86 / l.91 / l.94 / l.100  (identical structure)
+    They import detector_core as dc but call their local rect function
+    directly, bypassing dc.compute_mask entirely.
+    => the Pi real-time sweep path is RECT close.
+
+    They do NOT write any of the three targets. Their only contact with
+    them is READ-ONLY:
+      l.91/64 POOLED_K_PATH = all_flights/phase1/pooled_k.txt   (read, l.222/195)
+      l.92/65 CROSSING_CSV  = prediction/01_crossing_plane_setup/
+                              crossing_classification.csv        (read, for a join)
+    Their own output goes to a CLI-supplied --out path (l.477-478 / 480-481),
+    with a different, sweep-specific schema. Caveat stated plainly: because
+    --out is caller-supplied, source alone cannot prove where a given past
+    run wrote. This does not affect the three targets, whose producers are
+    identified above and each hard-code their own output path.
+
+CONTRAST WORTH RECORDING: three separate rect-close implementations exist
+(compute_mask_rect_close_variant.py, and an inline copy in each of the two
+Pi sweeps), all of them on the RECT side; the OFFLINE analysis path in this
+report never reaches any of them. Offline = ELLIPSE, Pi real-time = RECT.
+Conclusions above stand unchanged.

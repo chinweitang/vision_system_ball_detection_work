@@ -16,6 +16,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 import regen_2class.common as C
+import regen_2class.clean_figures as CF
 
 FIG = C.OUT_DIR + "figureA_margin_vs_cutoff.png"
 
@@ -69,11 +70,14 @@ def main():
         "Budget = 100 ms perceptual window minus 16 ms projector input lag. The projector figure is measured end to end and already includes the frame period,",
         "so panel, quantisation and render terms are not added separately. Pi render and compositor latency is neglected.",
     ]
-    for i, line in enumerate(caption):
-        fig.text(0.012, 0.030 - i * 0.016, line, color=C.INK2, fontsize=7.5)
+    if CF.clean():
+        CF.write_clean(fig, caption, FIG)
+    else:
+        for i, line in enumerate(caption):
+            fig.text(0.012, 0.030 - i * 0.016, line, color=C.INK2, fontsize=7.5)
 
-    fig.tight_layout()
-    fig.savefig(FIG, dpi=150, facecolor=C.SURF, bbox_inches="tight")
+        fig.tight_layout()
+        fig.savefig(FIG, dpi=150, facecolor=C.SURF, bbox_inches="tight")
     plt.close(fig)
 
     print(f"deadlines: {dl}")

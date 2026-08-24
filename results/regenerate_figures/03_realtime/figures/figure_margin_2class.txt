@@ -1,0 +1,1 @@
+margin_p95(t) = deadline - t - latency_p95(t)

@@ -1,0 +1,13 @@
+flight_22 only. All three series use the SAME trajectory model - gravity held fixed, quadratic drag added. What differs is the
+source of the fitted points and whether RANSAC is applied, nothing else.
+The hand-labelled series is the PLAIN fit, not a RANSAC one: the contrast being drawn is RANSAC vs no RANSAC on DETECTED points,
+and applying it to the reference as well would blur that.
+x is real elapsed time between the first and last frame of each fit window, from this flight's own per-frame sensor timestamps
+(cam0/cam1 mean). It is NOT the nominal 16.652 ms/frame constant the source pipeline uses; on this flight the two agree to about
+6 microseconds over the longest window, so the distinction is one of provenance rather than a correction.
+Shaded band: confirmed hand-pickup frames 44-47, converted to the same ms axis (699-749 ms).
+Windows where any series had no value are excluded from ALL THREE, so the x set is identical by construction - N=[8, 9]
+   dropped, where the RANSAC fit produced no value.
+Log y: the series span several orders of magnitude at short windows.
+Sources: results/trajectory_fit_comparison/phase2/prediction_sweep.csv
+         results/trajectory_fit_comparison/phase2/prediction_sweep_ransac.csv

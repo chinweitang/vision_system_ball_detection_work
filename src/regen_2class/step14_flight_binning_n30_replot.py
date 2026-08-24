@@ -26,6 +26,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+import clean_figures as CF
+
 SRC_CSV = "results/flight_binning/flight_velocity_angle.csv"
 OUT_PNG = "results/regenerate_figures/distribution_N30_uniform_markers.png"
 N_REQUESTED = "30"
@@ -66,7 +68,13 @@ def main():
     ax_right.hist(speeds, bins=20, orientation="horizontal", color="tab:blue", alpha=0.7)
     ax_right.tick_params(labelleft=False, labelsize=FS_TICK)
 
-    fig.savefig(OUT_PNG, dpi=150, bbox_inches="tight")
+    # this script never drew a caption on the canvas, so there is no caption list
+    # to hand over; --clean only supplies the 0.8-textwidth / 300 dpi copy, and
+    # the .caption.txt it writes beside it is empty.
+    if CF.clean():
+        CF.write_clean(fig, [], OUT_PNG)
+    else:
+        fig.savefig(OUT_PNG, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"wrote {OUT_PNG}")
     print("original results/flight_binning/distribution_N30.png left untouched")

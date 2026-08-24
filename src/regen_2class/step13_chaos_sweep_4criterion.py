@@ -39,6 +39,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+import clean_figures as CF
 import common as C
 from step10_chaos_outcome_sweep import AXIS_TITLE, load_per_axis
 
@@ -222,16 +223,19 @@ def render(windows, results, max_ltc, n_class, pos_tol, vel_tol, path,
         "first-match-wins: no_response, late, wrong_class, wrong_position, wrong_velocity, success. Where several windows tie at the maximum success rate the LATEST is selected; position never influences that maximisation.",
         "fit_failed rows are retained as no_response; the denominator is always the class n. Each class is truncated at its own maximum launch-to-crossing time. A = 72/135/220 ms are panel tilt moves of 2, 10 and 30 degrees.",
     ] + caption_extra
-    # Caption length differs between variants (the sensitivity run adds two lines),
-    # so anchor the LAST line at a fixed height and grow upward. A fixed start point
-    # clipped the final sensitivity line, which is the one that says it is not the
-    # requirement - the single line that most needed to be legible.
-    gap, floor_y = 0.0068, 0.010
-    start_y = floor_y + (len(caption) - 1) * gap
-    for i, line in enumerate(caption):
-        fig.text(0.006, start_y - i * gap, line, color=C.INK2, fontsize=6.5)
-    fig.tight_layout(rect=[0, start_y + 0.016, 1, 0.955])
-    fig.savefig(path, dpi=150, facecolor=C.SURF)
+    if CF.clean():
+        CF.write_clean(fig, caption, path)
+    else:
+        # Caption length differs between variants (the sensitivity run adds two lines),
+        # so anchor the LAST line at a fixed height and grow upward. A fixed start point
+        # clipped the final sensitivity line, which is the one that says it is not the
+        # requirement - the single line that most needed to be legible.
+        gap, floor_y = 0.0068, 0.010
+        start_y = floor_y + (len(caption) - 1) * gap
+        for i, line in enumerate(caption):
+            fig.text(0.006, start_y - i * gap, line, color=C.INK2, fontsize=6.5)
+        fig.tight_layout(rect=[0, start_y + 0.016, 1, 0.955])
+        fig.savefig(path, dpi=150, facecolor=C.SURF)
     plt.close(fig)
     print(f"  wrote {path}")
 

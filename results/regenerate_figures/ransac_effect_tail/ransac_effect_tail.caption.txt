@@ -1,0 +1,2 @@
+Model C, 158 flights, 9592 exactly paired (flight, window) cells in 100 ms bins. Not smoothed.
+331 cells where the RANSAC fit recorded no value are dropped from BOTH series so the pairing stays exact. Bins under 100 cells are not plotted.

@@ -1,0 +1,3 @@
+CONVERGENCE against the full-arc Model-C fit, NOT ground truth. This is agreement with the reference fit, not accuracy against labels.
+fit_failed rows excluded from the median. Excluded count per window (ascending) - SHORT: 10,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0
+LONG: 35,15,9,1,0,0,1,1,1,1,0,0,0,0,1,0,1,0,0,0,4,0,1,1.  Denominators: SHORT n=47, LONG n=60.

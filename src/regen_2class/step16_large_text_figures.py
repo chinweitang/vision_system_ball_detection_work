@@ -29,6 +29,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+import clean_figures as CF
 import common as C
 from step10_chaos_outcome_sweep import load_per_axis
 import step13_chaos_sweep_landing_error as LE
@@ -134,9 +135,12 @@ def landing_error_500mm_large(rows, per_axis, windows, max_ltc, n_class):
         "fit_failed rows are retained as no_response; the denominator is always the class n. Each class is truncated at its own maximum",
         "launch-to-crossing time. A = 72 / 135 / 220 ms are panel tilt moves of 2, 10 and 30 degrees.",
     ]
-    rect_bottom = caption_block(fig, caption)
-    fig.tight_layout(rect=[0, rect_bottom, 1, 0.955])
-    fig.savefig(OUT_LE, dpi=150, facecolor=C.SURF)
+    if CF.clean():
+        CF.write_clean(fig, caption, OUT_LE)
+    else:
+        rect_bottom = caption_block(fig, caption)
+        fig.tight_layout(rect=[0, rect_bottom, 1, 0.955])
+        fig.savefig(OUT_LE, dpi=150, facecolor=C.SURF)
     plt.close(fig)
     print(f"wrote {OUT_LE}")
 
@@ -177,9 +181,12 @@ def figure_d_large(rows, windows):
         f"accurate = position error < {FD.ACCURATE_MM_MAIN:.0f} mm, which is CONVERGENCE against the full-arc Model-C fit, NOT ground truth.",
         "fit_failed rows are retained as no_response; the denominator is always the panel n.",
     ]
-    rect_bottom = caption_block(fig, caption)
-    fig.tight_layout(rect=[0, rect_bottom, 1, 0.955])
-    fig.savefig(OUT_FD, dpi=150, facecolor=C.SURF)
+    if CF.clean():
+        CF.write_clean(fig, caption, OUT_FD)
+    else:
+        rect_bottom = caption_block(fig, caption)
+        fig.tight_layout(rect=[0, rect_bottom, 1, 0.955])
+        fig.savefig(OUT_FD, dpi=150, facecolor=C.SURF)
     plt.close(fig)
     print(f"wrote {OUT_FD}")
 

@@ -1,0 +1,90 @@
+RANSAC EFFECT - TAIL STATISTICS, MODEL C
+==============================================================================
+
+Matched keys before exclusion : 9923
+Excluded from BOTH series     : 331 (331 missing in the RANSAC series, 0 in the plain series)
+Exactly paired cells          : 9592 over 158 flights
+Key gate after exclusion      : PASS (identical key sets)
+Cross-check vs pooled n_paired: PASS (same cells per bin)
+Plotted range                 : 0-1500 ms, 15 bins of 100 ms, all >= 100 cells
+
+Bins excluded for falling below 100 cells (reported, not trimmed silently):
+    1500-1600   ms  n=21
+
+SURVIVING CELLS PER BIN (after dropping the 331 unpaired)
+
+  window (ms)    n paired  dropped  n total
+  0-100               778        0      778
+  100-200             640      288      928
+  200-300             899       33      932
+  300-400             898        8      906
+  400-500             855        2      857
+  500-600             808        0      808
+  600-700             741        0      741
+  700-800             658        0      658
+  800-900             625        0      625
+  900-1000            598        0      598
+  1000-1100           594        0      594
+  1100-1200           570        0      570
+  1200-1300           482        0      482
+  1300-1400           303        0      303
+  1400-1500           122        0      122
+  1500-1600            21        0       21
+
+PLOTTED STATISTIC - fraction of cells with error > 500 mm
+
+  window (ms)      without      with      diff      n
+  0-100             0.7301    0.7301   +0.0000    778
+  100-200           0.3125    0.3328   +0.0203    640
+  200-300           0.1379    0.2069   +0.0690    899
+  300-400           0.0267    0.0947   +0.0679    898
+  400-500           0.0152    0.0515   +0.0363    855
+  500-600           0.0359    0.0136   -0.0223    808
+  600-700           0.0418    0.0000   -0.0418    741
+  700-800           0.0502    0.0000   -0.0502    658
+  800-900           0.0640    0.0000   -0.0640    625
+  900-1000          0.0635    0.0000   -0.0635    598
+  1000-1100         0.0842    0.0000   -0.0842    594
+  1100-1200         0.0702    0.0000   -0.0702    570
+  1200-1300         0.0851    0.0000   -0.0851    482
+  1300-1400         0.1221    0.0000   -0.1221    303
+  1400-1500         0.1148    0.0000   -0.1148    122
+
+SECOND STATISTIC - 95th percentile of prediction error (mm)
+
+  window (ms)      without      with      diff      n
+  0-100             5295.8    5295.8      +0.0    778
+  100-200           1039.8    1220.6    +180.8    640
+  200-300            651.7     919.1    +267.4    899
+  300-400            446.6     626.7    +180.1    898
+  400-500            418.2     511.5     +93.3    855
+  500-600            419.1     405.8     -13.3    808
+  600-700            391.4     350.2     -41.2    741
+  700-800            450.4     302.4    -148.0    658
+  800-900            683.7     278.3    -405.4    625
+  900-1000           992.8     275.0    -717.7    598
+  1000-1100         1080.4     275.8    -804.5    594
+  1100-1200          762.6     271.1    -491.5    570
+  1200-1300         1155.7     265.1    -890.6    482
+  1300-1400         1260.4     231.2   -1029.3    303
+  1400-1500          913.0     304.7    -608.3    122
+
+WHERE THE PLAIN FIT WINS ON THE TAIL STATISTIC (> 500 mm)
+  The plain fit has a SMALLER tail fraction at 4 of 15 plotted windows. Plotted as measured:
+     100-200    ms  without=0.3125  with=0.3328  (with is +0.0203)
+     200-300    ms  without=0.1379  with=0.2069  (with is +0.0690)
+     300-400    ms  without=0.0267  with=0.0947  (with is +0.0679)
+     400-500    ms  without=0.0152  with=0.0515  (with is +0.0363)
+  Exactly equal at 1 window(s): 0-100 ms
+
+WHERE THE PLAIN FIT WINS ON p95
+  The plain fit has a LOWER p95 at 4 of 15 plotted windows:
+     100-200    ms  without=   1039.8 mm  with=   1220.6 mm
+     200-300    ms  without=    651.7 mm  with=    919.1 mm
+     300-400    ms  without=    446.6 mm  with=    626.7 mm
+     400-500    ms  without=    418.2 mm  with=    511.5 mm
+
+Figure (tail rate): results/regenerate_figures/ransac_effect_tail/ransac_effect_tail.png
+Figure (p95)      : results/regenerate_figures/ransac_effect_tail/ransac_effect_p95.png
+Table             : results/regenerate_figures/ransac_effect_tail/ransac_effect_tail.csv
+All inputs read-only; none modified.

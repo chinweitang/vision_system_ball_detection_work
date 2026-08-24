@@ -1,0 +1,10 @@
+Markers only - NO lines. The stages are discrete configuration changes, so the x positions are ordinal, not a time axis, and a
+line between two of them would assert a path through configurations that were never run. Stages with no marker recorded no rate.
+DENOMINATORS CHANGE PART-WAY ALONG BOTH SERIES, so neither series is a like-for-like comparison end to end:
+  average combined detection rate is measured on a 10-flight validation sample up to and including '+ mask v4 + area30 (sample)',
+  and on all 163 flights from 'full dataset 163 flights' onward. The step between those two is a change of
+  population, not a change in performance.
+  true detection rate is measured over 54 labelled points on one flight before the round 3 sweep, and 240 labelled
+  points on two flights after it.
+The rect close-kernel stage is excluded from this figure.
+Source: results/detector_tuning/history/results_history.csv, read-only, plotted in the file's own row order.

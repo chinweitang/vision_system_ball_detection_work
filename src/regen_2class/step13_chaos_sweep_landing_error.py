@@ -41,6 +41,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+import clean_figures as CF
 import common as C
 from step10_chaos_outcome_sweep import load_per_axis
 
@@ -210,14 +211,17 @@ def render(windows, results, max_ltc, n_class, threshold, anchor, path):
         "Verdict precedence first-match-wins: no_response, late, wrong_class, wrong_placement, success. Where several windows tie at the maximum success rate the LATEST is selected; landing error never influences that maximisation.",
         "fit_failed rows are retained as no_response; the denominator is always the class n. Each class is truncated at its own maximum launch-to-crossing time. A = 72/135/220 ms are panel tilt moves of 2, 10 and 30 degrees.",
     ]
-    gap, floor_y = 0.0072, 0.010
-    start_y = floor_y + (len(caption) - 1) * gap
-    for i, line in enumerate(caption):
-        fig.text(0.006, start_y - i * gap, line, color=C.INK2, fontsize=6.6)
-    fig.tight_layout(rect=[0, start_y + 0.018, 1, 0.955])
-    fig.savefig(path, dpi=150, facecolor=C.SURF)
+    if CF.clean():
+        CF.write_clean(fig, caption, path)
+    else:
+        gap, floor_y = 0.0072, 0.010
+        start_y = floor_y + (len(caption) - 1) * gap
+        for i, line in enumerate(caption):
+            fig.text(0.006, start_y - i * gap, line, color=C.INK2, fontsize=6.6)
+        fig.tight_layout(rect=[0, start_y + 0.018, 1, 0.955])
+        fig.savefig(path, dpi=150, facecolor=C.SURF)
+        print(f"  wrote {path}")
     plt.close(fig)
-    print(f"  wrote {path}")
 
 
 def run_threshold(rows, per_axis, windows, max_ltc, n_class, threshold, tag, anchor):

@@ -1,0 +1,145 @@
+RANSAC IMPLEMENTATION AND SWEEP COVERAGE
+==============================================================================
+
+Sources, all read-only:
+  src/stereo/trajectory_fit.py
+  results/trajectory_fit_comparison/all_flights/phase2/prediction_sweep_all_flights.csv
+  src/stereo/trajectory_model_prediction_sweep_all_flights.py   (consulted to interpret blank fields)
+
+Quoted line numbers are 1-based and were re-read from the file at run time;
+this report STOPs rather than quoting a line that has since changed.
+
+------------------------------------------------------------------------------
+(a) DOES ransac_fit REFIT ON THE FULL INLIER SET?
+------------------------------------------------------------------------------
+
+YES. After the sampling loop it refits over the winning consensus mask:
+
+218      final_params = fit_fn(t[best_mask], xyz[best_mask])
+
+The per-iteration fit on the minimal draw is scored and DISCARDED - the loop
+retains only the mask, never the parameters:
+
+203              params = fit_fn(t[idx], xyz[idx])
+207          resid = np.linalg.norm(pred_all - xyz, axis=1)
+208          mask = resid <= inlier_threshold_mm
+
+So the returned model is fitted on all inliers, not on the minimal subsample.
+
+------------------------------------------------------------------------------
+(b) OVER WHICH POINTS IS THE RETURNED RESIDUAL COMPUTED?
+------------------------------------------------------------------------------
+
+INLIERS ONLY. Both the prediction and the data are sliced by best_mask:
+
+219      pred_final = predict_fn(final_params, t[best_mask])
+220      resid_final = np.linalg.norm(pred_final - xyz[best_mask], axis=1)
+221      rms = float(np.sqrt(np.mean(resid_final ** 2)))
+
+The returned residual_rms_mm therefore EXCLUDES every rejected point.
+Because the rejected points are by construction the large-residual ones,
+this figure is biased low relative to a plain least-squares RMS over all
+points, and the two are not comparable like for like. It measures fit
+quality on the consensus set, not on the flight.
+
+------------------------------------------------------------------------------
+(c) MINIMUM INLIER COUNT AND INLIER DISTANCE THRESHOLD
+------------------------------------------------------------------------------
+
+MINIMUM INLIER COUNT - there is no separate parameter for it. The
+acceptance gate reuses min_samples, so the minimum inlier count EQUALS the
+minimal sample size:
+
+214      if best_mask is None or best_count < min_samples:
+
+with the per-model values at line 245:
+
+245  RANSAC_MIN_SAMPLES = {"A": 6, "B": 6, "C": 8}  # more than bare theoretical
+
+The same constant also guards the input size earlier:
+
+195      if n < min_samples:
+
+INLIER DISTANCE THRESHOLD - line 241:
+
+241  RANSAC_INLIER_THRESHOLD_MM = 75.0  # task decision #2's literal value; see
+
+applied as a Euclidean 3-D distance in mm at lines 207-208 (quoted above).
+One value for all three models and both phases.
+
+------------------------------------------------------------------------------
+(d) DOES THE SWEEP CSV CONTAIN A PLAIN, NON-RANSAC VARIANT?
+------------------------------------------------------------------------------
+
+File: results/trajectory_fit_comparison/all_flights/phase2/prediction_sweep_all_flights.csv
+Header: session,flight,N,model,lead_time_ms,error_mm,rejected_frac
+29769 data rows, 158 flights.
+
+NO - there is no column that distinguishes a plain fit from a RANSAC fit.
+The `model` column takes exactly 3 values (A, B, C),
+with no variant suffix and no separate method field. There is one row per
+(session, flight, N, model), so a plain and a RANSAC result never coexist
+at the same window for the same model.
+
+Plain fits ARE present, but only as an implicit fallback, identifiable only
+indirectly. Blank `rejected_frac` means two different things:
+
+    1738 rows  blank rejected_frac, error_mm PRESENT
+                -> plain fit: N below the model's min_samples, RANSAC skipped
+     731 rows  blank rejected_frac, error_mm ALSO BLANK
+                -> RANSAC raised; no result recorded
+   27300 rows  rejected_frac populated -> a real RANSAC fit
+
+Confirmed against the generating script, not inferred from the data alone:
+its fit_and_predict_ransac falls back to the plain fit when the window is
+smaller than min_samples and returns None for the rejected list, while a
+RuntimeError path sets error to NaN AND the fraction to None - which is why
+only the second category has both fields empty.
+
+STOP CONDITION - the plain variant restricted to a subset of flights?
+  NOT TRIGGERED. Plain rows appear for 158 of 158 flights (all of them),
+    model A: 158 of 158 flights
+    model B: 158 of 158 flights
+    model C: 158 of 158 flights
+
+  HOWEVER, the restriction that does exist is by WINDOW, not by flight:
+  the plain variant occurs only below each model's min_samples -
+    N < 6 for model A, N < 6 for model B, N < 8 for model C.
+  At every larger window each fit in this file is a RANSAC fit. The file
+  therefore supports NO plain-vs-RANSAC comparison at matched N, at any
+  window a report would quote.
+
+------------------------------------------------------------------------------
+(e) FRACTION OF FLIGHTS WITH rejected_frac > 0
+------------------------------------------------------------------------------
+
+Representative window: N = 30, the window this project
+already uses as representative (step14_flight_binning_n30_replot.py, the
+N30 distribution figures).
+
+At N = 30:
+
+  model   flights with a RANSAC row   of those, rejected_frac > 0   share
+    A               146                         146               100.0%
+    B               146                         146               100.0%
+    C               146                         145                99.3%
+
+  Denominator caveat: 146 of 158 flights have a row at
+  N = 30 at all; the remainder are shorter than 30 points.
+
+Adjacent windows, to show N=30 is not a cherry-pick:
+
+     N            A         B         C     flights with a row
+    10        71.4%     70.1%     60.2%     154 / 147 / 108
+    20        91.0%     94.2%     93.5%     155 / 155 / 154
+    30       100.0%    100.0%     99.3%     146 / 146 / 146
+    40       100.0%    100.0%    100.0%     127 / 127 / 127
+    50       100.0%    100.0%    100.0%     108 / 108 / 108
+
+The share rises with window size and saturates at 100% by N=40: at any
+window a report would quote, effectively every flight has at least one
+point rejected. Taken with finding (b), the reported residual excludes
+those points on effectively every flight, not on a rare subset.
+
+==============================================================================
+END

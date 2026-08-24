@@ -1,0 +1,3 @@
+CONVERGENCE against the full-arc Model-C crossing time (t_cross_ms from launch_to_crossing.csv), NOT accuracy against ground truth.
+Each class line is truncated at its own maximum launch_to_crossing_ms (SHORT 1121 ms, LONG 1559 ms); beyond that the window
+exceeds every flight in the class. fit_failed rows carry no t_cross_own_ms and are excluded from the statistics; counts are in timing_convergence_by_class_T.csv.

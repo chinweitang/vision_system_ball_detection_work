@@ -1,0 +1,8 @@
+Chaos rally requires the answer A ms BEFORE arrival: late is t_obs + latency > launch_to_crossing - A. Target mode's test allowed +84 ms AFTER arrival; the sign is opposite and deliberate.
+Verdict precedence first-match-wins: no_response, late, wrong_class, wrong_position, wrong_velocity, success. Bands stack bottom to top as success, wrong_velocity, wrong_position, wrong_class, late, no_response,
+matching Figure D's convention of success on the floor. t_obs = min(observation window, duration).
+Velocity tolerance is a PLACEMENT tolerance and is ISOTROPIC - the same 1471 mm/s on all three world axes, from placement tolerance / (e x T_return) = 1.0 m / (0.68 x 1.0 s).
+The earlier per-axis court-dimension tolerances tested only whether the ball stays in play. The game requires the return to land near an intended spot, and a player covers roughly 1 m during a 1 s return flight,
+so 1 m is the point beyond which the intended shot difficulty changes.
+position_error_mm and the velocity errors are CONVERGENCE against the full-arc Model-C fit, NOT accuracy against ground truth. fit_failed rows are retained as no_response; the denominator is always the class n.
+Each class is truncated at its own maximum launch-to-crossing time. A = 72 / 135 / 220 ms correspond to panel tilt moves of 2, 10 and 30 degrees.

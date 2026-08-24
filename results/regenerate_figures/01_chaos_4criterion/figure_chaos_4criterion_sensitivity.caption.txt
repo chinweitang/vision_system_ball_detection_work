@@ -1,0 +1,12 @@
+Position is a pass criterion again. v_out = e*v_in + (1+e)*u carries no rotation term, so outgoing VELOCITY is independent of contact location - but the ball departs from wherever it was struck, so a
+crossing-position error translates the whole return trajectory by the same amount. Position error and velocity error displace the SAME landing point in the SAME frame and both come from the same Model-C fit
+on the same detected points, so they are correlated in source and add LINEARLY; quadrature would assume an independence that does not hold.
+Total landing-error budget 500 mm at the player, split EQUALLY between the two terms - a stated budget choice, not a derived result: no physical basis favours either term, and over a 1 s return a static
+offset and an accumulated velocity error are directly commensurable. Position term 250 mm. Velocity term 250 mm / (e x t) with e = 0.68 (published volleyball-on-rigid-surface coefficient of
+restitution, not assumed) and t = 1.0 s -> 368 mm/s applied isotropically to all three world axes.
+position_error_mm and the per-axis velocity errors are CONVERGENCE against the full-arc Model-C fit, NOT accuracy against ground truth.
+Chaos rally needs the answer A ms BEFORE arrival: late is t_obs + latency > launch_to_crossing - A, opposite in sign to target mode's +84 ms after. t_obs = min(observation window, duration). Verdict precedence
+first-match-wins: no_response, late, wrong_class, wrong_position, wrong_velocity, success. Where several windows tie at the maximum success rate the LATEST is selected; position never influences that maximisation.
+fit_failed rows are retained as no_response; the denominator is always the class n. Each class is truncated at its own maximum launch-to-crossing time. A = 72/135/220 ms are panel tilt moves of 2, 10 and 30 degrees.
+THIS IS A REPORTED SENSITIVITY, NOT THE REQUIREMENT. At a 500 mm total budget the velocity tolerance falls to 368 mm/s, but the Y_width label SD is ~282 mm/s (decision 77),
+so a 368 mm/s isotropic tolerance sits at roughly 1.3x the reference noise floor on the weak axis and the test stops being informative there.

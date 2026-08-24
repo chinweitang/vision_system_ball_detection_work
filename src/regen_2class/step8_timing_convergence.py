@@ -24,11 +24,23 @@ Outputs (all new files under results/regenerate_figures/):
 """
 import csv
 import json
+import pathlib
 import statistics as st
+import sys
+
+# This folder carries two import conventions: step_1..step_7 use
+# "regen_2class.common", step8.. use "common". Both roots are added so the
+# shared --clean helper imports cleanly either way.
+_HERE = pathlib.Path(__file__).resolve().parent
+for _p in (str(_HERE), str(_HERE.parent)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
+import clean_figures as CF
 
 SWEEP_JSON = "results/pi_benchmarking/pipeline_sweep_full_20260804.json"
 SWEEP_CSV = "results/pi_benchmarking/02_pi_pipeline_sweep_parallel_detection/pipeline_sweep_raw.csv"
@@ -220,14 +232,18 @@ def main():
         f"Each class line is truncated at its own maximum launch_to_crossing_ms (SHORT {max_ltc['SHORT']:.0f} ms, LONG {max_ltc['LONG']:.0f} ms); beyond that the window",
         "exceeds every flight in the class. fit_failed rows carry no t_cross_own_ms and are excluded from the statistics; counts are in timing_convergence_by_class_T.csv.",
     ]
-    for i, line in enumerate(caption):
-        fig.text(0.012, 0.042 - i * 0.018, line, color=INK2, fontsize=7.6)
+    if CF.clean():
+        CF.write_clean(fig, caption, OUT_DIR + "figureE_timing_convergence.png")
+        plt.close(fig)
+    else:
+        for i, line in enumerate(caption):
+            fig.text(0.012, 0.042 - i * 0.018, line, color=INK2, fontsize=7.6)
 
-    fig.tight_layout(rect=[0, 0.075, 1, 1])
-    fig_path = OUT_DIR + "figureE_timing_convergence.png"
-    fig.savefig(fig_path, dpi=150, facecolor=SURF)
-    plt.close(fig)
-    print(f"wrote {fig_path}")
+        fig.tight_layout(rect=[0, 0.075, 1, 1])
+        fig_path = OUT_DIR + "figureE_timing_convergence.png"
+        fig.savefig(fig_path, dpi=150, facecolor=SURF)
+        plt.close(fig)
+        print(f"wrote {fig_path}")
 
     # ---- separate small job: label vs Model-C full-arc timing agreement ----
     print()

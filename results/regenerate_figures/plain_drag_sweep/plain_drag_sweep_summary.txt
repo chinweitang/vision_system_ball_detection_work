@@ -1,0 +1,18 @@
+PLAIN (NON-RANSAC) MODEL C PREDICTION SWEEP
+======================================================================
+
+Model C = fixed gravity + quadratic drag, k fixed at the pooled Phase 1 value.
+pooled K = 5.268474e-05 1/mm
+
+Identical to the RANSAC Phase 2 sweep in population, window grid, pooled K,
+held-out target and leakage exclusion. The ONLY difference is that each
+window is fitted by calling Model C's plain fit directly instead of through
+ransac_fit, so no point is ever rejected and the residual is over all points.
+
+flights: 158
+rows   : 9923  (9923 ok, 0 fit_failed)
+
+runtime: 478s (8.0 min) serial, 9923 windows fitted
+
+Reference (untouched): results/trajectory_fit_comparison/all_flights/phase2/prediction_sweep_all_flights.csv
+Output               : results/regenerate_figures/plain_drag_sweep/plain_drag_sweep.csv

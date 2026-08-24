@@ -1,0 +1,2 @@
+combined rate is measured on the validation sample at stages 4-8 and on all 163 flights at stage 9.
+true detection rate is 54 labelled points on one flight at stages 4-7 and 240 points on two flights at stages 8-9.

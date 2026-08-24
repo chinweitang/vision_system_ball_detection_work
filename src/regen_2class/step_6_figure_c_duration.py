@@ -19,6 +19,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+import clean_figures as CF
+
 JOIN = "results/regenerate_figures/two_class_join.csv"
 OUT = "results/regenerate_figures/figureC_duration_distribution.png"
 
@@ -101,11 +103,14 @@ def main():
         f"different population (all fitted flights, not crossers only). The two are not comparable. Confusion region of the 45-deg elevation proxy:",
         f"{len(confusion)} SHORT flights cross later than LONG's minimum ({long_min:.1f} ms); SHORT max is {short_max:.1f} ms.",
     ]
-    for i, line in enumerate(caption):
-        fig.text(0.012, 0.056 - i * 0.0165, line, color=INK2, fontsize=7.6)
+    if CF.clean():
+        CF.write_clean(fig, caption, OUT)
+    else:
+        for i, line in enumerate(caption):
+            fig.text(0.012, 0.056 - i * 0.0165, line, color=INK2, fontsize=7.6)
 
-    fig.tight_layout(rect=[0, 0.085, 1, 1])
-    fig.savefig(OUT, dpi=150, facecolor=SURF)
+        fig.tight_layout(rect=[0, 0.085, 1, 1])
+        fig.savefig(OUT, dpi=150, facecolor=SURF)
     plt.close(fig)
 
     print(f"SHORT max = {short_max:.1f} ms")

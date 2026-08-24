@@ -1,0 +1,8 @@
+Position is NOT a pass criterion here. The impulse axis translates the panel along its surface normal at uniform velocity, so return direction is set by the commanded panel angle and return
+speed by the translation velocity - neither depends on where on the surface contact occurs. Crossing position governs only WHETHER contact occurs, which hit_miss_match already tests. Figure F's
+wrong_position band counted that same requirement a second time. Position accuracy is reported as a capability in the companion CSV, not as pass/fail.
+Chaos rally requires the answer A ms BEFORE arrival: late is t_obs + latency > launch_to_crossing - A. Target mode's test allowed +84 ms AFTER arrival; the sign is opposite and deliberate.
+Verdict precedence first-match-wins: no_response, late, wrong_class, wrong_velocity, success. Bands stack bottom to top as success, wrong_velocity, wrong_class, late, no_response, matching Figure D.
+Where several observation windows achieve the maximum success rate, the latest is selected: reliability is at ceiling across the plateau, so a longer window reduces crossing position error at no cost to success.
+Velocity tolerance is isotropic placement: 1471 mm/s on all three world axes, from 1.0 m / (0.68 x 1.0 s). Velocity errors are CONVERGENCE against the full-arc Model-C fit, NOT ground truth.
+fit_failed rows are retained as no_response; the denominator is always the class n. Each class is truncated at its own maximum launch-to-crossing time. A = 72 / 135 / 220 ms are panel tilt moves of 2, 10 and 30 degrees.

@@ -1,0 +1,5 @@
+Margin above zero is the time remaining after the prediction is ready and before the ball arrives: the budget available for actuation, read by chaos rally. Margin below zero means the
+answer lands after impact, which target mode tolerates provided the display fires inside the perceptual window. Actuation band edges correspond to panel tilt moves of 2, 10 and 30 degrees
+for a 2 m x 2 m, 20 kg panel rotating about its centre line at 350 Nm output torque, triangular velocity profile, plus 20 ms lumped command and settling.
+margin_p95 = deadline - observation window - p95 latency; deadline is the class minimum launch-to-crossing time rounded down to 10 ms. Verticals mark the LAST grid point at or above each
+threshold, so with a 50 ms grid the true boundary lies between that point and the next. Each class line stops at its own maximum launch-to-crossing time. Pi render and compositor latency is neglected.

@@ -21,6 +21,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 import common as C
+import clean_figures as CF
 
 OUT_PNG = C.OUT_DIR + "figureC_duration_distribution_v2.png"
 FS_LABEL, FS_TICK, FS_TITLE, FS_ANNOT, FS_CAP = 16, 14, 18, 14, 9.5
@@ -79,13 +80,16 @@ def main():
         "target) on a different population (all fitted flights, not crossers only). The two are not comparable.",
         f"Confusion region of the 45-deg elevation proxy: {len(confusion)} SHORT flights cross later than LONG's minimum ({long_min:.1f} ms); SHORT max is {short_max:.1f} ms.",
     ]
-    gap, floor_y = 0.0165, 0.010
-    start_y = floor_y + (len(caption) - 1) * gap
-    for i, line in enumerate(caption):
-        fig.text(0.008, start_y - i * gap, line, color=C.INK2, fontsize=FS_CAP)
+    if CF.clean():
+        CF.write_clean(fig, caption, OUT_PNG)
+    else:
+        gap, floor_y = 0.0165, 0.010
+        start_y = floor_y + (len(caption) - 1) * gap
+        for i, line in enumerate(caption):
+            fig.text(0.008, start_y - i * gap, line, color=C.INK2, fontsize=FS_CAP)
 
-    fig.tight_layout(rect=[0, start_y + 0.030, 1, 1])
-    fig.savefig(OUT_PNG, dpi=150, facecolor=C.SURF)
+        fig.tight_layout(rect=[0, start_y + 0.030, 1, 1])
+        fig.savefig(OUT_PNG, dpi=150, facecolor=C.SURF)
     plt.close(fig)
     print(f"wrote {OUT_PNG}")
     print("original figureC_duration_distribution.png left untouched")

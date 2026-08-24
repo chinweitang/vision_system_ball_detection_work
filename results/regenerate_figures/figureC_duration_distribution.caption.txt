@@ -1,0 +1,4 @@
+Launch-to-crossing time, NOT observable track length. Overlaid, not stacked. Dotted verticals mark each class's min / P5 / median / max.
+The earlier n=158 duration figure plotted a different quantity (total observable duration, first usable fit frame to held-out target) on a
+different population (all fitted flights, not crossers only). The two are not comparable. Confusion region of the 45-deg elevation proxy:
+5 SHORT flights cross later than LONG's minimum (1047.8 ms); SHORT max is 1120.6 ms.

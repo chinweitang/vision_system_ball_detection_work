@@ -40,6 +40,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+import clean_figures as CF
 import common as C
 from step10_chaos_outcome_sweep import (
     A_VALUES, AXIS_TITLE, POSITION_THRESHOLD_MM, VELOCITY_TOL_MM_S,
@@ -214,10 +215,13 @@ def render(windows, results, max_ltc, n_of):
         f"Velocity tolerance is isotropic placement: {VELOCITY_TOL_MM_S:.0f} mm/s on all three world axes, from 1.0 m / (0.68 x 1.0 s). Velocity errors are CONVERGENCE against the full-arc Model-C fit, NOT ground truth.",
         "fit_failed rows are retained as no_response; the denominator is always the class n. Each class is truncated at its own maximum launch-to-crossing time. A = 72 / 135 / 220 ms are panel tilt moves of 2, 10 and 30 degrees.",
     ]
-    for i, line in enumerate(caption):
-        fig.text(0.006, 0.058 - i * 0.0078, line, color=C.INK2, fontsize=6.8)
-    fig.tight_layout(rect=[0, 0.072, 1, 0.955])
-    fig.savefig(FIG, dpi=150, facecolor=C.SURF)
+    if CF.clean():
+        CF.write_clean(fig, caption, FIG)
+    else:
+        for i, line in enumerate(caption):
+            fig.text(0.006, 0.058 - i * 0.0078, line, color=C.INK2, fontsize=6.8)
+        fig.tight_layout(rect=[0, 0.072, 1, 0.955])
+        fig.savefig(FIG, dpi=150, facecolor=C.SURF)
     plt.close(fig)
     print(f"wrote {FIG}")
 

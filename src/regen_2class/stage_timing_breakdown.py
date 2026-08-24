@@ -50,6 +50,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
+import clean_figures as CF
 import common as C
 
 OUT_DIR = C.OUT_DIR + "stage_timing/"
@@ -348,12 +349,16 @@ def make_figure(summary, windows, f):
         "Class is from the full flight record, 45 deg elevation cut. ransac_ms is NOT compared here against stage 1's ransac_fit_ms: that benchmark ran 15",
         "RANSAC iterations against this sweep's production 3, so the two are different quantities.",
     ]
-    rect_bottom = caption_block(fig, caption)
-    fig.tight_layout(rect=[0, rect_bottom, 1, 0.945])
-    pathlib.Path(OUT_DIR).mkdir(parents=True, exist_ok=True)
-    fig.savefig(OUT_PNG, dpi=DPI, facecolor=C.SURF)
-    plt.close(fig)
-    print(f"wrote {OUT_PNG}")
+    if CF.clean():
+        CF.write_clean(fig, caption, OUT_PNG)
+        plt.close(fig)
+    else:
+        rect_bottom = caption_block(fig, caption)
+        fig.tight_layout(rect=[0, rect_bottom, 1, 0.945])
+        pathlib.Path(OUT_DIR).mkdir(parents=True, exist_ok=True)
+        fig.savefig(OUT_PNG, dpi=DPI, facecolor=C.SURF)
+        plt.close(fig)
+        print(f"wrote {OUT_PNG}")
 
 
 def main():

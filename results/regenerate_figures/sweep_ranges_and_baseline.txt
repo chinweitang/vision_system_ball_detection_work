@@ -1,0 +1,208 @@
+SWEEP RANGES AND PRE-TUNING BASELINE DETECTION RATE
+====================================================
+All source CSVs read READ-ONLY; nothing in results/detector_tuning/ was modified.
+
+Status: IN PROGRESS
+
+=================================================================
+PART 1 - SWEEP GRIDS
+=================================================================
+
+-----------------------------------------------------------------
+GRID A: results/detector_tuning/sweep_results.csv
+-----------------------------------------------------------------
+Columns: stride, diff_threshold, open_kernel, avg_combined_rate,
+         labeled_recall, meets_recall_gate, is_baseline
+Data rows: 48 (file is 49 lines incl. header)
+
+Distinct values swept:
+  stride           n=3   {1, 2, 3}
+  diff_threshold   n=4   {8, 12, 16, 20}
+  open_kernel      n=4   {0, 3, 5, 7}      (0 = open step disabled)
+
+  Product: 3 x 4 x 4 = 48   -> CONFIRMED equals 48.
+
+Verification beyond the arithmetic:
+  - unique (stride, diff_threshold, open_kernel) combos present = 48
+  - duplicate rows = 0
+  - full Cartesian product covered = True (no missing cells)
+  So the grid is complete and exactly enumerated, not merely 48 rows.
+
+  is_baseline=True row: stride=1, diff_threshold=20, open_kernel=7
+    avg_combined_rate = 0.2772394489568403
+
+-----------------------------------------------------------------
+GRID B: results/detector_tuning/sweep_results_min_area_circ.csv
+-----------------------------------------------------------------
+Columns: min_area, min_circ, avg_combined_rate, labeled_recall,
+         meets_recall_gate, is_baseline
+Data rows: 24 (file is 25 lines incl. header)
+
+Distinct values swept:
+  min_area   n=6   {30, 50, 75, 100, 150, 200}
+  min_circ   n=4   {0.2, 0.25, 0.3, 0.35}
+
+  Product: 6 x 4 = 24   -> CONFIRMED equals 24.
+
+Verification beyond the arithmetic:
+  - unique (min_area, min_circ) combos present = 24
+  - duplicate rows = 0
+  - full Cartesian product covered = True (no missing cells)
+
+  is_baseline=True row: min_area=200, min_circ=0.3
+    avg_combined_rate = 0.8552206961250185
+
+NOTE: these two grids are separate stages, not one joint sweep
+(48 + 24 = 72 evaluations total, not 48*24). Grid A sweeps the
+frame-differencing/morphology parameters; Grid B sweeps the contour
+filter with A's chosen values held fixed.
+
+=================================================================
+PART 2 - PRE-TUNING BASELINE DETECTION RATE
+=================================================================
+FOUND. Both per-session summaries exist; no substitution was needed.
+  data/2026_07_15_gym/ball_flights/detection_rate_summary.csv
+  data/2026_07_21_gym/ball_flights/detection_rate_summary.csv
+(Note: these sit under data/, NOT results/ - the generator writes them
+next to each session's ball_flights tree.)
+
+-----------------------------------------------------------------
+2a. Confirmed these ARE the DEFAULT-PARAMETER (pre-tuning) summaries
+-----------------------------------------------------------------
+Not inferred from file dates. The summaries are built by
+05_detection_rate_summary.py, which does NOT re-run detection - it reads
+the analysis_3/*_detections3.csv files written by
+04_stereo_three_frame_diff.py. That script's hard-coded constants are:
+    l.45 STRIDE         = 1
+    l.52 DIFF_THRESHOLD = 20
+    l.53 OPEN_KERNEL    = 7
+    l.54 CLOSE_KERNEL   = 30      (l.66 MORPH_ELLIPSE)
+    l.55 MIN_AREA       = 200
+    l.56 MAX_AREA       = 50000
+    l.57 MIN_CIRC       = 0.3
+
+These match the is_baseline=True rows of BOTH sweep grids exactly:
+    Grid A baseline: stride=1, diff_threshold=20, open_kernel=7   -> match
+    Grid B baseline: min_area=200, min_circ=0.3                   -> match
+So the analysis_3 detections, and therefore these summaries, are the
+default/pre-tuning operating point.
+
+-----------------------------------------------------------------
+2b. Per-session baseline avg combined detection rate
+-----------------------------------------------------------------
+  2026_07_15_gym :  0.1978   (19.78%)   over  37 flights
+  2026_07_21_gym :  0.1510   (15.10%)   over 126 flights
+                                        ---------------
+                              total     163 flights   (37 + 126 = 163, checks out)
+
+These are the stored AVERAGE rows. Recomputing from the per-flight
+combined_rate column reproduces them (0.197800 and 0.151025), so the
+stored values are consistent with their own flight rows.
+No flight had a blank/None combined_rate in either session, so all 163
+flights contribute.
+
+-----------------------------------------------------------------
+2c. Across all 163 flights - AND THE WEIGHTING QUESTION
+-----------------------------------------------------------------
+IMPORTANT: no 163-flight figure is STORED anywhere. Each CSV carries only
+its own session AVERAGE. The combined figure must be computed, and the
+answer depends on the weighting, so both are given:
+
+  FLIGHT-UNWEIGHTED mean across 163 flights = 0.161643  (16.16%)
+      = mean of the 163 individual per-flight combined_rate values,
+        each flight weighted equally.
+
+  POOLED FRAME-LEVEL rate across 163 flights = 1252 / 11052 = 0.113283 (11.33%)
+      = sum(combined_detections) / sum(combined_processable),
+        i.e. weighted by each flight's number of co-processable frames.
+      Per session, pooled: 07_15 = 293/2665 = 0.109944
+                           07_21 = 959/8387 = 0.114344
+
+ANSWER TO THE WEIGHTING QUESTION:
+  The figure that matches this codebase's own convention is the
+  FLIGHT-UNWEIGHTED MEAN = 0.161643. It is NOT a pooled frame-level rate.
+  Evidence from 05_detection_rate_summary.py:
+    l.132-133  valid_rates = [per-flight combined_rate ...]
+               avg_combined_rate = sum(valid_rates) / len(valid_rates)
+  i.e. a simple mean over flights, each flight weighted equally
+  regardless of how many frames it contains. The module header states the
+  same: "simple mean of combined_rate across flights, each flight
+  weighted equally".
+
+  The gap between the two (16.16% vs 11.33%) is large and not incidental:
+  the unweighted mean is pulled up by short flights with few processable
+  frames and high rates (e.g. 07_15 flight_01: 24/25 = 0.96 over just 25
+  frames), which the pooled rate down-weights. Quote whichever is intended,
+  but do not present 16.16% as a frame-level detection rate.
+
+CAVEAT ON A THIRD, WRONG NUMBER: averaging the two session AVERAGEs
+directly gives (0.1978 + 0.1510)/2 = 0.1744 (17.44%). That is a
+SESSION-unweighted mean and matches neither figure above - it ignores
+that 07_21 has 126 flights against 07_15's 37. Do not use it.
+
+NOTE ON PRECISION: per-flight combined_rate is stored rounded to 4 dp, so
+the unweighted mean 0.161643 inherits that rounding; recomputing it from
+the raw combined_detections/combined_processable integers per flight would
+shift it only in the 5th decimal. The pooled figure is exact (integer
+counts).
+
+-----------------------------------------------------------------
+NOTE ON PART 1 vs PART 2 BASELINES - they are not the same population
+-----------------------------------------------------------------
+Grid A's is_baseline avg_combined_rate = 0.2772 and Grid B's = 0.8552,
+neither of which equals the 163-flight baseline above. These sweep rows
+are evaluated over the sweep's own flight subset (and Grid B is measured
+with Grid A's tuned stride/threshold/open_kernel already applied, which is
+why it is far higher). The 163-flight 0.1616 / 0.1133 figures are the
+whole-dataset pre-tuning baseline. Do not cross-quote them as if they were
+measured on the same flights.
+
+Status: COMPLETE - all requested values found; nothing reported NOT_FOUND.
+
+=================================================================
+ADDENDUM - verification of file uniqueness + exact precision
+=================================================================
+1. Repo-wide glob for **/detection_rate_summary*.csv returns EXACTLY two
+   files - the two used above. There is no third/alternative or archived
+   default-parameter summary that could have been confused for them, and
+   no substitution was made anywhere in this report.
+
+2. Exact flight-unweighted means recomputed from the raw integer columns
+   (combined_detections / combined_processable per flight), bypassing the
+   4-dp rounded combined_rate column:
+       2026_07_15_gym : 0.197805   (vs stored AVERAGE 0.1978)
+       2026_07_21_gym : 0.151030   (vs stored AVERAGE 0.1510)
+       163 flights    : 0.161647   (vs 0.161643 from rounded inputs)
+   The rounding shifts the 163-flight figure by 4e-6, confirming the
+   earlier caveat. Quote 0.1616 (16.16%) at any sane precision.
+
+FINAL ANSWER SUMMARY
+--------------------
+  Grid A sweep_results.csv:               stride{1,2,3} x
+                                          diff_threshold{8,12,16,20} x
+                                          open_kernel{0,3,5,7}
+                                          = 3 x 4 x 4 = 48  CONFIRMED
+  Grid B sweep_results_min_area_circ.csv: min_area{30,50,75,100,150,200} x
+                                          min_circ{0.2,0.25,0.3,0.35}
+                                          = 6 x 4 = 24      CONFIRMED
+  Baseline avg combined detection rate at default parameters
+  (STRIDE=1, DIFF_THRESHOLD=20, OPEN_KERNEL=7, CLOSE_KERNEL=30 ELLIPSE,
+   MIN_AREA=200, MAX_AREA=50000, MIN_CIRC=0.3):
+      2026_07_15_gym  0.1978 (37 flights)
+      2026_07_21_gym  0.1510 (126 flights)
+      all 163 flights 0.1616  <- FLIGHT-UNWEIGHTED MEAN (not pooled)
+                      0.1133  <- pooled frame-level rate, for reference
+
+CORROBORATION OF ADDENDUM ITEM 1
+--------------------------------
+The uniqueness check was run a second time by an independent method with
+different visibility, and the two agree exactly:
+  (a) glob  **/detection_rate_summary*.csv                -> 2 files
+  (b) find . -name "detection_rate_summary*" -not -path "./.git/*"
+      (full-tree crawl, does NOT honour .gitignore, so it would also
+       surface untracked/ignored copies that a glob might hide) -> 2 files
+Both return exactly:
+  data/2026_07_15_gym/ball_flights/detection_rate_summary.csv
+  data/2026_07_21_gym/ball_flights/detection_rate_summary.csv
+No archived, ignored, or untracked default-parameter summary exists
+elsewhere in the tree. Conclusions above stand unchanged.

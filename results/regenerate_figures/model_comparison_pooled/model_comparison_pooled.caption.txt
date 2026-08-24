@@ -1,0 +1,12 @@
+Pooled across all 158 flights. NO duration stratum and NO elevation class applied - every flight contributes to every
+window it has data for. Bands are the interquartile range, lines the median. Log y: the three series span several orders of
+magnitude at short windows, and a linear axis would render the two lower series flat against zero.
+x is DERIVED, not a column: the file's sweep variable is the number of points in the fit window, converted here as
+(points - 1) x 16.65 ms. That frame period is measured from the data - all 158 flights share it with spread 0.0000 ms - so the
+conversion is exact rather than approximate. It is not the same quantity as the file's own lead-time axis, which runs the other way.
+Rows with a blank error were excluded: free gravity 172, fixed gravity 228, fixed gravity + drag 331 (731 of 29769).
+x truncated at 1332 ms, where the contributing count falls below 40 on all three series.
+Contributing count is NOT constant across windows, so series are not always compared on the same subset of flights - at
+117 ms and 1332 ms in particular. Per-window counts are in the companion CSV.
+Error is measured against each flight's held-out final-point label.
+Source: results/trajectory_fit_comparison/all_flights/phase2/prediction_sweep_all_flights.csv

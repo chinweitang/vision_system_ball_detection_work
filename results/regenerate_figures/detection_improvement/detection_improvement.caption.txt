@@ -1,0 +1,12 @@
+Markers only - NO interpolation. The stages are discrete configuration changes, so the x positions are ordinal, not a time axis,
+and a line between two of them would assert a path through configurations that were never run.
+FOUR PANELS BECAUSE THE DENOMINATORS DIFFER. Values may only be compared WITHIN a panel, never across panels:
+  combined rate is a 10-flight sample mean in panel 1 and a 163-flight mean in panel 2;
+  recall is over 54 labelled points (flight_01 only) in panel 3 and 240 points (flight_01 + flight_22) in panel 4.
+The two splits are NOT the same partition: the '+ mask v4 + area30 (sample)' stage carries a 10-flight combined rate but an
+already-240-point recall, so the recall denominator changes one stage earlier than the flight population does.
+ELLIPSE (diamond) and RECT (square) mark the only genuinely like-for-like pair in the file - same 163 flights, same 240 points,
+differing only in the morphological close-kernel shape. Every other adjacent pair also changes config, population or both.
+Dashes on the lower edge mark stages this panel has no value for - sweep and audit rows record no rate, and a row measured on one
+denominator is absent from the other's panel. An empty slot means not measured here, not measured as zero.
+Source: results/detector_tuning/history/results_history.csv, read-only, plotted in the file's own row order. Values in the companion CSV.

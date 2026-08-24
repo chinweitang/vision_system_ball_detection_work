@@ -1,0 +1,7 @@
+landing_error = |dp| + e*|dv|*t, e = 0.68, t = 1.0 s. A total landing-error allowance at the player of 500 mm. Because the budget is not split between the two terms, a flight with small
+position error may spend the whole allowance on velocity, corresponding to 735 mm/s - 2.6x the ~282 mm/s Y_width label SD, so the test remains above the reference noise floor on the
+weak axis. Position and velocity errors are CONVERGENCE against the full-arc Model-C fit, NOT accuracy against ground truth.
+|dp| is the crossing-position error magnitude; it is a two-component in-plane distance and that IS its 3D magnitude, because both the predicted and reference crossing points lie on the plane by construction.
+Chaos rally needs the answer A ms BEFORE arrival: late is t_obs + latency > launch_to_crossing - A, opposite in sign to target mode's +84 ms after. t_obs = min(observation window, duration).
+Verdict precedence first-match-wins: no_response, late, wrong_class, wrong_placement, success. Where several windows tie at the maximum success rate the LATEST is selected; landing error never influences that maximisation.
+fit_failed rows are retained as no_response; the denominator is always the class n. Each class is truncated at its own maximum launch-to-crossing time. A = 72/135/220 ms are panel tilt moves of 2, 10 and 30 degrees.

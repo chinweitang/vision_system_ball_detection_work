@@ -35,6 +35,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 import regen_2class.common as C
+import regen_2class.clean_figures as CF
 
 PANELS = ["POOLED", "SHORT", "LONG"]      # POOLED first: it is the headline
 ACCURATE_MM_MAIN = 200.0
@@ -152,11 +153,14 @@ def render(windows, n_of, counts, best, accurate_mm, fig_path):
         f"t_obs = min(observation window, duration).  accurate = position error < {accurate_mm:.0f} mm, which is CONVERGENCE against the full-arc Model-C fit, NOT ground truth.  fit_failed rows are retained as",
         "no_response; the denominator is always the panel n.",
     ]
-    for i, line in enumerate(caption):
-        fig.text(0.012, 0.030 - i * 0.0088, line, color=C.INK2, fontsize=7.4)
+    if CF.clean():
+        CF.write_clean(fig, caption, fig_path)
+    else:
+        for i, line in enumerate(caption):
+            fig.text(0.012, 0.030 - i * 0.0088, line, color=C.INK2, fontsize=7.4)
 
-    fig.tight_layout(rect=[0, 0.038, 1, 0.955])
-    fig.savefig(fig_path, dpi=150, facecolor=C.SURF)
+        fig.tight_layout(rect=[0, 0.038, 1, 0.955])
+        fig.savefig(fig_path, dpi=150, facecolor=C.SURF)
     plt.close(fig)
 
 

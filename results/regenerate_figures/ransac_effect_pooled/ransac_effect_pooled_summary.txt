@@ -1,0 +1,36 @@
+RANSAC EFFECT, POOLED - MODEL C
+==========================================================================
+
+Matched cells: 9923 over 158 flights.
+Key-set gate: PASS (identical (session, flight, N) sets).
+RANSAC windows with no recorded error: 331 (excluded from paired stats only; the plain series has 0).
+Plotted range: 0-1500 ms, 15 bins of 100 ms, all >= 100 cells per series.
+
+Bins excluded for falling below 100 cells (reported, not silently trimmed):
+    1500-1600   ms  n_cells=  21  n_without=  21  n_with=  21
+
+WHERE RANSAC IS WORSE
+  On the pooled median, RANSAC is WORSE at 2 of 15 plotted windows:
+     200-300    ms  without=    268.6 mm  with=    269.1 mm  (with is +0.4 mm)
+     300-400    ms  without=    209.5 mm  with=    211.2 mm  (with is +1.7 mm)
+  Not smoothed and not dropped.
+
+  By paired cell count, RANSAC LOSES more cells than it wins at 4 plotted window(s):
+     100-200    ms  better=0.245  worse=0.359  tied=0.395  (n_paired=640)
+     200-300    ms  better=0.379  worse=0.474  tied=0.147  (n_paired=899)
+     300-400    ms  better=0.434  worse=0.518  tied=0.048  (n_paired=898)
+     400-500    ms  better=0.468  worse=0.516  tied=0.016  (n_paired=855)
+
+TIES - cells where the two series are numerically identical
+  Two causes, both real 'no difference', neither a RANSAC loss:
+    (1) N < 8: the original never runs RANSAC, it falls back to the plain fit, so the cells are identical by construction.
+    (2) N large enough, but RANSAC rejected nothing, so its refit on the full set IS the plain fit.
+       0-100    ms  identical= 778/778  (1.000)  of which N<8: 778
+     100-200    ms  identical= 253/640  (0.395)  of which N<8: 11
+     200-300    ms  identical= 132/899  (0.147)  of which N<8: 1
+     300-400    ms  identical=  43/898  (0.048)  of which N<8: 0
+     400-500    ms  identical=  14/855  (0.016)  of which N<8: 0
+
+Figure : results/regenerate_figures/ransac_effect_pooled/ransac_effect_pooled.png
+Table  : results/regenerate_figures/ransac_effect_pooled/ransac_effect_pooled.csv
+Both source CSVs read-only; neither modified.

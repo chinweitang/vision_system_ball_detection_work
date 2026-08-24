@@ -41,6 +41,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 import common as C
+import clean_figures as CF
 from step10_chaos_outcome_sweep import (
     AXIS_TITLE, LABEL_FLOOR, load_per_axis, render_velocity_figure,  # noqa: F401
 )
@@ -134,8 +135,13 @@ def landing_error_print(rows, per_axis, windows, max_ltc, n_class):
     fig.suptitle(f"Chaos-rally outcome, combined landing error <= {threshold:.0f} mm\n"
                  f"(arm's reach, stationary player)",
                  color=C.INK, fontsize=FS_SUPTITLE, x=0.01, ha="left", y=0.998)
-    fig.tight_layout(rect=[0, 0.005, 1, 0.885])
-    fig.savefig(OUT_LE, dpi=DPI, facecolor=C.SURF)
+    # This script never drew a caption on the canvas (see the module
+    # docstring); clean mode therefore only re-sizes and records that fact.
+    if CF.clean():
+        CF.write_clean(fig, [], OUT_LE)
+    else:
+        fig.tight_layout(rect=[0, 0.005, 1, 0.885])
+        fig.savefig(OUT_LE, dpi=DPI, facecolor=C.SURF)
     plt.close(fig)
     print(f"wrote {OUT_LE}")
 
@@ -165,8 +171,13 @@ def figure_d_print(rows, windows):
     fig.suptitle(f"Per-flight outcome vs observation window "
                  f"(accuracy threshold {FD.ACCURATE_MM_MAIN:.0f} mm)",
                  color=C.INK, fontsize=FS_SUPTITLE, x=0.01, ha="left", y=0.998)
-    fig.tight_layout(rect=[0, 0.005, 1, 0.925])
-    fig.savefig(OUT_FD, dpi=DPI, facecolor=C.SURF)
+    # This script never drew a caption on the canvas (see the module
+    # docstring); clean mode therefore only re-sizes and records that fact.
+    if CF.clean():
+        CF.write_clean(fig, [], OUT_FD)
+    else:
+        fig.tight_layout(rect=[0, 0.005, 1, 0.925])
+        fig.savefig(OUT_FD, dpi=DPI, facecolor=C.SURF)
     plt.close(fig)
     print(f"wrote {OUT_FD}")
 
@@ -215,8 +226,13 @@ def figure_b_print(rows, windows, max_window, n_of):
     ax.set_title("Position-error CONVERGENCE vs observation window",
                  color=C.INK, fontsize=FS_SUPTITLE, loc="left", pad=6)
     ax.legend(frameon=False, fontsize=FS_LEGEND, labelcolor=C.INK2, loc="upper right")
-    fig.tight_layout()
-    fig.savefig(OUT_B, dpi=DPI, facecolor=C.SURF)
+    # This script never drew a caption on the canvas (see the module
+    # docstring); clean mode therefore only re-sizes and records that fact.
+    if CF.clean():
+        CF.write_clean(fig, [], OUT_B)
+    else:
+        fig.tight_layout()
+        fig.savefig(OUT_B, dpi=DPI, facecolor=C.SURF)
     plt.close(fig)
     print(f"wrote {OUT_B}")
 
@@ -266,8 +282,13 @@ def figure_g_print(rows, per_axis, windows, max_ltc, op_window):
     axes[-1].set_xlabel(C.X_LABEL, color=C.INK, fontsize=FS_AXIS)
     fig.suptitle("Per-axis velocity error vs observation window",
                  color=C.INK, fontsize=FS_SUPTITLE, x=0.01, ha="left", y=0.998)
-    fig.tight_layout(rect=[0, 0.005, 1, 0.965])
-    fig.savefig(OUT_G, dpi=DPI, facecolor=C.SURF)
+    # This script never drew a caption on the canvas (see the module
+    # docstring); clean mode therefore only re-sizes and records that fact.
+    if CF.clean():
+        CF.write_clean(fig, [], OUT_G)
+    else:
+        fig.tight_layout(rect=[0, 0.005, 1, 0.965])
+        fig.savefig(OUT_G, dpi=DPI, facecolor=C.SURF)
     plt.close(fig)
     print(f"wrote {OUT_G}")
 
