@@ -1,0 +1,22 @@
+# Laptop / analysis environment.
+# Versions are those actually used to produce the results in results/,
+# read from the working environment on 2026-08-27 (Python 3.9.12, Windows).
+#
+# Derived by scanning every tracked .py file for third-party imports:
+#   matplotlib (124 files), numpy (84), cv2 (51), scipy (10),
+#   openpyxl (2), PIL (1).
+
+numpy==2.0.2
+opencv-python==4.13.0.92
+matplotlib==3.9.4
+scipy==1.13.1
+
+# Only used by the spreadsheet-export helpers, not by the analysis pipeline.
+openpyxl==3.0.9
+Pillow==9.0.1
+
+# NOT installable on a laptop, and deliberately not listed above:
+#   picamera2   - Raspberry Pi camera stack, imported by the 3 scripts in
+#                 src/pi_code/ (capture_flights_stereo.py, exposure_sweep.py,
+#                 sync_startup_test.py). These run on the Pi only; every
+#                 analysis script in src/ runs without it.
